@@ -55,7 +55,7 @@ function addMaterial  () {
 
     httpClient({
         method: 'post',
-        url: 'http://localhost:8080/api/material/add',
+        url: '/api/users/register',
         data: {
                 code: material.value.code,
         name: material.value.name,
