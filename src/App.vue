@@ -1,10 +1,10 @@
-<script setup>
-import MaterialTest from './materail/materailtest.vue'
-</script>
+
 
 <template>
   <h1>You did it!</h1>
+  <NavBar />
 
+  <RouterView />
   <p>
     Visit
     <a
@@ -19,5 +19,11 @@ import MaterialTest from './materail/materailtest.vue'
   <MaterialTest />
 </template>
 
-<style scoped>
-</style>
+
+<script setup>
+
+import { RouterView } from 'vue-router'
+
+import NavBar from '@/component/NavBar.vue'
+
+</script>

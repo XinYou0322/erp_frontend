@@ -71,6 +71,14 @@
         修改原物料
       </button>
 
+    <button @click="deleteMaterial">
+        刪除原物料
+      </button>
+
+
+
+
+
     </div>
 
 
@@ -243,6 +251,50 @@ function updateMaterial() {
     })
 
 }
+
+
+// =========================
+// 修改原物料
+// =========================
+
+function deleteMaterial() {
+
+  httpClient({
+
+    method: 'delete',
+
+    url: `/api/materialdelete/${material.value.id}`,
+
+    data: {
+
+  
+    }
+
+  })
+
+    .then(response => {
+
+      console.log(response.status)
+
+      material.value = response.data
+
+      result.value = '刪除成功'
+
+    })
+
+    .catch(error => {
+
+      console.log(error)
+
+      result.value = '修改失敗'
+
+    })
+
+}
+
+
+
+
 
 </script>
 
