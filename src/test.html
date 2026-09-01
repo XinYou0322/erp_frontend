@@ -1,358 +1,13 @@
-```vue
-<template>
-
-  <div class="container">
-
-    <h2>原物料管理測試</h2>
-
-    <!-- ID -->
-    <label>原物料 ID</label>
-
-    <input
-      v-model="material.id"
-      type="number"
-      placeholder="修改時輸入 ID"
-    />
-
-    <button @click="getMaterial">
-      載入原物料
-    </button>
-
-
-    <hr />
-
-
-    <div class="form">
-
-      <label>原物料編號</label>
-
-      <input
-        v-model="material.code"
-        placeholder="例如 MAT001"
-      />
-
-
-      <label>原物料名稱</label>
-
-      <input
-        v-model="material.name"
-        placeholder="例如 珍珠"
-      />
-
-
-      <label>單位</label>
-
-      <input
-        v-model="material.unit"
-        placeholder="例如 g"
-      />
-
-
-      <label>成本</label>
-
-      <input
-        v-model="material.cost"
-        type="number"
-        step="0.01"
-        placeholder="例如 0.25"
-      />
-
-
-      <!-- 新增 -->
-
-      <button @click="addMaterial">
-        新增原物料
-      </button>
-
-
-      <!-- 修改 -->
-
-      <button @click="updateMaterial" class="btn-primary font-label-md">
-        修改原物料
-      </button>
-
-    <button @click="deleteMaterial">
-        刪除原物料
-      </button>
-
-
-
-
-
-    </div>
-
-
-    <!-- 顯示結果 -->
-
-    <div v-if="result" class="message">
-      {{ result }}
-    </div>
-
-
-    <hr />
-
-
-    <h3>目前資料</h3>
-
-    <pre>{{ material }}</pre>
-
-  </div>
-
-</template>
-
-
-<script setup>
-
-import { ref } from 'vue'
-
-import httpClient from '@/service/httpClient'
-
-
-const result = ref('')
-
-
-const material = ref({
-
-  id: null,
-
-  code: '',
-
-  name: '',
-
-  unit: '',
-
-  cost: ''
-
-})
-
-
-// =========================
-// 新增原物料
-// =========================
-
-function addMaterial() {
-
-  httpClient({
-
-    method: 'post',
-
-    url: '/api/material/add',
-
-    data: {
-
-      code: material.value.code,
-
-      name: material.value.name,
-
-      unit: material.value.unit,
-
-      cost: material.value.cost
-
-    }
-
-  })
-
-    .then(response => {
-
-      console.log(response.status)
-
-      result.value = '新增成功'
-
-    })
-
-    .catch(error => {
-
-      console.log(error)
-
-      result.value = '新增失敗'
-
-    })
-
-}
-
-
-// =========================
-// 查詢原物料
-// =========================
-
-function getMaterial() {
-
-  httpClient({
-
-    method: 'get',
-
-    url: `/api/materialfind/${material.value.id}`
-
-  })
-
-    .then(response => {
-
-      console.log(response.data)
-
-      material.value = response.data
-
-      result.value = '取得原物料成功'
-
-    })
-
-    .catch(error => {
-
-      console.log(error)
-
-      result.value = '找不到原物料'
-
-    })
-
-}
-
-
-// =========================
-// 修改原物料
-// =========================
-
-function updateMaterial() {
-
-  httpClient({
-
-    method: 'put',
-
-    url: `/api/materialupdate/${material.value.id}`,
-
-    data: {
-
-      code: material.value.code,
-
-      name: material.value.name,
-
-      unit: material.value.unit,
-
-      cost: material.value.cost
-
-    }
-
-  })
-
-    .then(response => {
-
-      console.log(response.status)
-
-      material.value = response.data
-
-      result.value = '修改成功'
-
-    })
-
-    .catch(error => {
-
-      console.log(error)
-
-      result.value = '修改失敗'
-
-    })
-
-}
-
-
-// =========================
-// 修改原物料
-// =========================
-
-function deleteMaterial() {
-
-  httpClient({
-
-    method: 'delete',
-
-    url: `/api/materialdelete/${material.value.id}`,
-
-    data: {
-
-  
-    }
-
-  })
-
-    .then(response => {
-
-      console.log(response.status)
-
-      material.value = response.data
-
-      result.value = '刪除成功'
-
-    })
-
-    .catch(error => {
-
-      console.log(error)
-
-      result.value = '修改失敗'
-
-    })
-
-}
-
-
-
-
-
-</script>
-
-
-<style scoped>
-
-.container {
-
-  width: 500px;
-
-  margin: 50px auto;
-
-  font-family: Arial, sans-serif;
-
-}
-
-
-.form {
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 10px;
-
-}
-
-
-input {
-
-  padding: 8px;
-
-  font-size: 16px;
-
-}
-
-
-
-
-.message {
-
-  margin-top: 20px;
-
-  padding: 10px;
-
-  background-color: #eee;
-
-}
-
-
-pre {
-
-  padding: 15px;
-
-  background-color: #f5f5f5;
-
-}
-    :root {
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Raw Material Management - BeverageERP</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        /* CSS 變數定義 */
+        :root {
             /* 顏色變數 */
             --color-background: #f9faf2;
             --color-surface: #f9faf2;
@@ -962,6 +617,231 @@ pre {
         .text-amber { color: #d97706; }
         /* 粗體文字 */
         .font-bold { font-weight: bold; }
-
-</style>
-```
+    </style>
+</head>
+<body>
+<div class="app-container">
+<!-- SideNavBar -->
+<aside class="sidebar">
+<div class="sidebar-header">
+<div class="brand">
+<img alt="Corporate logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuARjBIUr-KXr9y1UJHIeKM1TsrujGTnZ7Y3BobkuDjZzyqTGiO4ap2nbuNZ6_M3YrGZSVAVjZlUcI0aurDnyIi5arvYW2zXK_KxjHaYoGCT_wQxtbnYz760WVKg4oGq0pBP393CGQqbcxDQQoOBjmdTlcEjBgK_cXRIM6RK8HawzunbCYixhls5j05qtNN6Mh_tz07OnLRwVdI4CHz91vD37-s_LjOLWv-MhpNaaHcm9kmO0ZmQvVAn"/>
+<div>
+<h1 class="font-headline-md brand-title">BeverageERP</h1>
+<p class="font-label-md brand-subtitle">Admin Console</p>
+</div>
+</div>
+</div>
+<nav class="sidebar-nav">
+<a class="nav-item" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md">Dashboard</span>
+</a>
+<a class="nav-item" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md">Inventory</span>
+</a>
+<a class="nav-item active" href="#">
+<span class="material-symbols-outlined">liquor</span>
+<span class="font-label-md">Raw Materials</span>
+</a>
+<a class="nav-item" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-md">Orders</span>
+</a>
+<a class="nav-item mt-auto" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md">Settings</span>
+</a>
+</nav>
+<div class="sidebar-footer">
+<button class="btn-primary font-label-md">
+<span class="material-symbols-outlined filled">add</span>
+                New Order
+            </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="main-wrapper">
+<!-- TopNavBar -->
+<header class="top-header">
+<div class="header-left">
+<span class="font-headline-md font-bold mobile-title">SipSystems ERP</span>
+<div class="search-container">
+<span class="material-symbols-outlined search-icon">search</span>
+<input class="input-field font-body-md" placeholder="Search..." type="text"/>
+</div>
+</div>
+<div class="header-actions">
+<button class="icon-btn">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="icon-btn">
+<span class="material-symbols-outlined">apps</span>
+</button>
+<img alt="User avatar" class="avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDov_LPZXcGWYbgejIMNzwjBf6nemJHO54rLgXCuKDRYXSf6ZmH8TUpURtZOdGLZUN-QZSNsfppe5E9XM8OcxBCnBzTY0qdHnrYCHgbBYM4CY9NGG-495UyVBjVM7c2LuVi2ZKGsuB6ZmrS7eS5zSdBV6dH3YZ2uWtgIB5cNCSrFcn1I9YR_RFGimdZN9hnV630PNVPStilsZ0WpeaXJsRcYhhM9kmnbgBhvayYM_eky6yOe_iTgKvn"/>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="main-content">
+<div class="content-container">
+<!-- Header & Breadcrumbs -->
+<div>
+<nav class="breadcrumbs font-label-md">
+<a href="#">Inventory</a>
+<span class="material-symbols-outlined" style="font-size: 16px;">chevron_right</span>
+<span class="current">Raw Materials</span>
+</nav>
+<h1 class="font-display">Raw Materials</h1>
+</div>
+<!-- Action Bar -->
+<div class="action-bar">
+<div class="filters">
+<div class="search-wrapper">
+<span class="material-symbols-outlined search-icon">search</span>
+<input class="input-field transparent font-body-md" placeholder="Search by name or ID..." type="text"/>
+</div>
+<select class="select-field font-body-md">
+<option value="">All Categories</option>
+<option value="tea">Tea</option>
+<option value="dairy">Dairy</option>
+<option value="topping">Topping</option>
+<option value="fruit">Fruits</option>
+<option value="packaging">Packaging</option>
+</select>
+<select class="select-field font-body-md">
+<option value="">All Statuses</option>
+<option value="normal">Normal</option>
+<option value="low">Low Stock</option>
+<option value="out">Out of Stock</option>
+</select>
+</div>
+<button class="btn-primary font-label-md" style="width: auto;">
+<span class="material-symbols-outlined filled">add</span>
+                        Add Raw Material
+                    </button>
+</div>
+<!-- Data Table -->
+<div class="table-card">
+<div class="table-responsive">
+<table class="data-table">
+<thead>
+<tr>
+<th class="font-label-md font-bold">ID</th>
+<th class="font-label-md font-bold">Material Name</th>
+<th class="font-label-md font-bold">Category</th>
+<th class="font-label-md font-bold text-right">Stock</th>
+<th class="font-label-md font-bold text-right">Safety</th>
+<th class="font-label-md font-bold text-right">Unit Cost</th>
+<th class="font-label-md font-bold">Supplier</th>
+<th class="font-label-md font-bold">Status</th>
+<th class="font-label-md font-bold text-right">Updated</th>
+<th class="font-label-md font-bold text-center">Actions</th>
+</tr>
+</thead>
+<tbody class="font-body-md">
+<tr>
+<td class="font-data-mono td-id">RM001</td>
+<td class="td-name">Black Tea</td>
+<td class="td-cat">Tea</td>
+<td class="font-data-mono text-right">25 <span class="text-xs unit-text">kg</span></td>
+<td class="font-data-mono text-right td-id">10</td>
+<td class="font-data-mono text-right">$180</td>
+<td class="td-cat">Taiwan Tea Supplier</td>
+<td>
+<span class="status-badge status-normal">Normal</span>
+</td>
+<td class="font-data-mono text-right td-id">2023-10-24</td>
+<td class="text-center">
+<div class="actions-cell-content">
+<button class="action-btn"><span class="material-symbols-outlined">visibility</span></button>
+<button class="action-btn"><span class="material-symbols-outlined">edit</span></button>
+<button class="action-btn delete"><span class="material-symbols-outlined">delete</span></button>
+</div>
+</td>
+</tr>
+<tr>
+<td class="font-data-mono td-id">RM002</td>
+<td class="td-name">Fresh Milk</td>
+<td class="td-cat">Dairy</td>
+<td class="font-data-mono text-right text-amber">8 <span class="text-xs unit-text">L</span></td>
+<td class="font-data-mono text-right td-id">15</td>
+<td class="font-data-mono text-right">$90</td>
+<td class="td-cat">Local Dairy</td>
+<td>
+<span class="status-badge status-low">Low Stock</span>
+</td>
+<td class="font-data-mono text-right td-id">2023-10-25</td>
+<td class="text-center">
+<div class="actions-cell-content">
+<button class="action-btn"><span class="material-symbols-outlined">visibility</span></button>
+<button class="action-btn"><span class="material-symbols-outlined">edit</span></button>
+<button class="action-btn delete"><span class="material-symbols-outlined">delete</span></button>
+</div>
+</td>
+</tr>
+<tr>
+<td class="font-data-mono td-id">RM003</td>
+<td class="td-name">Tapioca Pearls</td>
+<td class="td-cat">Topping</td>
+<td class="font-data-mono text-right">30 <span class="text-xs unit-text">kg</span></td>
+<td class="font-data-mono text-right td-id">10</td>
+<td class="font-data-mono text-right">$120</td>
+<td class="td-cat">Food Supplier</td>
+<td>
+<span class="status-badge status-normal">Normal</span>
+</td>
+<td class="font-data-mono text-right td-id">2023-10-23</td>
+<td class="text-center">
+<div class="actions-cell-content">
+<button class="action-btn"><span class="material-symbols-outlined">visibility</span></button>
+<button class="action-btn"><span class="material-symbols-outlined">edit</span></button>
+<button class="action-btn delete"><span class="material-symbols-outlined">delete</span></button>
+</div>
+</td>
+</tr>
+<tr>
+<td class="font-data-mono td-id">RM004</td>
+<td class="td-name">Lemon</td>
+<td class="td-cat">Fruit</td>
+<td class="font-data-mono text-right text-error font-bold">0 <span class="text-xs unit-text">pcs</span></td>
+<td class="font-data-mono text-right td-id">20</td>
+<td class="font-data-mono text-right">$5</td>
+<td class="td-cat">Market Direct</td>
+<td>
+<span class="status-badge status-out">Out of Stock</span>
+</td>
+<td class="font-data-mono text-right td-id">2023-10-25</td>
+<td class="text-center">
+<div class="actions-cell-content">
+<button class="action-btn"><span class="material-symbols-outlined">visibility</span></button>
+<button class="action-btn"><span class="material-symbols-outlined">edit</span></button>
+<button class="action-btn delete"><span class="material-symbols-outlined">delete</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="pagination-bar">
+<span class="font-body-md pagination-info">Showing 1-4 of 45</span>
+<div class="pagination-controls">
+<button class="page-btn nav-arrow" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="page-btn active font-label-md">1</button>
+<button class="page-btn font-label-md">2</button>
+<button class="page-btn font-label-md">3</button>
+<span class="pagination-info">...</span>
+<button class="page-btn nav-arrow">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body></html>
