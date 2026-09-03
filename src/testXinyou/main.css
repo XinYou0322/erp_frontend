@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@import "../testXinyou/styles/glassmorphism.css";
+@import "../testXinyou/styles/waves.css";
+@import "../testXinyou/styles/components.css";
+
+@layer base {
+  body {
+    font-family:
+      'Plus Jakarta Sans',
+      'Noto Sans TC',
+      'Inter',
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+}

@@ -1,0 +1,81 @@
+/* Reusable component styles for buttons, inputs, and form controls */
+.btn-primary {
+  background: linear-gradient(135deg, #007BFF 0%, #00D2FF 100%);
+  color: #ffffff;
+  font-weight: 700;
+  border-radius: 0.75rem;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 4px 14px rgba(0, 123, 255, 0.28);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.42);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.85);
+  color: #181c23;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(229, 231, 235, 0.9);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0059bb;
+}
+
+.btn-danger {
+  background: #fee2e2;
+  color: #991b1b;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #fecaca;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  background: #fecaca;
+  color: #7f1d1d;
+}
+
+.input-field {
+  width: 100%;
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.75rem;
+  background-color: rgba(241, 243, 254, 0.75);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  font-size: 0.8125rem;
+  color: #181c23;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.input-field:focus {
+  background-color: #ffffff;
+  border-color: #0070ea;
+  box-shadow: 0 0 0 3px rgba(0, 112, 234, 0.15);
+}

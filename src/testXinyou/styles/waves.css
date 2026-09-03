@@ -1,0 +1,107 @@
+/* Forward & Interlacing Moving Waves */
+.wave-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 52vh;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.wave-layer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 300%;
+  height: 100%;
+  background-repeat: repeat-x;
+  background-position: bottom left;
+  will-change: transform;
+}
+
+/* Layer 1: Deep Ocean Tide (Slowest base swell - Perfectly seamless periodic curve) */
+.wave-layer.bg-1 {
+  background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 320" xmlns="http://www.w3.org/2000/svg"><path d="M0,320 L0,180 C200,80 400,280 600,180 C800,80 1000,280 1200,180 L1200,320 Z" fill="rgba(0,89,187,0.075)"/></svg>');
+  background-size: 1200px 320px;
+  animation: wave-interlace-1 68s ease-in-out infinite alternate;
+  z-index: 1;
+  opacity: 0.9;
+}
+
+/* Layer 2: Mid Cyan Ripple (Contrasting counter-drift - Perfectly seamless periodic curve) */
+.wave-layer.bg-2 {
+  background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 280" xmlns="http://www.w3.org/2000/svg"><path d="M0,280 L0,140 C150,230 450,50 600,140 C750,230 1050,50 1200,140 L1200,280 Z" fill="rgba(0,163,255,0.085)"/></svg>');
+  background-size: 1200px 280px;
+  animation: wave-interlace-2 52s ease-in-out infinite alternate;
+  z-index: 2;
+  opacity: 0.85;
+}
+
+/* Layer 3: Luminous Aqua Wave (Smooth undulating crest with continuous light rim) */
+.wave-layer.bg-3 {
+  background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 240" xmlns="http://www.w3.org/2000/svg"><path d="M0,240 L0,110 C200,40 400,180 600,110 C800,40 1000,180 1200,110 L1200,240 Z" fill="rgba(0,210,255,0.11)"/><path d="M0,110 C200,40 400,180 600,110 C800,40 1000,180 1200,110" fill="none" stroke="rgba(0,210,255,0.3)" stroke-width="1.5"/></svg>');
+  background-size: 1200px 240px;
+  animation: wave-interlace-3 42s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  z-index: 3;
+  opacity: 0.95;
+}
+
+/* Layer 4: Foreground Foam & Light Crest (Crisp interlocking accent with continuous crest) */
+.wave-layer.bg-4 {
+  background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 200" xmlns="http://www.w3.org/2000/svg"><path d="M0,200 L0,90 C160,150 440,30 600,90 C760,150 1040,30 1200,90 L1200,200 Z" fill="rgba(186,222,255,0.14)"/><path d="M0,90 C160,150 440,30 600,90 C760,150 1040,30 1200,90" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2"/></svg>');
+  background-size: 1200px 200px;
+  animation: wave-interlace-4 58s ease-in-out infinite alternate;
+  z-index: 4;
+  opacity: 0.9;
+}
+
+/* Staggered, Organic Interlacing Keyframes */
+@keyframes wave-interlace-1 {
+  0% {
+    transform: translate3d(0, 0, 0) scaleY(1);
+  }
+  50% {
+    transform: translate3d(-25%, -15px, 0) scaleY(1.08);
+  }
+  100% {
+    transform: translate3d(-50%, 5px, 0) scaleY(0.96);
+  }
+}
+
+@keyframes wave-interlace-2 {
+  0% {
+    transform: translate3d(-40%, 10px, 0) scaleY(1.05);
+  }
+  50% {
+    transform: translate3d(-15%, -12px, 0) scaleY(0.95);
+  }
+  100% {
+    transform: translate3d(0, 8px, 0) scaleY(1.1);
+  }
+}
+
+@keyframes wave-interlace-3 {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-25%, -18px, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes wave-interlace-4 {
+  0% {
+    transform: translate3d(-30%, -8px, 0) scaleY(0.94);
+  }
+  50% {
+    transform: translate3d(-10%, 14px, 0) scaleY(1.06);
+  }
+  100% {
+    transform: translate3d(0, -5px, 0) scaleY(1);
+  }
+}
