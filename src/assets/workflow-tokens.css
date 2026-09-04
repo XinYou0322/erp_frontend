@@ -1,0 +1,43 @@
+/*
+  Workflow 模組共用設計變數
+  請在 main.js 或 App.vue 中 import 一次即可全域套用：
+    import './assets/workflow-tokens.css'
+
+  字體建議：在 index.html 加入 Noto Sans TC
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+*/
+
+:root {
+  /* 底色：紙感米灰，非暖米色系，降低 AI 生成的既視感 */
+  --wf-paper: #f5f5f1;
+  --wf-paper-raised: #ffffff;
+
+  /* 文字 */
+  --wf-ink: #1c2321;
+  --wf-ink-soft: #5b6461;
+  --wf-ink-faint: #8b928f;
+
+  /* 分隔線 */
+  --wf-line: #dedbd3;
+  --wf-line-strong: #c7c3b8;
+
+  /* 強調色：印章紅（核准 = 蓋章的意象） */
+  --wf-seal: #a6321f;
+  --wf-seal-hover: #8c2919;
+  --wf-seal-tint: #f4e2de;
+
+  /* 狀態色 */
+  --wf-pending: #9c6b1f;
+  --wf-pending-tint: #f1e6d2;
+  --wf-rejected: #6b6560;
+  --wf-rejected-tint: #e8e6e1;
+
+  /* 字體 */
+  --wf-font: 'Noto Sans TC', -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  --wf-font-mono: 'JetBrains Mono', 'Roboto Mono', ui-monospace, monospace;
+
+  /* 圓角 */
+  --wf-radius-sm: 4px;
+  --wf-radius-md: 8px;
+}
