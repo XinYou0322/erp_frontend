@@ -25,38 +25,23 @@
   @open-pos="posModalOpen = true"
 />
 
-    <!-- 右側主要區域 -->
-    <div class="flex-1 ml-64 flex flex-col min-h-screen">
+   <!-- 右側主要區域 -->
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
 
- <!--
-  Header
-  search-query       ：目前搜尋文字
-  is-realtime-active ：POS 連線狀態
+  <Header
+    :search-query="searchQuery"
+    :is-realtime-active="isRealtimeActive"
+    @search-change="searchQuery = $event"
+    @open-filter="filterModalOpen = true"
+    @open-report="reportModalOpen = true"
+    @open-profile="profileModalOpen = true"
+    @open-add-product="addProductModalOpen = true"
+    @open-pos="posModalOpen = true"
+    @toggle-realtime="isRealtimeActive = !isRealtimeActive"
+  />
 
-  search-change      ：更新搜尋文字
-  open-filter        ：開啟進階篩選
-  open-report        ：開啟營運報表
-  open-profile       ：開啟個人資料
-  open-add-product   ：開啟新增產品
-  open-pos           ：開啟 POS
-  toggle-realtime    ：切換 POS 連線狀態
--->
-<Header
-  :search-query="searchQuery"
-  :is-realtime-active="isRealtimeActive"
-  @search-change="searchQuery = $event"
-  @open-filter="filterModalOpen = true"
-  @open-report="reportModalOpen = true"
-  @open-profile="profileModalOpen = true"
-  @open-add-product="addProductModalOpen = true"
-  @open-pos="posModalOpen = true"
-  @toggle-realtime="isRealtimeActive = !isRealtimeActive"
-/>
-
-
-
-      <!-- Main Workspace Scroll Area (Independent ERP Views) -->
- <main class="flex-1 p-6 max-w-7xl w-full mx-auto overflow-y-auto">
+  <!-- 主要內容：只留一個 main -->
+  <main class="flex-1 p-6 w-full max-w-[1600px] mx-auto overflow-y-auto">
 
     <Dashboard
       v-if="currentTab === 'dashboard'"
@@ -68,35 +53,21 @@
       @navigate-to-inventory="currentTab = 'inventory'"
     />
 
-
- <!-- 4. Inventory Management View (原物料進銷存) -->
-        <InventoryManagement
-          v-else-if="currentTab === 'inventory'"
-          :inventory="inventory"
-          @restock-item="handleRestockInventoryItem"
-          @open-report="reportModalOpen = true"
-          @open-add-material="addMaterialModalOpen = true"
-        />
+  <InventoryManagement
+  v-else-if="currentTab === 'inventory'"
+  @open-report="reportModalOpen = true"
+  @open-add-material="addMaterialModalOpen = true"
+  @open-inventory-intake="inventoryIntakeModalOpen = true"
+/>
 
 
   </main>
 
-
-
-
-
-      
-      <!-- 頁面內容 -->
-      <main class="flex-1 p-6 overflow-y-auto">
-        <RouterView />
-      </main>
-
-    </div>
-
+</div>
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue';
 import { RouterView } from 'vue-router'
 
 import Sidebar, { type NavTabType } from './testXinyou/Sidebar.vue'
@@ -104,7 +75,7 @@ import Header from './testXinyou/Header.vue'
 import WaveBackground from './testXinyou/WaveBackground.vue'
 import Dashboard from './testXinyou/Dashboard.vue'
 import InventoryManagement from './testXinyou/InventoryManagement.vue'
-
+import InventoryIntakeModal from './testXinyou/styles/components/modals/InventoryIntakeModal.vue';
 
 
 // AI 假資料
@@ -115,12 +86,12 @@ import {
 } from './testXinyou/data/mockData.js'
 
 // 型別
-import type { Product, InventoryItem, LiveOrder } from './testXinyou/types.js'
+import type { Product, InventorySummary, LiveOrder } from './testXinyou/types.js'
 const currentTab = ref<NavTabType>('dashboard')
 
 const searchQuery = ref('')
 const isRealtimeActive = ref(true)
-
+const inventoryIntakeModalOpen = ref(false)
 const reportModalOpen = ref(false)
 const profileModalOpen = ref(false)
 const posModalOpen = ref(false)
@@ -130,27 +101,27 @@ const addMaterialModalOpen = ref(false);
 
 
 const products = ref<Product[]>([...mockProducts]);
-const inventory = ref<InventoryItem[]>([...mockInventory]);
+const inventory = ref<InventorySummary[]>([]);
 const orders = ref<LiveOrder[]>([...mockLiveOrders]);
 
 
-const handleRestockInventoryItem = (id: string, amount: number) => {
-  const item = inventory.value.find(i => i.id === id);
-  if (item) {
-    item.currentStock += amount;
-    item.lastRestocked = '剛剛';
-    updateInventoryStatus(item);
-  }
-};
-const updateInventoryStatus = (inv: InventoryItem) => {
-  if (inv.currentStock <= inv.safetyStock * 0.4) {
-    inv.status = 'urgent';
-  } else if (inv.currentStock <= inv.safetyStock) {
-    inv.status = 'low';
-  } else {
-    inv.status = 'normal';
-  }
-};
+// const handleRestockInventoryItem = (id: string, amount: number) => {
+//   const item = inventory.value.find(i => i.id === id);
+//   if (item) {
+//     item.currentStock += amount;
+//     item.lastRestocked = '剛剛';
+//     updateInventoryStatus(item);
+//   }
+// };
+// const updateInventoryStatus = (inv: InventoryItem) => {
+//   if (inv.currentStock <= inv.safetyStock * 0.4) {
+//     inv.status = 'urgent';
+//   } else if (inv.currentStock <= inv.safetyStock) {
+//     inv.status = 'low';
+//   } else {
+//     inv.status = 'normal';
+//   }
+// };
 
 
 </script>

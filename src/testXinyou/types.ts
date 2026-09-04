@@ -108,3 +108,16 @@ export interface StoreMetric {
   todayRevenue: number;
   todayOrders: number;
 }
+
+
+
+//我自己的
+export interface InventorySummary {
+  materialId: number;
+  code: string;
+  name: string;
+  unit: string;
+  totalQuantity: number;
+  cost: number;
+  nearestExpiryDate: string | null;
+}
