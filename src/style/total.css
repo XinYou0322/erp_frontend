@@ -1,0 +1,1405 @@
+/* ==========================================================================
+   ERP STYLE LIBRARY
+   來源：依照多款 ERP 視覺風格整理成可混搭的 CSS 集合。
+
+   使用方法：
+   1. 在 main.js 引入：import './assets/erp-style-library.css'
+   2. 在 template 使用 class，例如：class="erp-btn erp-btn--primary"
+   3. style="" 適合覆寫 CSS 變數，例如：
+      class="erp-card" style="--erp-accent: #ec4899"
+
+   命名規則：
+   .erp-元件                 元件的必要基礎樣式
+   .erp-元件--款式          可替換的外觀樣式
+   .erp-u-用途              小型工具樣式
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   01. 全域設計變數
+   用途：統一修改整個專案的顏色、圓角、陰影與字型。
+   注意：這裡的 var() 是 CSS 變數的標準用法，不是 JavaScript 的 var。
+   -------------------------------------------------------------------------- */
+:root {
+  --erp-primary: #5b45e8;
+  --erp-primary-hover: #4935ce;
+  --erp-secondary: #2563eb;
+  --erp-success: #20a46b;
+  --erp-warning: #e99a21;
+  --erp-danger: #e95068;
+  --erp-info: #0ea5c6;
+  --erp-text: #1f2a4d;
+  --erp-muted: #74809b;
+  --erp-line: #e4e8f2;
+  --erp-surface: #ffffff;
+  --erp-canvas: #f4f6fc;
+  --erp-radius-sm: 8px;
+  --erp-radius-md: 12px;
+  --erp-radius-lg: 18px;
+  --erp-shadow-sm: 0 4px 14px rgba(31, 42, 77, 0.07);
+  --erp-shadow-md: 0 14px 36px rgba(44, 51, 110, 0.11);
+  --erp-font: Inter, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+}
+
+/* --------------------------------------------------------------------------
+   02. 頁面骨架
+   用途：包住側邊欄與右側主要內容。
+
+   範例：
+   <div class="erp-shell">
+     <aside class="erp-sidebar erp-sidebar--aurora">...</aside>
+     <main class="erp-main">...</main>
+   </div>
+   -------------------------------------------------------------------------- */
+.erp-shell {
+  display: flex;
+  min-height: 100vh;
+  color: var(--erp-text);
+  background: var(--erp-canvas);
+  font-family: var(--erp-font);
+}
+
+.erp-main {
+  flex: 1;
+  min-width: 0;
+  padding: 28px;
+}
+
+.erp-page {
+  width: 100%;
+  max-width: 1500px;
+  margin-inline: auto;
+}
+
+/* 用途：頁面最上方的標題與操作按鈕區。 */
+.erp-page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.erp-page-head__title {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.25;
+}
+
+.erp-page-head__description {
+  margin: 7px 0 0;
+  color: var(--erp-muted);
+  font-size: 13px;
+}
+
+/* --------------------------------------------------------------------------
+   03. 側邊欄共用結構
+   用途：先套 erp-sidebar，再從下方四種主題挑一種。
+
+   範例：class="erp-sidebar erp-sidebar--business"
+   -------------------------------------------------------------------------- */
+.erp-sidebar {
+  --erp-sidebar-width: 230px;
+  --erp-sidebar-text: rgba(255, 255, 255, 0.72);
+  --erp-sidebar-active: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex: 0 0 var(--erp-sidebar-width);
+  flex-direction: column;
+  width: var(--erp-sidebar-width);
+  height: 100vh;
+  padding: 24px 16px;
+  color: #ffffff;
+  overflow-y: auto;
+}
+
+/* 款式 A：明亮紫色漸層，適合現代、活潑的 ERP。 */
+.erp-sidebar--aurora {
+  background:
+    radial-gradient(circle at 20% 8%, #735fff 0, transparent 29%),
+    linear-gradient(165deg, #171f80 10%, #3520a1 58%, #1247a2);
+  box-shadow: 12px 0 36px rgba(35, 34, 121, 0.17);
+}
+
+/* 款式 B：穩重商務深藍，適合採購、供應商、財務後台。 */
+.erp-sidebar--business {
+  background: linear-gradient(180deg, #07294f, #061a35);
+  box-shadow: 10px 0 28px rgba(6, 26, 53, 0.14);
+}
+
+/* 款式 C：青色科技感，適合深色儀表板。 */
+.erp-sidebar--future {
+  --erp-sidebar-text: #8eacbd;
+  --erp-sidebar-active: #58f0ff;
+  background: rgba(3, 12, 20, 0.98);
+  border-right: 1px solid rgba(56, 189, 248, 0.2);
+  box-shadow: 12px 0 32px rgba(0, 229, 255, 0.04);
+}
+
+/* 款式 D：低調深黑，適合專業、數據密集型 ERP。 */
+.erp-sidebar--midnight {
+  --erp-sidebar-text: #7890a7;
+  --erp-sidebar-active: #55e7fa;
+  background: linear-gradient(180deg, #08101d, #040911);
+  border-right: 1px solid #10283a;
+}
+
+/* 款式 E：植物暖白風。圖片可用 style="--erp-botanical-image: url(...)" 自行指定。 */
+.erp-sidebar--botanical {
+  --erp-sidebar-text: #4e5146;
+  --erp-sidebar-active: #687d42;
+  color: #34382f;
+  border-right: 1px solid #e7e4d9;
+  background: rgba(255, 254, 249, 0.96);
+  box-shadow: 7px 0 24px rgba(86, 91, 68, 0.04);
+}
+
+.erp-sidebar--botanical::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 38%;
+  pointer-events: none;
+  background: var(--erp-botanical-image, none) bottom left / contain no-repeat;
+  opacity: 0.72;
+}
+
+.erp-sidebar--botanical .erp-brand { color: #2f332b; font-family: Georgia, "Noto Serif TC", serif; }
+.erp-sidebar--botanical .erp-brand__mark { color: #71834d; background: #f0f1e5; box-shadow: none; }
+.erp-sidebar--botanical .erp-nav { position: relative; z-index: 1; }
+.erp-sidebar--botanical .erp-nav__item:hover { background: #f5f4eb; }
+.erp-sidebar--botanical .erp-nav__item.active,
+.erp-sidebar--botanical .erp-nav__item.router-link-active,
+.erp-sidebar--botanical .erp-nav__item.router-link-exact-active {
+  color: #536735;
+  border-color: transparent;
+  background: linear-gradient(90deg, #f0f1e4, #f8f7ef);
+  box-shadow: none;
+  font-weight: 700;
+}
+
+/* 用途：側邊欄頂端 Logo 與系統名稱。 */
+.erp-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 48px;
+  margin-bottom: 25px;
+  padding-inline: 8px;
+  color: #ffffff;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.erp-brand__mark {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 11px;
+  color: #ffffff;
+  background: linear-gradient(145deg, #14dff4, #4459ff 65%, #a461ff);
+  box-shadow: 0 0 22px rgba(22, 202, 232, 0.28);
+}
+
+/* 用途：包住全部側邊欄選單。 */
+.erp-nav {
+  display: grid;
+  gap: 6px;
+}
+
+/* 用途：單一側邊欄選項，可用在 RouterLink 或 a。 */
+.erp-nav__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--erp-sidebar-text);
+  text-decoration: none;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+.erp-nav__item:hover {
+  color: var(--erp-sidebar-active);
+  background: rgba(255, 255, 255, 0.09);
+  transform: translateX(2px);
+}
+
+/* 用途：目前所在頁面的選單狀態；可手動加 active，RouterLink 也會自動產生。 */
+.erp-nav__item.active,
+.erp-nav__item.router-link-active,
+.erp-nav__item.router-link-exact-active {
+  color: var(--erp-sidebar-active);
+  border-color: rgba(98, 225, 255, 0.18);
+  background: rgba(44, 173, 238, 0.17);
+  box-shadow: inset 3px 0 currentColor;
+}
+
+.erp-nav__icon {
+  width: 21px;
+  flex: 0 0 21px;
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   04. 按鈕
+   用途：每顆按鈕都先套 erp-btn，再選擇一個 --款式。
+
+   範例：<button class="erp-btn erp-btn--primary">新增供應商</button>
+   -------------------------------------------------------------------------- */
+.erp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 9px 15px;
+  border: 1px solid transparent;
+  border-radius: var(--erp-radius-md);
+  font: 600 14px/1 var(--erp-font);
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.erp-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+}
+
+.erp-btn:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--erp-primary) 24%, transparent);
+  outline-offset: 2px;
+}
+
+.erp-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 主要操作：新增、儲存、確認。 */
+.erp-btn--primary {
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--erp-primary), #7749e9);
+  box-shadow: 0 8px 18px rgba(91, 69, 232, 0.24);
+}
+
+/* 商務藍：查詢、送出、前往詳細頁。 */
+.erp-btn--blue {
+  color: #ffffff;
+  background: linear-gradient(135deg, #2776ed, #1e55cc);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+}
+
+/* 科技青：適合深色背景上的主要操作。 */
+.erp-btn--cyan {
+  color: #eaffff;
+  border-color: #1b8ba2;
+  background: linear-gradient(135deg, #117991, #3154bd);
+  box-shadow: 0 0 20px rgba(22, 188, 211, 0.18);
+}
+
+/* 次要操作：取消、返回、重設。 */
+.erp-btn--soft {
+  color: #43516a;
+  border-color: var(--erp-line);
+  background: #ffffff;
+  box-shadow: var(--erp-shadow-sm);
+}
+
+/* 不搶眼的透明按鈕：更多、篩選、收合。 */
+.erp-btn--ghost {
+  color: var(--erp-muted);
+  border-color: var(--erp-line);
+  background: transparent;
+}
+
+/* 成功操作：核准、完成、啟用。 */
+.erp-btn--success {
+  color: #ffffff;
+  background: linear-gradient(135deg, #22b980, #158b60);
+}
+
+/* 危險操作：刪除、停用、取消訂單。 */
+.erp-btn--danger {
+  color: #d83f58;
+  border-color: #ffd3da;
+  background: #fff0f3;
+}
+
+/* 用途：只有圖示的小按鈕，例如關閉 ×、編輯筆、垃圾桶。 */
+.erp-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--erp-line);
+  border-radius: 11px;
+  color: #647091;
+  background: #f6f8fb;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.erp-icon-btn:hover {
+  color: var(--erp-primary);
+  background: #eef0ff;
+  transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
+   05. 卡片
+   用途：儀表板數字卡、一般內容卡、深色科技卡。
+   -------------------------------------------------------------------------- */
+.erp-card {
+  --erp-accent: var(--erp-primary);
+  position: relative;
+  padding: 20px;
+  border: 1px solid var(--erp-line);
+  border-radius: var(--erp-radius-lg);
+  color: var(--erp-text);
+  background: var(--erp-surface);
+  box-shadow: var(--erp-shadow-md);
+}
+
+/* 平面卡片：表格外框、設定區塊，不需要明顯陰影時使用。 */
+.erp-card--flat {
+  box-shadow: none;
+}
+
+/* 漸層卡片：重要公告、歡迎區塊。 */
+.erp-card--gradient {
+  color: #ffffff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--erp-accent), #283fb6);
+  box-shadow: 0 15px 34px color-mix(in srgb, var(--erp-accent) 24%, transparent);
+}
+
+/* 科技深色卡片：搭配 midnight/future 側邊欄或深色儀表板。 */
+.erp-card--tech {
+  --erp-text: #eaf8ff;
+  --erp-muted: #88a5b8;
+  color: var(--erp-text);
+  border-color: rgba(0, 218, 255, 0.27);
+  background: linear-gradient(180deg, rgba(7, 22, 35, 0.96), rgba(4, 15, 25, 0.98));
+  box-shadow: inset 0 0 18px rgba(0, 229, 255, 0.03), 0 0 22px rgba(0, 229, 255, 0.05);
+}
+
+/* 用途：卡片上方標題與右側操作按鈕。 */
+.erp-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.erp-card__title {
+  margin: 0;
+  color: inherit;
+  font-size: 17px;
+}
+
+.erp-card__subtitle {
+  margin: 5px 0 0;
+  color: var(--erp-muted);
+  font-size: 12px;
+}
+
+/* 用途：KPI 數字卡，例如本月營收、待處理訂單。 */
+.erp-stat-card {
+  --erp-accent: var(--erp-primary);
+  position: relative;
+  min-height: 145px;
+  padding: 20px;
+  overflow: hidden;
+  border: 1px solid var(--erp-line);
+  border-radius: var(--erp-radius-lg);
+  background: #ffffff;
+  box-shadow: var(--erp-shadow-sm);
+}
+
+.erp-stat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--erp-accent), transparent);
+}
+
+.erp-stat-card__label {
+  color: var(--erp-muted);
+  font-size: 13px;
+}
+
+.erp-stat-card__value {
+  display: block;
+  margin: 10px 0 6px;
+  color: var(--erp-text);
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.erp-stat-card__change {
+  color: var(--erp-success);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 可直接改色：style="--erp-accent: #ff9f43"。 */
+.erp-stat-card--tech {
+  --erp-text: #eaf8ff;
+  --erp-muted: #88a5b8;
+  border-color: color-mix(in srgb, var(--erp-accent) 34%, #163044);
+  background: linear-gradient(145deg, #0c1827, #050c16);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.32);
+}
+
+/* --------------------------------------------------------------------------
+   06. 網格排版
+   用途：快速排列卡片；畫面縮小時會自動換行。
+   -------------------------------------------------------------------------- */
+.erp-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.erp-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.erp-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.erp-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.erp-grid--auto { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+
+/* --------------------------------------------------------------------------
+   07. 表單
+   用途：新增/修改供應商、商品、採購單的輸入欄位。
+
+   範例：
+   <div class="erp-field">
+     <label class="erp-field__label">供應商名稱</label>
+     <input class="erp-input" />
+   </div>
+   -------------------------------------------------------------------------- */
+.erp-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.erp-field {
+  display: grid;
+  gap: 7px;
+}
+
+.erp-field--full {
+  grid-column: 1 / -1;
+}
+
+.erp-field__label {
+  color: #66708d;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.erp-input,
+.erp-select,
+.erp-textarea {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--erp-line);
+  border-radius: 11px;
+  outline: none;
+  color: var(--erp-text);
+  background: #ffffff;
+  font: inherit;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.erp-textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.erp-input:focus,
+.erp-select:focus,
+.erp-textarea:focus {
+  border-color: color-mix(in srgb, var(--erp-primary) 70%, white);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--erp-primary) 11%, transparent);
+}
+
+.erp-input::placeholder,
+.erp-textarea::placeholder {
+  color: #a1a9bb;
+}
+
+/* 用途：驗證錯誤的輸入框。 */
+.erp-input.is-error,
+.erp-select.is-error,
+.erp-textarea.is-error {
+  border-color: var(--erp-danger);
+  box-shadow: 0 0 0 3px rgba(233, 80, 104, 0.1);
+}
+
+.erp-field__error {
+  color: var(--erp-danger);
+  font-size: 12px;
+}
+
+/* --------------------------------------------------------------------------
+   08. 搜尋與篩選工具列
+   用途：列表上方的關鍵字搜尋、狀態選擇、新增按鈕。
+   -------------------------------------------------------------------------- */
+.erp-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.erp-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: min(360px, 100%);
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--erp-line);
+  border-radius: 11px;
+  color: var(--erp-muted);
+  background: #ffffff;
+}
+
+.erp-search__input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  color: var(--erp-text);
+  background: transparent;
+  font: inherit;
+}
+
+.erp-toolbar__actions {
+  display: flex;
+  gap: 9px;
+  margin-left: auto;
+}
+
+/* --------------------------------------------------------------------------
+   09. 表格
+   用途：供應商、庫存、商品、採購單列表。
+
+   範例：<div class="erp-table-wrap"><table class="erp-table">...</table></div>
+   -------------------------------------------------------------------------- */
+.erp-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--erp-line);
+  border-radius: var(--erp-radius-md);
+  background: #ffffff;
+}
+
+.erp-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+}
+
+.erp-table th,
+.erp-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--erp-line);
+  text-align: left;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.erp-table th {
+  color: var(--erp-muted);
+  background: #f7f9fc;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.erp-table tbody tr:hover td {
+  background: #fafbff;
+}
+
+.erp-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* 深色科技表格：在外層同時套 erp-table-wrap--tech。 */
+.erp-table-wrap--tech {
+  --erp-line: #162c40;
+  --erp-text: #a9bdcd;
+  --erp-muted: #6f899d;
+  border-color: var(--erp-line);
+  background: #08111d;
+}
+
+.erp-table-wrap--tech .erp-table {
+  color: var(--erp-text);
+}
+
+.erp-table-wrap--tech .erp-table th {
+  background: #0a1724;
+}
+
+.erp-table-wrap--tech .erp-table tbody tr:hover td {
+  background: #0b1825;
+}
+
+/* --------------------------------------------------------------------------
+   10. 狀態標籤 Badge
+   用途：顯示啟用、待處理、停用、已取消等狀態。
+   -------------------------------------------------------------------------- */
+.erp-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.erp-status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.erp-status--success { color: #168b5a; background: #e7f8f0; }
+.erp-status--warning { color: #b8700a; background: #fff5df; }
+.erp-status--danger { color: #d7465d; background: #fff0f3; }
+.erp-status--info { color: #2164bf; background: #eaf2ff; }
+.erp-status--neutral { color: #68758d; background: #eef1f5; }
+
+/* --------------------------------------------------------------------------
+   11. Modal 彈出視窗
+   用途：新增、編輯、確認刪除等彈窗。
+   -------------------------------------------------------------------------- */
+.erp-modal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(19, 27, 74, 0.48);
+  backdrop-filter: blur(5px);
+}
+
+.erp-modal {
+  width: min(620px, 100%);
+  max-height: 90vh;
+  padding: 22px;
+  overflow-y: auto;
+  border: 1px solid var(--erp-line);
+  border-radius: var(--erp-radius-lg);
+  color: var(--erp-text);
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(22, 31, 75, 0.22);
+}
+
+.erp-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.erp-modal__title {
+  margin: 0;
+  font-size: 19px;
+}
+
+.erp-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 22px;
+}
+
+/* --------------------------------------------------------------------------
+   12. 提示訊息
+   用途：API 成功、錯誤、警告、一般資訊。
+   -------------------------------------------------------------------------- */
+.erp-alert {
+  padding: 12px 14px;
+  border: 1px solid;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.erp-alert--success { color: #167451; border-color: #a9e1ca; background: #ecfaf4; }
+.erp-alert--warning { color: #9b610d; border-color: #f3d394; background: #fff8e8; }
+.erp-alert--danger { color: #bc3d53; border-color: #f3bdc6; background: #fff1f4; }
+.erp-alert--info { color: #245da9; border-color: #bcd4f7; background: #eef5ff; }
+
+/* --------------------------------------------------------------------------
+   13. 快速操作方塊
+   用途：儀表板的新增採購單、供應商管理、庫存盤點等快捷入口。
+   -------------------------------------------------------------------------- */
+.erp-quick-action {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-height: 92px;
+  padding: 14px;
+  border: 1px solid var(--erp-line);
+  border-radius: var(--erp-radius-md);
+  color: #516078;
+  background: #ffffff;
+  text-align: center;
+  text-decoration: none;
+  font: 600 13px/1.4 var(--erp-font);
+  transition: 0.18s ease;
+}
+
+.erp-quick-action:hover {
+  color: var(--erp-primary);
+  border-color: color-mix(in srgb, var(--erp-primary) 45%, white);
+  box-shadow: var(--erp-shadow-sm);
+  transform: translateY(-2px);
+}
+
+.erp-quick-action--tech {
+  color: #c8e4f2;
+  border-color: rgba(0, 218, 255, 0.2);
+  background: linear-gradient(180deg, #081d2d, #04121d);
+}
+
+.erp-quick-action--tech:hover {
+  color: #58f0ff;
+  border-color: rgba(0, 229, 255, 0.5);
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.09);
+}
+
+/* --------------------------------------------------------------------------
+   14. 植物暖白 Botanical 主題
+   用途：套用參考圖的柔和植物系 ERP 外觀。
+
+   建議在最外層使用：
+   <div class="erp-shell erp-theme--botanical">...</div>
+
+   此主題只會改變容器內的 CSS 變數，不會影響其他頁面。
+   -------------------------------------------------------------------------- */
+.erp-theme--botanical {
+  --erp-primary: #71864b;
+  --erp-primary-hover: #5e713c;
+  --erp-secondary: #a4b28a;
+  --erp-success: #71864b;
+  --erp-warning: #dda842;
+  --erp-danger: #bf6659;
+  --erp-info: #6893a0;
+  --erp-text: #31342e;
+  --erp-muted: #77796f;
+  --erp-line: #e8e5db;
+  --erp-surface: rgba(255, 255, 252, 0.9);
+  --erp-canvas: #fbfaf5;
+  --erp-radius-sm: 9px;
+  --erp-radius-md: 13px;
+  --erp-radius-lg: 16px;
+  --erp-shadow-sm: 0 4px 16px rgba(77, 81, 58, 0.035);
+  --erp-shadow-md: 0 8px 26px rgba(77, 81, 58, 0.045);
+  color: var(--erp-text);
+  background:
+    radial-gradient(circle at 88% 5%, rgba(200, 209, 176, 0.19), transparent 22%),
+    linear-gradient(135deg, #fffef9, #faf8f1);
+}
+
+/* 用途：參考圖上方的歡迎文字區。 */
+.erp-welcome--botanical .erp-page-head__title {
+  font-family: Georgia, "Noto Serif TC", serif;
+  font-size: clamp(25px, 2.6vw, 34px);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.erp-welcome--botanical .erp-page-head__description { color: #8b897e; }
+
+/* 用途：頁面頂端中央的膠囊搜尋框。 */
+.erp-search--botanical {
+  width: min(420px, 100%);
+  min-height: 44px;
+  padding-inline: 16px;
+  border-color: #e5e2d8;
+  border-radius: 999px;
+  background: rgba(255, 255, 252, 0.82);
+  box-shadow: 0 5px 18px rgba(86, 91, 68, 0.025);
+}
+
+/* 用途：參考圖的輕量白色內容卡。 */
+.erp-card--botanical {
+  border-color: #e8e5dc;
+  background: rgba(255, 255, 252, 0.86);
+  box-shadow: 0 7px 23px rgba(74, 78, 55, 0.035);
+  backdrop-filter: blur(8px);
+}
+
+/* 用途：四張 KPI 卡；圖示、文字、數值、迷你趨勢線可分開排版。 */
+.erp-stat-card--botanical {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 10px 14px;
+  min-height: 175px;
+  border-color: #e7e4da;
+  background: rgba(255, 255, 252, 0.88);
+  box-shadow: 0 6px 20px rgba(76, 82, 55, 0.035);
+}
+
+.erp-stat-card--botanical::before { display: none; }
+
+.erp-stat-card__icon--botanical {
+  display: grid;
+  grid-row: span 2;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  color: var(--erp-accent, #71864b);
+  background: color-mix(in srgb, var(--erp-accent, #71864b) 13%, #fffef9);
+  font-size: 25px;
+}
+
+.erp-stat-card--botanical .erp-stat-card__value {
+  margin: 3px 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  font-weight: 500;
+}
+
+.erp-mini-trend {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 38px;
+  color: var(--erp-accent, #71864b);
+}
+
+.erp-mini-trend svg { width: 100%; height: 100%; }
+.erp-mini-trend polyline { fill: none; stroke: currentColor; stroke-width: 2; }
+
+/* 用途：參考圖近期採購申請的淡米色表頭。 */
+.erp-table-wrap--botanical {
+  border: 0;
+  background: transparent;
+}
+
+.erp-table-wrap--botanical .erp-table th {
+  color: #65665d;
+  border: 0;
+  background: #f4f1e7;
+  font-weight: 600;
+}
+
+.erp-table-wrap--botanical .erp-table th:first-child { border-radius: 10px 0 0 10px; }
+.erp-table-wrap--botanical .erp-table th:last-child { border-radius: 0 10px 10px 0; }
+.erp-table-wrap--botanical .erp-table td { border-color: #f0eee7; }
+.erp-table-wrap--botanical .erp-table tbody tr:hover td { background: #fbfaf3; }
+
+/* 植物主題狀態標籤：無圓點，接近參考圖的柔和色塊。 */
+.erp-status--botanical::before { display: none; }
+.erp-status--botanical { min-width: 68px; justify-content: center; border-radius: 8px; font-weight: 600; }
+
+/* 用途：常用功能的圓形圖示按鈕。 */
+.erp-quick-action--botanical {
+  min-height: 112px;
+  border: 0;
+  color: #4d5146;
+  background: transparent;
+  box-shadow: none;
+}
+
+.erp-quick-action--botanical:hover {
+  color: #60763d;
+  border-color: transparent;
+  background: #faf8ef;
+  box-shadow: none;
+}
+
+.erp-quick-action__icon--botanical {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  color: var(--erp-accent, #71864b);
+  background: color-mix(in srgb, var(--erp-accent, #71864b) 11%, #fffef9);
+  font-size: 24px;
+}
+
+/* 用途：圖片右下角「目標達成率」進度條。 */
+.erp-progress--botanical {
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8eadc;
+}
+
+.erp-progress--botanical > span {
+  display: block;
+  width: var(--erp-progress, 0%);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #a7b68c, #71864b);
+}
+
+/* 用途：參考圖的個人資料小卡與最新消息區塊。 */
+.erp-profile-card--botanical {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 14px;
+  border: 1px solid #e6e3d9;
+  border-radius: 14px;
+  background: rgba(255, 255, 252, 0.84);
+}
+
+.erp-news-list--botanical { display: grid; gap: 11px; margin: 0; padding: 0; list-style: none; }
+.erp-news-list--botanical li { display: flex; gap: 8px; color: #686b61; font-size: 12px; }
+.erp-news-list--botanical li::before { content: ""; width: 6px; height: 6px; margin-top: 5px; border-radius: 50%; background: #80955c; }
+
+/* 用途：簡易月曆網格。當日加上 is-today。 */
+.erp-calendar--botanical { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
+.erp-calendar--botanical > * { display: grid; place-items: center; min-height: 31px; border-radius: 50%; font-size: 12px; }
+.erp-calendar--botanical .is-muted { color: #bbbcb5; }
+.erp-calendar--botanical .is-today { width: 31px; justify-self: center; color: white; background: #74884f; }
+
+/* --------------------------------------------------------------------------
+   15. 主內容分類導覽列
+   用途：放在右側 erp-main 內，用來篩選商品卡、原物料卡或供應商卡。
+   注意：這不是左側主選單，不要套用 erp-sidebar 或 erp-nav。
+
+   共用結構：
+   <nav class="erp-category-nav erp-category-nav--underline" aria-label="商品分類">
+     <button class="erp-category-nav__item active">
+       全部商品 <span class="erp-category-nav__count">36</span>
+     </button>
+     <button class="erp-category-nav__item">飲品</button>
+   </nav>
+
+   Vue 可使用：:class="{ active: activeCategory === category.id }"
+   -------------------------------------------------------------------------- */
+.erp-category-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  overscroll-behavior-inline: contain;
+}
+
+.erp-category-nav__item {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 9px 14px;
+  border: 0;
+  color: var(--erp-muted);
+  background: transparent;
+  font: 600 14px/1.2 var(--erp-font);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease,
+    border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.erp-category-nav__item:hover { color: var(--erp-primary); }
+
+.erp-category-nav__item:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--erp-primary) 20%, transparent);
+  outline-offset: 2px;
+}
+
+.erp-category-nav__item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* 用途：分類名稱旁顯示商品數量。 */
+.erp-category-nav__count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 23px;
+  height: 23px;
+  padding-inline: 6px;
+  border-radius: 999px;
+  color: inherit;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* 款式 A：底線分頁型
+   適合分類較多、希望畫面簡潔的商品總覽。 */
+.erp-category-nav--underline {
+  gap: 20px;
+  border-bottom: 1px solid var(--erp-line);
+}
+
+.erp-category-nav--underline .erp-category-nav__item {
+  position: relative;
+  padding: 10px 2px 13px;
+}
+
+.erp-category-nav--underline .erp-category-nav__item::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 3px;
+  border-radius: 999px 999px 0 0;
+  background: var(--erp-primary);
+  transform: scaleX(0);
+  transition: transform 0.18s ease;
+}
+
+.erp-category-nav--underline .erp-category-nav__item:hover::after {
+  transform: scaleX(0.35);
+}
+
+.erp-category-nav--underline .erp-category-nav__item.active {
+  color: var(--erp-primary);
+}
+
+.erp-category-nav--underline .erp-category-nav__item.active::after {
+  transform: scaleX(1);
+}
+
+/* 款式 B：膠囊按鈕型
+   適合常切換的商品類別，也很適合植物暖白主題。 */
+.erp-category-nav--pills {
+  padding: 7px;
+  border: 1px solid var(--erp-line);
+  border-radius: 15px;
+  background: var(--erp-surface);
+  box-shadow: var(--erp-shadow-sm);
+}
+
+.erp-category-nav--pills .erp-category-nav__item {
+  min-height: 38px;
+  border-radius: 10px;
+}
+
+.erp-category-nav--pills .erp-category-nav__item:hover {
+  background: color-mix(in srgb, var(--erp-primary) 7%, transparent);
+}
+
+.erp-category-nav--pills .erp-category-nav__item.active {
+  color: #ffffff;
+  background: var(--erp-primary);
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--erp-primary) 22%, transparent);
+}
+
+.erp-category-nav--pills .erp-category-nav__item.active .erp-category-nav__count {
+  background: rgba(255, 255, 255, 0.19);
+}
+
+/* 款式 C：分類卡片型
+   適合類別較少，想同時顯示圖示、名稱與商品數量的總覽頁。 */
+.erp-category-nav--cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  align-items: stretch;
+  gap: 12px;
+  overflow: visible;
+}
+
+.erp-category-nav--cards .erp-category-nav__item {
+  justify-content: flex-start;
+  min-height: 70px;
+  padding: 13px 15px;
+  border: 1px solid var(--erp-line);
+  border-radius: var(--erp-radius-md);
+  color: var(--erp-text);
+  background: var(--erp-surface);
+  box-shadow: var(--erp-shadow-sm);
+  text-align: left;
+}
+
+.erp-category-nav--cards .erp-category-nav__item:hover {
+  color: var(--erp-primary);
+  border-color: color-mix(in srgb, var(--erp-primary) 38%, var(--erp-line));
+  transform: translateY(-2px);
+}
+
+.erp-category-nav--cards .erp-category-nav__item.active {
+  color: var(--erp-primary);
+  border-color: color-mix(in srgb, var(--erp-primary) 58%, var(--erp-line));
+  background: color-mix(in srgb, var(--erp-primary) 7%, var(--erp-surface));
+  box-shadow: inset 4px 0 var(--erp-primary), var(--erp-shadow-sm);
+}
+
+/* 分類卡片內的圓形圖示。 */
+.erp-category-nav__icon {
+  display: grid;
+  flex: 0 0 38px;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: var(--erp-primary);
+  background: color-mix(in srgb, var(--erp-primary) 11%, var(--erp-surface));
+  font-size: 18px;
+}
+
+.erp-category-nav__text {
+  display: grid;
+  gap: 4px;
+}
+
+.erp-category-nav__label { font-weight: 700; }
+.erp-category-nav__description { color: var(--erp-muted); font-size: 11px; font-weight: 500; }
+
+/* --------------------------------------------------------------------------
+   16. 商品總覽與右側明細版面
+   用途：放在 erp-main 裡，建立「分類導覽列、商品卡區、右側明細區」。
+
+   三個固定區塊名稱：
+   .erp-catalog-layout__nav       分類導覽列區
+   .erp-catalog-layout__products  商品卡片區
+   .erp-catalog-layout__detail    新增商品、購物明細或其他資訊區
+
+   可透過 style="--erp-detail-width: 360px" 修改右側寬度。
+   -------------------------------------------------------------------------- */
+.erp-catalog-layout {
+  --erp-detail-width: 340px;
+  display: grid;
+  width: 100%;
+  min-height: 620px;
+  border: 1px solid var(--erp-line);
+  border-radius: var(--erp-radius-lg);
+  overflow: hidden;
+  background: var(--erp-surface);
+  box-shadow: var(--erp-shadow-sm);
+}
+
+.erp-catalog-layout__nav {
+  min-width: 0;
+  padding: 18px 20px 0;
+}
+
+/* 分類列在 layout 裡時，由 layout 控制下方間距。 */
+.erp-catalog-layout__nav .erp-category-nav {
+  margin-bottom: 0;
+}
+
+.erp-catalog-layout__products {
+  min-width: 0;
+  padding: 20px;
+ 
+}
+
+.erp-catalog-layout__detail {
+  position: relative;
+  min-width: 0;
+  padding: 22px;
+  border-left: 1px solid var(--erp-line);
+  background: color-mix(in srgb, var(--erp-surface) 84%, var(--erp-canvas));
+  overflow-y: auto;
+}
+
+.erp-catalog-layout__detail-title {
+  margin: 0 0 18px;
+  color: var(--erp-text);
+  font-size: 18px;
+}
+
+/* 第一種：導覽列橫跨整個上方。
+
+   ┌──────────── 導覽列 ────────────┐
+   │        商品卡       │   明細區   │
+   └─────────────────────────────────┘
+
+   使用：class="erp-catalog-layout erp-catalog-layout--nav-top"
+   -------------------------------------------------------------------------- */
+.erp-catalog-layout--nav-top {
+  grid-template-columns: minmax(0, 1fr) var(--erp-detail-width);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "nav nav"
+    "products detail";
+}
+
+.erp-catalog-layout--nav-top .erp-catalog-layout__nav {
+  grid-area: nav;
+  padding-bottom: 0;
+  border-bottom: 1px solid var(--erp-line);
+}
+
+.erp-catalog-layout--nav-top .erp-catalog-layout__products {
+  grid-area: products;
+}
+
+.erp-catalog-layout--nav-top .erp-catalog-layout__detail {
+  grid-area: detail;
+}
+
+/* 第二種：導覽列只在左上方，右側明細從頂部延伸到底部。
+
+   ┌────── 導覽列 ──────┬──────────┐
+   │                     │          │
+   │       商品卡        │  明細區  │
+   │                     │          │
+   └─────────────────────┴──────────┘
+
+   使用：class="erp-catalog-layout erp-catalog-layout--detail-full"
+   -------------------------------------------------------------------------- */
+.erp-catalog-layout--detail-full {
+  grid-template-columns: minmax(0, 1fr) var(--erp-detail-width);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "nav detail"
+    "products detail";
+}
+
+.erp-catalog-layout--detail-full .erp-catalog-layout__nav {
+  grid-area: nav;
+  border-bottom: 1px solid var(--erp-line);
+}
+
+.erp-catalog-layout--detail-full .erp-catalog-layout__products {
+  grid-area: products;
+}
+
+.erp-catalog-layout--detail-full .erp-catalog-layout__detail {
+  grid-area: detail;
+}
+
+/* 明細區需要固定在畫面內時，再加上 erp-catalog-layout__detail--sticky。
+   注意：外層若有 overflow: hidden，sticky 會以外層版面為範圍。 */
+.erp-catalog-layout__detail--sticky {
+  position: sticky;
+  top: 20px;
+  align-self: start;
+  max-height: calc(100vh - 40px);
+}
+
+/* --------------------------------------------------------------------------
+   17. 小工具 class
+   用途：處理常見的排列與間距，不必為每個元件重寫 CSS。
+   -------------------------------------------------------------------------- */
+.erp-u-flex { display: flex; }
+.erp-u-center { display: flex; align-items: center; justify-content: center; }
+.erp-u-between { display: flex; align-items: center; justify-content: space-between; }
+.erp-u-wrap { flex-wrap: wrap; }
+.erp-u-gap-8 { gap: 8px; }
+.erp-u-gap-12 { gap: 12px; }
+.erp-u-gap-16 { gap: 16px; }
+.erp-u-mt-16 { margin-top: 16px; }
+.erp-u-mb-16 { margin-bottom: 16px; }
+.erp-u-muted { color: var(--erp-muted); }
+.erp-u-text-right { text-align: right; }
+.erp-u-full { width: 100%; }
+
+/* --------------------------------------------------------------------------
+   18. 響應式畫面
+   用途：平板與手機自動改為較少欄位；側邊欄可搭配 Vue 控制顯示。
+   -------------------------------------------------------------------------- */
+@media (max-width: 1050px) {
+  .erp-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .erp-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .erp-catalog-layout {
+    --erp-detail-width: 300px;
+  }
+}
+
+@media (max-width: 760px) {
+  .erp-main { padding: 18px 15px; }
+
+  .erp-page-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .erp-sidebar {
+    position: fixed;
+    left: 0;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+
+  /* Vue 中選單開啟時加上 is-open：class="erp-sidebar is-open"。 */
+  .erp-sidebar.is-open { transform: translateX(0); }
+
+  .erp-grid--2,
+  .erp-grid--3,
+  .erp-grid--4 { grid-template-columns: 1fr; }
+
+  .erp-form-grid { grid-template-columns: 1fr; }
+  .erp-field--full { grid-column: auto; }
+
+  .erp-toolbar__actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .erp-category-nav--cards {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .erp-category-nav--cards .erp-category-nav__item {
+    flex: 0 0 155px;
+  }
+
+  /* 手機版兩種結構都改為：導覽列 → 商品卡 → 明細區。 */
+  .erp-catalog-layout--nav-top,
+  .erp-catalog-layout--detail-full {
+    min-height: auto;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      "nav"
+      "products"
+      "detail";
+  }
+
+  .erp-catalog-layout__nav,
+  .erp-catalog-layout__products,
+  .erp-catalog-layout__detail {
+    padding: 15px;
+  }
+
+  .erp-catalog-layout__detail {
+    border-top: 1px solid var(--erp-line);
+    border-left: 0;
+  }
+
+  .erp-catalog-layout__detail--sticky {
+    position: static;
+    max-height: none;
+  }
+}
+
+/* 尊重使用者作業系統的「減少動畫」設定。 */
+@media (prefers-reduced-motion: reduce) {
+  .erp-btn,
+  .erp-icon-btn,
+  .erp-nav__item,
+  .erp-quick-action,
+  .erp-category-nav__item,
+  .erp-sidebar {
+    transition: none;
+  }
+}

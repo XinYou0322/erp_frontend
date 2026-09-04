@@ -1,29 +1,27 @@
-
+<script setup>
+import Navbar from '@/components/NavBar.vue';
+import testbar from '@/components/testbar.vue';
+</script>
 
 <template>
-  <h1>You did it!</h1>
-  <NavBar />
+  <!-- <Navbar></Navbar> -->
+   <!-- <testbar></testbar>
+  <div class="container">
+    <router-view></router-view>
+  </div> -->
+   <div  class="erp-shell">
 
-  <RouterView />
-  <p>
-    Visit
-    <a
-      href="https://vuejs.org/"
-      target="_blank"
-      rel="noopener"
-    >
-      vuejs.org
-    </a>
-  </p>
+    <testbar />
 
-  <MaterialTest />
+    <main class="erp-main">
+      <router-view />
+    </main>
+
+  </div>
+
 </template>
 
+<style scoped>
 
-<script setup>
 
-import { RouterView } from 'vue-router'
-
-import NavBar from '@/component/NavBar.vue'
-
-</script>
+</style>
