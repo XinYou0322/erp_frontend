@@ -1,24 +1,37 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import materail from '@/views/materialview/Material.vue'
-import product from '@/views/productview/Product.vue'
-import bom from '@/views/bomview/bom.vue'
-const routes = [
+import Home from '@/views/Home.vue'
+
+ const routes = [
   {
-    path: '/material',
-    name: 'material',
-    component: materail
+    path: '/home',
+    name: 'home',
+    component: Home
+  },
+    {
+    path: '/addsupplier',
+    name: 'addsupplier',
+    component: () => import("@/views/supplierview/addsuppliers.vue")
+  },
+    {
+    path: '/supplier',
+    name: 'supplier',
+    component: () => import("@/views/supplierview/suppliers.vue")
   },
   {
-    path: '/product',
-    name: 'product',
-    component: product
+    path: '/pos',
+    name: 'pos',
+    component: () => import("@/views/pos/pos.vue")
   },
-  {
-    path: '/bom',
-    name: 'bom',
-    component: bom
-  }
-]
+
+//     name: 'product',
+//     component: product
+//   },
+//   {
+//     path: '/bom',
+//     name: 'bom',
+//     component: bom
+//   }
+ ]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
