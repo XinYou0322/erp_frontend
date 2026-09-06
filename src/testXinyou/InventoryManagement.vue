@@ -134,7 +134,11 @@
               </th>
 
               <th class="py-3 px-4">
-                現有總存量
+                現有總存量 / 安全庫存
+              </th>
+
+              <th class="py-3 px-4">
+                庫存狀態
               </th>
 
               <th class="py-3 px-4">
@@ -182,16 +186,44 @@
                 </td>
 
 
-                <!-- 總庫存 -->
+                <!-- 總庫存 / 安全庫存 -->
                 <td class="py-3.5 px-4">
 
-                  <span class="font-mono font-bold text-gray-800">
+                  <div class="font-mono font-bold text-gray-800">
                     {{ item.totalQuantity }}
                     {{ item.unit }}
-                  </span>
+                  </div>
+
+                  <div class="text-[10px] text-gray-400 mt-1">
+                    安全庫存：{{ item.safetyStock ?? 0 }} {{ item.unit }}
+                  </div>
 
                 </td>
+<!-- 庫存狀態 -->
+<td class="py-3.5 px-4">
 
+  <span
+    v-if="item.status === 'NORMAL'"
+    class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold"
+  >
+    存量充足
+  </span>
+
+  <span
+    v-else-if="item.status === 'LOW'"
+    class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 font-bold"
+  >
+    偏低需補
+  </span>
+
+  <span
+    v-else-if="item.status === 'URGENT'"
+    class="px-2.5 py-1 rounded-full bg-red-50 text-red-700 font-bold"
+  >
+    緊急缺料
+  </span>
+
+</td>
 
                 <!-- 最近有效日期 -->
                 <td class="py-3.5 px-4">
@@ -262,7 +294,7 @@
                 v-if="expandedMaterialId === item.materialId"
               >
                 <td
-                  colspan="6"
+                  colspan="7"
                   class="px-6 py-4 bg-blue-50/30"
                 >
 
@@ -399,7 +431,7 @@
             <tr v-if="inventory.length === 0">
 
               <td
-                colspan="6"
+                colspan="7"
                 class="py-12 text-center text-sm text-gray-400"
               >
                 目前沒有庫存資料

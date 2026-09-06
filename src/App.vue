@@ -53,6 +53,12 @@
       @navigate-to-inventory="currentTab = 'inventory'"
     />
 
+
+  <MaterialManagement
+    v-else-if="currentTab === 'materials'"
+  />
+
+
   <InventoryManagement
   v-else-if="currentTab === 'inventory'"
   @open-report="reportModalOpen = true"
@@ -75,8 +81,7 @@ import Header from './testXinyou/Header.vue'
 import WaveBackground from './testXinyou/WaveBackground.vue'
 import Dashboard from './testXinyou/Dashboard.vue'
 import InventoryManagement from './testXinyou/InventoryManagement.vue'
-import InventoryIntakeModal from './testXinyou/styles/components/modals/InventoryIntakeModal.vue';
-
+import MaterialManagement from './testXinyou/MaterialManagement.vue'
 
 // AI 假資料
 import {

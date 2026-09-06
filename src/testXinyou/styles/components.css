@@ -1,81 +1,280 @@
-/* Reusable component styles for buttons, inputs, and form controls */
+/* =========================================================
+   ERP Global Theme Variables
+   全域主題顏色
+   ---------------------------------------------------------
+   之後如果想更換整套 ERP 的配色，
+   優先修改這裡即可。
+   ========================================================= */
+
+:root {
+
+  /* =========================
+     Primary / 品牌主色
+     ========================= */
+
+  /* 主要藍色 */
+  --color-primary: #007BFF;
+
+  /* 深藍：Hover、文字強調 */
+  --color-primary-dark: #0059bb;
+
+  /* 淺藍：漸層使用 */
+  --color-primary-light: #00D2FF;
+
+
+  /* =========================
+     Text / 文字顏色
+     ========================= */
+
+  /* 主要文字 */
+  --color-text-primary: #181c23;
+
+  /* 白色文字 */
+  --color-text-white: #ffffff;
+
+
+  /* =========================
+     Background / 背景
+     ========================= */
+
+  /* 純白背景 */
+  --color-bg-white: #ffffff;
+
+  /* Secondary Button 半透明白 */
+  --color-bg-secondary: rgba(255, 255, 255, 0.85);
+
+  /* Input 預設背景 */
+  --color-bg-input: rgba(241, 243, 254, 0.75);
+
+
+  /* =========================
+     Border / 邊框
+     ========================= */
+
+  /* 一般邊框 */
+  --color-border: rgba(229, 231, 235, 0.9);
+
+  /* Input 邊框 */
+  --color-border-input: rgba(229, 231, 235, 0.8);
+
+  /* Hover 邊框 */
+  --color-border-hover: #cbd5e1;
+
+
+  /* =========================
+     Danger / 危險、刪除
+     ========================= */
+
+  /* Danger 背景 */
+  --color-danger-bg: #fee2e2;
+
+  /* Danger Hover */
+  --color-danger-bg-hover: #fecaca;
+
+  /* Danger 邊框 */
+  --color-danger-border: #fecaca;
+
+  /* Danger 文字 */
+  --color-danger-text: #991b1b;
+
+  /* Danger Hover 文字 */
+  --color-danger-text-hover: #7f1d1d;
+
+
+  /* =========================
+     Shadow / 陰影
+     ========================= */
+
+  /* Primary Button 陰影 */
+  --color-primary-shadow: rgba(0, 123, 255, 0.28);
+
+  /* Primary Button Hover 陰影 */
+  --color-primary-shadow-hover: rgba(0, 123, 255, 0.42);
+
+  /* Input Focus 外框 */
+  --color-primary-focus: rgba(0, 112, 234, 0.15);
+}
+
+
+/* =========================================================
+   Primary Button
+   主要按鈕
+   ========================================================= */
+
 .btn-primary {
-  background: linear-gradient(135deg, #007BFF 0%, #00D2FF 100%);
-  color: #ffffff;
+
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-primary-light) 100%
+  );
+
+  color: var(--color-text-white);
+
   font-weight: 700;
+
   border-radius: 0.75rem;
+
   padding: 0.5rem 1rem;
-  box-shadow: 0 4px 14px rgba(0, 123, 255, 0.28);
+
+  box-shadow:
+    0 4px 14px var(--color-primary-shadow);
+
   transition: all 0.2s ease;
+
   display: inline-flex;
+
   align-items: center;
+
   justify-content: center;
+
   cursor: pointer;
+
   border: none;
 }
 
+
+/* Primary Hover */
+
 .btn-primary:hover {
-  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.42);
+
+  box-shadow:
+    0 6px 20px var(--color-primary-shadow-hover);
+
   transform: translateY(-1px);
 }
 
+
+/* Primary Click */
+
 .btn-primary:active {
+
   transform: translateY(0);
 }
 
+
+/* =========================================================
+   Secondary Button
+   次要按鈕
+   ========================================================= */
+
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.85);
-  color: #181c23;
+
+  background: var(--color-bg-secondary);
+
+  color: var(--color-text-primary);
+
   font-weight: 600;
+
   border-radius: 0.75rem;
+
   padding: 0.5rem 1rem;
-  border: 1px solid rgba(229, 231, 235, 0.9);
+
+  border:
+    1px solid var(--color-border);
+
   transition: all 0.2s ease;
+
   display: inline-flex;
+
   align-items: center;
+
   justify-content: center;
+
   cursor: pointer;
 }
+
+
+/* Secondary Hover */
 
 .btn-secondary:hover {
-  background: #ffffff;
-  border-color: #cbd5e1;
-  color: #0059bb;
+
+  background: var(--color-bg-white);
+
+  border-color: var(--color-border-hover);
+
+  color: var(--color-primary-dark);
 }
 
+
+/* =========================================================
+   Danger Button
+   危險 / 刪除按鈕
+   ========================================================= */
+
 .btn-danger {
-  background: #fee2e2;
-  color: #991b1b;
+
+  background: var(--color-danger-bg);
+
+  color: var(--color-danger-text);
+
   font-weight: 600;
+
   border-radius: 0.75rem;
+
   padding: 0.5rem 1rem;
-  border: 1px solid #fecaca;
+
+  border:
+    1px solid var(--color-danger-border);
+
   transition: all 0.2s ease;
+
   display: inline-flex;
+
   align-items: center;
+
   justify-content: center;
+
   cursor: pointer;
 }
 
+
+/* Danger Hover */
+
 .btn-danger:hover {
-  background: #fecaca;
-  color: #7f1d1d;
+
+  background: var(--color-danger-bg-hover);
+
+  color: var(--color-danger-text-hover);
 }
 
+
+/* =========================================================
+   Input Field
+   表單輸入框
+   ========================================================= */
+
 .input-field {
+
   width: 100%;
+
   padding: 0.5rem 0.875rem;
+
   border-radius: 0.75rem;
-  background-color: rgba(241, 243, 254, 0.75);
-  border: 1px solid rgba(229, 231, 235, 0.8);
+
+  background-color: var(--color-bg-input);
+
+  border:
+    1px solid var(--color-border-input);
+
   font-size: 0.8125rem;
-  color: #181c23;
+
+  color: var(--color-text-primary);
+
   transition: all 0.2s ease;
+
   outline: none;
 }
 
+
+/* Input Focus */
+
 .input-field:focus {
-  background-color: #ffffff;
-  border-color: #0070ea;
-  box-shadow: 0 0 0 3px rgba(0, 112, 234, 0.15);
+
+  background-color: var(--color-bg-white);
+
+  border-color: var(--color-primary);
+
+  box-shadow:
+    0 0 0 3px var(--color-primary-focus);
 }
