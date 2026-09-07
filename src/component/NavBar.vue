@@ -28,7 +28,6 @@ import { RouterLink } from "vue-router";
 
 import { useNotificationStore } from "../testErp-sheng/stores/notification.store";
 import { useUIStore } from "../testErp-sheng/stores/ui.store";
-import { useUIStore } from "../testErp-sheng/stores/ui.store";
 
 const notifStore = useNotificationStore();
 const uiStore = useUIStore();
