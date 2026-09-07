@@ -1,33 +1,33 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch } from "vue";
 
-const emit = defineEmits(['filter-changed'])
+const emit = defineEmits(["filter-changed"]);
 
-const type = ref('all')
-const status = ref('all')
-const keyword = ref('')
-const dateFrom = ref('')
-const dateTo = ref('')
+const type = ref("all");
+const status = ref("all");
+const keyword = ref("");
+const dateFrom = ref("");
+const dateTo = ref("");
 
 function emitChange() {
-  emit('filter-changed', {
+  emit("filter-changed", {
     type: type.value,
     status: status.value,
     keyword: keyword.value,
     dateFrom: dateFrom.value,
     dateTo: dateTo.value,
-  })
+  });
 }
 
 // select 變更立即套用；文字/日期輸入用 watch 統一處理，避免每個欄位各寫一次 @change
-watch([type, status, keyword, dateFrom, dateTo], emitChange)
+watch([type, status, keyword, dateFrom, dateTo], emitChange);
 
 function handleReset() {
-  type.value = 'all'
-  status.value = 'all'
-  keyword.value = ''
-  dateFrom.value = ''
-  dateTo.value = ''
+  type.value = "all";
+  status.value = "all";
+  keyword.value = "";
+  dateFrom.value = "";
+  dateTo.value = "";
 }
 </script>
 
@@ -38,7 +38,7 @@ function handleReset() {
       <select v-model="type" class="filter-select">
         <option value="all">全部</option>
         <option value="LEAVE">請假</option>
-        <option value="PURCHASE">採購</option>
+        <option value="ORDER">採購</option>
       </select>
     </div>
 
@@ -63,10 +63,17 @@ function handleReset() {
 
     <div class="filter-group filter-group--grow">
       <label class="filter-label">搜尋</label>
-      <input v-model="keyword" type="text" placeholder="單號、申請人或摘要" class="filter-input filter-input--search" />
+      <input
+        v-model="keyword"
+        type="text"
+        placeholder="單號、申請人或摘要"
+        class="filter-input filter-input--search"
+      />
     </div>
 
-    <button class="filter-reset" type="button" @click="handleReset">重設</button>
+    <button class="filter-reset" type="button" @click="handleReset">
+      重設
+    </button>
   </div>
 </template>
 

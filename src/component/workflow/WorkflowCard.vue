@@ -1,28 +1,30 @@
 <script setup>
-import WorkflowStatusBadge from './WorkflowStatusBadge.vue'
+import WorkflowStatusBadge from "./WorkflowStatusBadge.vue";
 
 const props = defineProps({
   workflow: {
     type: Object,
     default: () => ({
-      code: 'WF-2026-0091',
-      documentType: 'LEAVE',
-      summary: '身體不適，請一天病假',
-      applicant: 'Alice',
-      approver: 'Bob',
-      date: '2026-09-01',
-      status: 'pending',
+      code: "WF-2026-0091",
+      documentType: "LEAVE",
+      summary: "身體不適，請一天病假",
+      applicant: "Alice",
+      approver: "Bob",
+      date: "2026-09-01",
+      status: "pending",
     }),
   },
-})
+});
 
-const typeLabel = { LEAVE: '請假', PURCHASE: '採購', EXPENSE: '費用' }
+const typeLabel = { LEAVE: "請假", ORDER: "採購", EXPENSE: "費用" };
 </script>
 
 <template>
   <article class="card">
     <div class="card__top">
-      <span class="card__type">{{ typeLabel[workflow.documentType] || workflow.documentType }}</span>
+      <span class="card__type">{{
+        typeLabel[workflow.documentType] || workflow.documentType
+      }}</span>
       <span class="card__code">{{ workflow.code }}</span>
     </div>
 

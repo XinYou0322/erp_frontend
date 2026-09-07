@@ -1,21 +1,15 @@
 <script setup>
-import WorkflowStatusBadge from './WorkflowStatusBadge.vue'
+import WorkflowStatusBadge from "./WorkflowStatusBadge.vue";
 
 // items 需帶 id（workflow 的實際 id，用於導向明細頁），code 只是顯示用的單號
 const props = defineProps({
   items: {
     type: Array,
-    default: () => ([
-      { id: 5001, code: 'WF-2026-0091', documentType: 'LEAVE', summary: '身體不適，請一天病假', applicant: 'Alice', approver: 'Bob', date: '2026-09-01', status: 'pending' },
-      { id: 5000, code: 'WF-2026-0090', documentType: 'PURCHASE', summary: '珍珠 50kg、鮮奶 30箱', applicant: 'Carol', approver: 'Alice', date: '2026-08-31', status: 'approved' },
-      { id: 4999, code: 'WF-2026-0089', documentType: 'LEAVE', summary: '家中有事，請假一天', applicant: 'David', approver: 'Bob', date: '2026-08-30', status: 'rejected' },
-      { id: 4998, code: 'WF-2026-0088', documentType: 'PURCHASE', summary: '紅茶葉 20kg', applicant: 'Emma', approver: 'Alice', date: '2026-08-29', status: 'approved' },
-      { id: 4997, code: 'WF-2026-0087', documentType: 'LEAVE', summary: '特休，安排家庭旅遊', applicant: 'Frank', approver: 'Bob', date: '2026-08-28', status: 'pending' },
-    ]),
+    default: () => [],
   },
-})
+});
 
-const typeLabel = { LEAVE: '請假', PURCHASE: '採購', EXPENSE: '費用' }
+const typeLabel = { LEAVE: "請假", ORDER: "採購", EXPENSE: "費用" };
 </script>
 
 <template>
@@ -36,14 +30,20 @@ const typeLabel = { LEAVE: '請假', PURCHASE: '採購', EXPENSE: '費用' }
       <tbody>
         <tr v-for="item in items" :key="item.id">
           <td class="mono">{{ item.code }}</td>
-          <td><span class="type-tag">{{ typeLabel[item.documentType] || item.documentType }}</span></td>
+          <td>
+            <span class="type-tag">{{
+              typeLabel[item.documentType] || item.documentType
+            }}</span>
+          </td>
           <td class="summary">{{ item.summary }}</td>
           <td>{{ item.applicant }}</td>
           <td>{{ item.approver }}</td>
           <td class="mono">{{ item.date }}</td>
           <td><WorkflowStatusBadge :status="item.status" size="sm" /></td>
           <td class="actions">
-            <router-link :to="`/workflows/${item.id}`" class="view-link">查看</router-link>
+            <router-link :to="`/workflows/${item.id}`" class="view-link"
+              >查看</router-link
+            >
           </td>
         </tr>
       </tbody>

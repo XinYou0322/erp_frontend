@@ -25,7 +25,7 @@ const submitting = ref(false);
 
 const typeLabel = {
   LEAVE: "請假申請",
-  PURCHASE: "採購申請",
+  ORDER: "採購申請",
   EXPENSE: "費用申請",
 };
 
@@ -40,7 +40,8 @@ async function loadData() {
     workflow.value = wf;
     // WorkflowLogResponse 的動作欄位是 status，這裡轉成 Timeline 元件要的 action 欄位
     logs.value = logData.map((l) => ({
-      action: l.status,
+      id: l.id,
+      action: l.action,
       operator: l.operator,
       remark: l.remark,
       createdAt: l.createdAt,
@@ -104,11 +105,11 @@ onMounted(loadData);
           <div class="detail__info-row">
             <dt>申請人</dt>
             <!-- applicant/approver 目前是使用者 id，之後可接上 A 模組的使用者 API 顯示姓名 -->
-            <dd>{{ workflow.applicant }}</dd>
+            <dd>{{ workflow.applicantName }}</dd>
           </div>
           <div class="detail__info-row">
             <dt>簽核人</dt>
-            <dd>{{ workflow.approver }}</dd>
+            <dd>{{ workflow.approverName }}</dd>
           </div>
           <div class="detail__info-row">
             <dt>申請日期</dt>
@@ -122,7 +123,7 @@ onMounted(loadData);
         </div>
 
         <WorkflowActionButtons
-          :status="workflow.status"
+          :status="workflow.action"
           :submitting="submitting"
           @approve="handleApprove"
           @reject="handleReject"
@@ -134,9 +135,7 @@ onMounted(loadData);
         <WorkflowTimeline
           :logs="logs"
           :pending-next="
-            workflow.status === 'pending'
-              ? `${workflow.approver}（等待審核）`
-              : ''
+            workflow.status === 'pending' ? `${workflow.approverName}` : ''
           "
         />
       </aside>

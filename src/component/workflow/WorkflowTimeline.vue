@@ -3,14 +3,7 @@
 const props = defineProps({
   logs: {
     type: Array,
-    default: () => [
-      {
-        action: "SUBMIT",
-        operator: "強恩",
-        remark: "家裡有事情",
-        createdAt: "2026/9/4 下午2:01:54",
-      },
-    ],
+    default: () => [],
   },
   // 若單據仍在等待下一關簽核，帶入下一位審核人名稱顯示空心節點
   pendingNext: {
