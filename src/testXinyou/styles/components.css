@@ -266,6 +266,20 @@
   outline: none;
 }
 
+input[type="number"].no-number-spinner {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+/* Chrome / Edge / Safari */
+input[type="number"].no-number-spinner::-webkit-inner-spin-button,
+input[type="number"].no-number-spinner::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+
 
 /* Input Focus */
 

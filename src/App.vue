@@ -65,7 +65,9 @@
   @open-add-material="addMaterialModalOpen = true"
   @open-inventory-intake="inventoryIntakeModalOpen = true"
 />
-
+<ProductBomManagement
+  v-else-if="currentTab === 'recipes'"
+/>
 
   </main>
 
@@ -82,8 +84,9 @@ import WaveBackground from './testXinyou/WaveBackground.vue'
 import Dashboard from './testXinyou/Dashboard.vue'
 import InventoryManagement from './testXinyou/InventoryManagement.vue'
 import MaterialManagement from './testXinyou/MaterialManagement.vue'
-
+import ProductBomManagement from './testXinyou/ProductBomManagement.vue';
 // AI 假資料
+
 import {
   mockProducts,
   mockInventory,
@@ -92,6 +95,8 @@ import {
 
 // 型別
 import type { Product, InventorySummary, LiveOrder } from './testXinyou/types.js'
+import { Import } from 'lucide-vue-next';
+
 const currentTab = ref<NavTabType>('dashboard')
 
 const searchQuery = ref('')
