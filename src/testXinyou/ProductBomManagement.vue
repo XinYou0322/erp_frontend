@@ -219,9 +219,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { FlaskConical, DollarSign, Layers, CheckCircle2, Coffee, Edit3, Plus } from 'lucide-vue-next'
-import MetricCard from './styles/components/common/MetricCard.vue'
+import MetricCard from './components/common/MetricCard.vue'
 import httpClient from '@/service/httpClient'
-import EditRecipeModal from './styles/components/modals/EditRecipeModal.vue'
+import EditRecipeModal from './components/modals/EditRecipeModal.vue'
 
 
 

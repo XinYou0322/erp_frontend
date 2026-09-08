@@ -393,10 +393,8 @@ import {
   Edit3,
   Plus,
 } from "lucide-vue-next";
-
-import MetricCard from "./styles/components/common/MetricCard.vue";
-
-import AddMaterialModal from "./styles/components/modals/AddMaterialModal.vue";
+import MetricCard from './components/common/MetricCard.vue'
+import AddMaterialModal from "./components/modals/AddMaterialModal.vue";
 
 import httpClient from "@/service/httpClient";
 
