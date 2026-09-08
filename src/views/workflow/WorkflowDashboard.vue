@@ -3,10 +3,10 @@ import { ref, computed, onMounted } from "vue";
 import WorkflowFilter from "@/component/workflow/WorkflowFilter.vue";
 import WorkflowTable from "@/component/workflow/WorkflowTable.vue";
 import WorkflowEmpty from "@/component/workflow/WorkflowEmpty.vue";
-import { getPendingWorkflows } from "@/service/workflowService";
+import { getWorkflows } from "@/service/workflowService";
 
 // TODO: 之後接上登入機制後，改成從登入狀態取得目前使用者 id
-const CURRENT_APPROVER_ID = 3;
+const CURRENT_APPROVER_ID = 2;
 
 const rawWorkflows = ref([]);
 const loading = ref(false);
@@ -23,7 +23,7 @@ async function loadWorkflows() {
   loading.value = true;
   errorMessage.value = "";
   try {
-    const data = await getPendingWorkflows(CURRENT_APPROVER_ID);
+    const data = await getWorkflows(CURRENT_APPROVER_ID);
     rawWorkflows.value = data;
   } catch (err) {
     errorMessage.value = "讀取待簽核清單失敗，請稍後再試";
@@ -56,6 +56,9 @@ const filteredWorkflows = computed(() => {
 
 const stats = computed(() => ({
   pending: rawWorkflows.value.filter((w) => w.status === "pending").length,
+  approved: rawWorkflows.value.filter((w) => w.status === "approved").length,
+  rejected: rawWorkflows.value.filter((w) => w.status === "rejected").length,
+  total: rawWorkflows.value.length,
 }));
 
 function handleFilterChanged(newFilters) {
