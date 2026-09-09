@@ -123,7 +123,7 @@ onMounted(loadData);
         </div>
 
         <WorkflowActionButtons
-          :status="workflow.action"
+          :status="workflow.status"
           :submitting="submitting"
           @approve="handleApprove"
           @reject="handleReject"
