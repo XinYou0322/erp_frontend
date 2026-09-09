@@ -4,18 +4,18 @@ interface Props {
   title: string;
   subtitle?: string;
   icon?: string;
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl';
+  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl";
 }
 
 withDefaults(defineProps<Props>(), {
   isOpen: false,
-  subtitle: '',
-  icon: 'info',
-  maxWidth: 'md',
+  subtitle: "",
+  icon: "info",
+  maxWidth: "md",
 });
 
 const emit = defineEmits<{
-  (e: 'close'): void;
+  (e: "close"): void;
 }>();
 </script>
 
@@ -38,10 +38,14 @@ const emit = defineEmits<{
       ]"
     >
       <!-- Modal Header -->
-      <div class="flex justify-between items-start mb-4 pb-3 border-b border-slate-800">
+      <div
+        class="flex justify-between items-start mb-4 pb-3 border-b border-slate-800"
+      >
         <div>
           <h3 class="text-lg font-bold text-white flex items-center gap-2">
-            <span class="material-symbols-outlined text-emerald-400 text-[22px]">
+            <span
+              class="material-symbols-outlined text-emerald-400 text-[22px]"
+            >
               {{ icon }}
             </span>
             {{ title }}

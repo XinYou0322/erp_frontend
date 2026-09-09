@@ -8,6 +8,7 @@ import BaseCard from "../base/BaseCard.vue";
 import BaseBadge from "../base/BaseBadge.vue";
 import BaseModal from "../base/BaseModal.vue";
 import BaseInput from "../base/BaseInput.vue";
+import { onMounted } from "vue";
 
 const authStore = useAuthStore();
 const uiStore = useUIStore();

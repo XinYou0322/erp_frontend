@@ -6,6 +6,10 @@ import LoginPage from "@/testErp-sheng/pages/LoginPage.vue";
 import PermissionPage from "@/testErp-sheng/pages/PermissionPage.vue";
 const routes = [
   {
+    path: "/",
+    redirect: "/material",
+  },
+  {
     path: "/material",
     name: "material",
     component: materail,
@@ -27,6 +31,12 @@ const routes = [
   },
   {
     path: "/PermissionPage",
+    name: "PermissionPage",
+    component: PermissionPage,
+  },
+  {
+    path: "/PermissionPage",
+    alias: ["/permissions"],
     name: "PermissionPage",
     component: PermissionPage,
   },

@@ -6,6 +6,7 @@ import { useUIStore } from "../stores/ui.store";
 import { UserProfile, UserRole } from "../types";
 import BaseBadge from "../base/BaseBadge.vue";
 import BaseModal from "../base/BaseModal.vue";
+import { useNotificationStore } from "../stores/notification.store";
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -45,25 +46,35 @@ const handleQuickFill = (targetEmail: string, targetPass: string) => {
 };
 
 // Handle Form Submit
-const handleFormLogin = () => {
+const notifStore = useNotificationStore();
+const handleFormLogin = async () => {
   errorMessage.value = "";
   if (!email.value) {
-    errorMessage.value = "請輸入登入電子郵件帳號。";
+    errorMessage.value = "請輸入登入帳號或 Email。";
     return;
   }
-
   isLoading.value = true;
-  setTimeout(() => {
-    const res = authStore.loginWithCredentials(email.value, password.value);
+  try {
+    const res = await authStore.loginWithCredentials(
+      email.value,
+      password.value,
+    );
     isLoading.value = false;
-
     if (res.success) {
       uiStore.showToast(res.message);
-      router.push("/overview");
+      // 啟動 WebSocket 即時通知監聽
+      if (res.user?.id) {
+        notifStore.connectWebSocket(res.user.id);
+      }
+      // 跳轉至主功能頁（原物料管理）
+      router.push("/material");
     } else {
       errorMessage.value = res.message;
     }
-  }, 400);
+  } catch (err: any) {
+    isLoading.value = false;
+    errorMessage.value = "系統連線異常，請確認後端服務是否已啟動。";
+  }
 };
 
 // Handle Quick Role Select
