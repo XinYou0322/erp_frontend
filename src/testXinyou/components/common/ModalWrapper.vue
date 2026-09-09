@@ -70,7 +70,7 @@ const props = withDefaults(
     title: string;
     subtitle?: string;
     id?: string;
-    maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
+    maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl'|'6xl';
     icon?: Component;
     closeOnBackdrop?: boolean;
   }>(),
@@ -96,6 +96,8 @@ const maxWidthClass = computed(() => {
       return 'max-w-xl';
     case '3xl':
       return 'max-w-3xl';
+        case '6xl':
+      return 'max-w-6xl';
     default:
       return 'max-w-2xl';
   }

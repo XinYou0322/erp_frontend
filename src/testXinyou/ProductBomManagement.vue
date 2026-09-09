@@ -63,7 +63,7 @@
       <div class="flex items-center space-x-2 shrink-0">
         <button
           type="button"
-          @click="emit('openAddProduct')"
+         @click="addProductModalOpen = true"
           class="btn-primary text-xs px-3 py-1.5 flex items-center space-x-1.5"
         >
           <Plus class="w-4 h-4" />
@@ -209,7 +209,11 @@
   @success="handleRecipeSuccess"
 />
 
-
+<AddProductModal
+  :is-open="addProductModalOpen"
+  @close="addProductModalOpen = false"
+  @success="handleProductSuccess"
+/>
 
 
 
@@ -222,13 +226,19 @@ import { FlaskConical, DollarSign, Layers, CheckCircle2, Coffee, Edit3, Plus } f
 import MetricCard from './components/common/MetricCard.vue'
 import httpClient from '@/service/httpClient'
 import EditRecipeModal from './components/modals/EditRecipeModal.vue'
-
+import AddProductModal from './components/modals/AddProductModal.vue'
 
 
 
 const editRecipeModalOpen = ref(false)
-
+const addProductModalOpen = ref(false)
 const selectedProduct = ref(null)
+
+const handleProductSuccess = async () => {
+  await loadProducts()
+}
+
+
 
 const handleOpenEditRecipe = (product) => {
 

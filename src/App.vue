@@ -57,7 +57,9 @@
   <MaterialManagement
     v-else-if="currentTab === 'materials'"
   />
-
+<InventoryLogManagement
+  v-else-if="currentTab === 'inventoryLogs'"
+/>
 
   <InventoryManagement
   v-else-if="currentTab === 'inventory'"
@@ -85,6 +87,8 @@ import Dashboard from './testXinyou/Dashboard.vue'
 import InventoryManagement from './testXinyou/InventoryManagement.vue'
 import MaterialManagement from './testXinyou/MaterialManagement.vue'
 import ProductBomManagement from './testXinyou/ProductBomManagement.vue';
+import InventoryLogManagement
+  from './testXinyou/InventoryLogManagement.vue'
 // AI 假資料
 
 import {
