@@ -46,7 +46,7 @@ const filteredWorkflows = computed(() => {
       );
       if (!hit) return false;
     }
-    const dateOnly = (w.date || "").slice(0, 10);
+    const dateOnly = (w.createdAt || "").slice(0, 10);
     if (filters.value.dateFrom && dateOnly < filters.value.dateFrom)
       return false;
     if (filters.value.dateTo && dateOnly > filters.value.dateTo) return false;
