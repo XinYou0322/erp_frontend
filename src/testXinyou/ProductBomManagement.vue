@@ -113,8 +113,8 @@
             </div>
 
             <button
-              type="button"
-              @click="emit('openEditRecipe', product)"
+           type="button"
+  @click="handleOpenEditRecipe(product)"
               class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#0059bb] text-xs font-bold transition-colors cursor-pointer flex items-center space-x-1"
             >
               <Edit3 class="w-3.5 h-3.5" />
@@ -201,14 +201,49 @@
         </div>
       </div>
     </div>
+
+<EditRecipeModal
+  :is-open="editRecipeModalOpen"
+  :product="selectedProduct"
+  @close="editRecipeModalOpen = false"
+  @success="handleRecipeSuccess"
+/>
+
+
+
+
+
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { FlaskConical, DollarSign, Layers, CheckCircle2, Coffee, Edit3, Plus } from 'lucide-vue-next'
-import MetricCard from './styles/components/common/MetricCard.vue'
+import MetricCard from './components/common/MetricCard.vue'
 import httpClient from '@/service/httpClient'
+import EditRecipeModal from './components/modals/EditRecipeModal.vue'
+
+
+
+
+const editRecipeModalOpen = ref(false)
+
+const selectedProduct = ref(null)
+
+const handleOpenEditRecipe = (product) => {
+
+  selectedProduct.value = product
+
+  editRecipeModalOpen.value = true
+
+}
+const handleRecipeSuccess = () => {
+
+  loadProducts()
+
+  selectedProduct.value = null
+
+}
 
 const emit = defineEmits([
   'openEditRecipe',

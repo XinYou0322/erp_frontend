@@ -478,10 +478,10 @@ import {
   PackagePlus
 } from 'lucide-vue-next'
 
-import MetricCard from './styles/components/common/MetricCard.vue'
+import MetricCard from './components/common/MetricCard.vue'
 
 import httpClient from '@/service/httpClient'
-import InventoryIntakeModal from './styles/components/modals/InventoryIntakeModal.vue'
+import InventoryIntakeModal from './components/modals/InventoryIntakeModal.vue'
 
 
 // ==============================
