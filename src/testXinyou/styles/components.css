@@ -266,17 +266,21 @@
   outline: none;
 }
 
-input[type="number"].no-number-spinner {
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-
-/* Chrome / Edge / Safari */
-input[type="number"].no-number-spinner::-webkit-inner-spin-button,
-input[type="number"].no-number-spinner::-webkit-outer-spin-button {
+/* Chrome、Edge、Safari */
+.no-number-spinner::-webkit-inner-spin-button,
+.no-number-spinner::-webkit-outer-spin-button,
+.no-number-spinner:focus::-webkit-inner-spin-button,
+.no-number-spinner:focus::-webkit-outer-spin-button {
   -webkit-appearance: none;
   appearance: none;
   margin: 0;
+}
+
+/* Firefox */
+.no-number-spinner,
+.no-number-spinner:focus {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 
