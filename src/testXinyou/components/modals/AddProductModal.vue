@@ -1,12 +1,6 @@
 <template>
-  <ModalWrapper
-    :is-open="isOpen"
-    title="新增飲品"
-    subtitle="建立商品基本資料，配方可於商品建立後另外設定"
-    max-width="2xl"
-    :icon="Plus"
-    @close="emit('close')"
-  >
+  <ModalWrapper :is-open="isOpen" title="新增飲品" subtitle="建立商品基本資料，配方可於商品建立後另外設定" max-width="2xl" :icon="Plus"
+    @close="emit('close')">
     <form id="add-product-form" @submit.prevent="handleSubmit" class="space-y-4">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -29,9 +23,15 @@
           <label class="block font-bold text-gray-700 text-xs mb-1">
             商品分類 <span class="text-red-500">*</span>
           </label>
-          <select v-model="category" class="input-field" required>
-            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-          </select>
+          <select v-model="categoryId" class="input-field" required>
+            <option :value="null" disabled>
+              請選擇商品分類
+            </option>
+
+            <option v-for="category in categories" :key="category.id" :value="category.id">
+              {{ category.name }}
+            </option>
+          </select>+
         </div>
 
         <div>
@@ -74,12 +74,8 @@
       <button type="button" @click="emit('close')" class="btn-secondary text-xs">
         取消
       </button>
-      <button
-        type="submit"
-        form="add-product-form"
-        class="btn-primary text-xs flex items-center space-x-1.5"
-        :disabled="submitting"
-      >
+      <button type="submit" form="add-product-form" class="btn-primary text-xs flex items-center space-x-1.5"
+        :disabled="submitting">
         <Check class="w-4 h-4" />
         <span>{{ submitting ? '新增中...' : '新增產品' }}</span>
       </button>
@@ -88,14 +84,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { Plus, Check } from 'lucide-vue-next'
 import ModalWrapper from '../common/ModalWrapper.vue'
-import httpClient from '@/service/httpClient.js';
+import httpClient from '@/service/httpClient.js'
 
-
-
-defineProps<{
+const props = defineProps<{
   isOpen: boolean
 }>()
 
@@ -104,11 +98,11 @@ const emit = defineEmits<{
   (e: 'success'): void
 }>()
 
-const categories = ['純茶類', '鮮奶類', '手作特調', '果茶類', '奶茶類', '季節限定']
+const categories = ref<any[]>([])
 
 const sku = ref('')
 const name = ref('')
-const category = ref(categories[0])
+const categoryId = ref<number | null>(null)
 const sellingPrice = ref<number>(0)
 const unit = ref('杯')
 const status = ref('ACTIVE')
@@ -116,39 +110,121 @@ const status = ref('ACTIVE')
 const submitting = ref(false)
 const errorMessage = ref('')
 
+
+// 取得啟用中的商品分類
+const loadCategories = async () => {
+
+  try {
+
+    const response =
+      await httpClient.get(
+        '/api/product-categories/active'
+      )
+
+    categories.value =
+      response.data
+
+  } catch (error) {
+
+    console.error(
+      '取得商品分類失敗：',
+      error
+    )
+
+    errorMessage.value =
+      '取得商品分類失敗'
+  }
+}
+
+
+// Modal 打開時重新抓分類
+watch(
+  () => props.isOpen,
+
+  (isOpen) => {
+
+    if (isOpen) {
+
+      loadCategories()
+
+    }
+
+  }
+)
+
+
 const resetForm = () => {
+
   sku.value = ''
+
   name.value = ''
-  category.value = categories[0]
+
+  categoryId.value = null
+
   sellingPrice.value = 0
+
   unit.value = '杯'
+
   status.value = 'ACTIVE'
+
   errorMessage.value = ''
 }
 
+
 const handleSubmit = async () => {
-  if (!sku.value.trim() || !name.value.trim()) return
+
+  if (
+    !sku.value.trim()
+    ||
+    !name.value.trim()
+    ||
+    !categoryId.value
+  ) {
+    return
+  }
 
   submitting.value = true
+
   errorMessage.value = ''
 
   try {
-    await httpClient.post('/api/product/add', {
-      sku: sku.value,
-      name: name.value,
-      category: category.value,
-      sellingPrice: sellingPrice.value,
-      unit: unit.value,
-      status: status.value
-    })
+
+    await httpClient.post(
+      '/api/product/add',
+      {
+        sku: sku.value,
+        name: name.value,
+
+        categoryId:
+          Number(categoryId.value),
+
+        sellingPrice:
+          Number(sellingPrice.value),
+
+        unit: unit.value,
+
+        status: status.value
+      }
+    )
 
     emit('success')
+
     emit('close')
+
     resetForm()
+
   } catch (error) {
-    console.error('新增產品失敗：', error)
-    errorMessage.value = '新增產品失敗，請確認 SKU 是否重複或後端是否正常。'
+
+    console.error(
+      '新增產品失敗：',
+      error
+    )
+
+    errorMessage.value =
+      '新增產品失敗，請確認 SKU、分類或後端是否正常。'
+
   } finally {
+
     submitting.value = false
   }
 }
