@@ -4,9 +4,9 @@
 
     <Sidebar />
 
-     <main class="ml-64 min-h-screen">
-      <RouterView />
-    </main>
+   <main class="erp-main ml-64 min-h-screen">
+  <RouterView />
+</main>
 
 
   </div>
