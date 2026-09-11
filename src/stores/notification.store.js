@@ -11,7 +11,7 @@
 
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
-import { StorageService } from "../services/storage.service";
+import { StorageService } from "../service/storage.service";
 import httpClient from "/src/service/httpClient.js";
 
 /** 預設初始通知資料集 */

@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { INITIAL_RAW_MATERIALS, INITIAL_SKUS } from "../data/initialData";
-import { StorageService } from "../services/storage.service";
+import { StorageService } from "../service/storage.service";
 
 export const useInventoryStore = defineStore("inventory", () => {
   // --- State ---

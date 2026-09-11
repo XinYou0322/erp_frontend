@@ -4,10 +4,10 @@ import { useAuthStore } from "../stores/auth.store";
 import { useUIStore } from "../stores/ui.store";
 import { UserProfile, UserRole, PermissionKey } from "../types";
 import { PERMISSION_MODULES } from "../data/permissionData";
-import BaseCard from "../base/BaseCard.vue";
-import BaseBadge from "../base/BaseBadge.vue";
-import BaseModal from "../base/BaseModal.vue";
-import BaseInput from "../base/BaseInput.vue";
+import BaseCard from "../component/子元件/BaseCard.vue";
+import BaseBadge from "../component/子元件/BaseBadge.vue";
+import BaseModal from "../component/子元件/BaseModal.vue";
+import BaseInput from "../component/子元件/BaseInput.vue";
 import { onMounted } from "vue";
 
 const authStore = useAuthStore();

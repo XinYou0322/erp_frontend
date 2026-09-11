@@ -11,7 +11,7 @@
 -->
 
 <script setup lang="ts">
-import { useUIStore } from "../stores/ui.store";
+import { useUIStore } from "../../stores/ui.store";
 import SideNavBar from "./components/SideNavBar.vue";
 import TopNavBar from "./components/TopNavBar.vue";
 import BarcodeScannerModal from "../components/composite/BarcodeScannerModal.vue";

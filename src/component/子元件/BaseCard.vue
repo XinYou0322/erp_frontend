@@ -18,7 +18,10 @@ withDefaults(defineProps<Props>(), {
       hoverable ? 'hover:border-slate-700/80 hover:shadow-level-2' : '',
     ]"
   >
-    <div v-if="$slots.header" class="mb-4 pb-3 border-b border-slate-800/80 flex items-center justify-between">
+    <div
+      v-if="$slots.header"
+      class="mb-4 pb-3 border-b border-slate-800/80 flex items-center justify-between"
+    >
       <slot name="header" />
     </div>
 

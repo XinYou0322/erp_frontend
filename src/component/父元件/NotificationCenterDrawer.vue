@@ -12,8 +12,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { useNotificationStore } from "../stores/notification.store";
-import { useUIStore } from "../stores/ui.store";
+import { useNotificationStore } from "../../stores/notification.store";
+import { useUIStore } from "../../stores/ui.store";
 
 const router = useRouter();
 const notifStore = useNotificationStore();

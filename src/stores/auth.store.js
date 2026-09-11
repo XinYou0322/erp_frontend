@@ -5,7 +5,7 @@ import {
   DEFAULT_ROLE_PERMISSIONS,
   INITIAL_SECURITY_AUDIT_LOGS,
 } from "../data/permissionData";
-import { StorageService } from "../services/storage.service";
+import { StorageService } from "../service/storage.service";
 import httpClient from "@/service/httpClient";
 
 export const useAuthStore = defineStore("auth", () => {

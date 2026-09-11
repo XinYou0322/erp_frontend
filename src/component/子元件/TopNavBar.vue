@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { useAuthStore } from "../stores/auth.store";
-import { useInventoryStore } from "../stores/inventory.store";
-import { useNotificationStore } from "../stores/notification.store";
-import { useUIStore } from "../stores/ui.store";
-import { UserProfile } from "../types";
+import { useAuthStore } from "../../stores/auth.store";
+import { useInventoryStore } from "../../stores/inventory.store";
+import { useNotificationStore } from "../../stores/notification.store";
+import { useUIStore } from "../../stores/ui.store";
+import { UserProfile } from "../../types";
 
 const router = useRouter();
 const authStore = useAuthStore();
