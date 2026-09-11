@@ -93,6 +93,9 @@
 import { ref, computed, onMounted } from 'vue';
 import { RouterView } from 'vue-router'
 
+
+// 💡 補上通知抽屜組件的正確引入路徑
+import NotificationCenterDrawer from "@/testErp-sheng/components/NotificationCenterDrawer.vue";
 import Sidebar, { type NavTabType } from './testXinyou/Sidebar.vue'
 import Header from './testXinyou/Header.vue'
 import WaveBackground from './testXinyou/WaveBackground.vue'
@@ -152,10 +155,5 @@ const orders = ref<LiveOrder[]>([...mockLiveOrders]);
 
 
 
-<script setup>
-import { RouterView } from "vue-router";
-import NavBar from "@/component/NavBar.vue";
 
-// 💡 補上通知抽屜組件的正確引入路徑
-import NotificationCenterDrawer from "@/testErp-sheng/components/NotificationCenterDrawer.vue";
 </script>
