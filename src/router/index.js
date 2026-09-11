@@ -20,13 +20,24 @@ import Home from '@/views222222/Home.vue'
    {
      path: '/product',
     name: 'product',
-     component: ()=> import("@/testXinyou/ProductBomManagement.vue")
+     component: ()=> import("@/view/ProductBomManagement.vue")
    },
   {
-    path: '/bom',
-    name: 'bom',
-    component: ()=> import("@/testXinyou/InventoryManagement.vue")
+    path: '/inventory',
+    name: 'inventory',
+    component: ()=> import("@/view/InventoryManagement.vue")
   },
+  {
+    path: '/material',
+    name: 'material',
+    component: ()=> import("@/view/MaterialManagement.vue")
+  },
+ {
+    path: '/inventory/logs',
+    name: 'inventorylogs',
+    component: ()=> import("@/view/InventoryLogManagement.vue")
+  },
+
   // { 
   //   path: '/workflows', 
   //   name: 'workflow-dashboard', 

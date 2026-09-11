@@ -224,7 +224,7 @@ import {
   FileSpreadsheet 
 } from 'lucide-vue-next';
 import MetricCard from './components/common/MetricCard.vue';
-import StatusBadge from './components/common/StatusBadge.vue';
+import StatusBadge from '../component/子元件/StatusBadge.vue';
 import type { Product, LiveOrder, InventoryItem } from './types.js';
 
 const props = defineProps<{

@@ -201,7 +201,7 @@ import {
   Save
 } from 'lucide-vue-next'
 
-import ModalWrapper from '../common/ModalWrapper.vue'
+import ModalWrapper from '../子元件/ModalWrapper.vue'
 import httpClient from '@/service/httpClient'
 
 const props = defineProps({

@@ -218,15 +218,15 @@ const navItems = [
     label: "飲品品項菜單",
     icon: Layers,
     badge: "8款",
-    path: "/product",
+    path: "/product2",
   },
 
   {
-    id: "recipes",
+    id: "products",
     label: "原料配方 BOM 管理",
     icon: FlaskConical,
     badge: "SOP",
-    path: "/bom",
+    path: "/product",
   },
 
   {
@@ -242,6 +242,7 @@ const navItems = [
     label: "原物料進銷存",
     icon: Package,
     badge: "庫存",
+    
   },
 
   {

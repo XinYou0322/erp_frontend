@@ -407,10 +407,10 @@ import {
   PackagePlus,
 } from "lucide-vue-next";
 
-import MetricCard from "./components/common/MetricCard.vue";
+import MetricCard from "@/component/子元件/MetricCard.vue";
 
 import httpClient from "@/service/httpClient";
-import InventoryIntakeModal from "./components/modals/InventoryIntakeModal.vue";
+import InventoryIntakeModal from "@/component/父元件/InventoryIntakeModal.vue";
 
 // ==============================
 // 庫存摘要資料

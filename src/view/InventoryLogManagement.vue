@@ -368,9 +368,9 @@ import {
   Import
 } from 'lucide-vue-next'
 
-import MetricCard from './components/common/MetricCard.vue'
+import MetricCard from '@/component/子元件/MetricCard.vue'
 import httpClient from '@/service/httpClient'
-import InventoryAdjustmentModal from './components/modals/InventoryAdjustmentModal.vue'
+import InventoryAdjustmentModal from '@/component/父元件/InventoryAdjustmentModal.vue'
 
 const inventoryAdjustmentModalOpen = ref(false)
 // ==============================

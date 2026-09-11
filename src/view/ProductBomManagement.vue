@@ -187,11 +187,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { FlaskConical, DollarSign, Layers, CheckCircle2, Coffee, Edit3, Plus, Import } from 'lucide-vue-next'
-import MetricCard from './components/common/MetricCard.vue'
+import MetricCard from '@/component/子元件/MetricCard.vue'
 import httpClient from '@/service/httpClient'
-import EditRecipeModal from './components/modals/EditRecipeModal.vue'
-import AddProductModal from './components/modals/AddProductModal.vue'
-import ProductCategoryManagementModal from './components/modals/ProductCategoryManagementModal.vue'
+import EditRecipeModal from '@/component/父元件/EditRecipeModal.vue'
+import AddProductModal from '@/component/父元件/AddProductModal.vue'
+import ProductCategoryManagementModal from '@/component/父元件/ProductCategoryManagementModal.vue'
 
 
 

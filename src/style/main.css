@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
-@import "../testXinyou/styles/glassmorphism.css";
-@import "../testXinyou/styles/waves.css";
-@import "../testXinyou/styles/components.css";
+@import "./glassmorphism.css";
+@import "./waves.css";
+@import "./components.css";
 
 @layer base {
   body {

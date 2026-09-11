@@ -197,9 +197,9 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { Tags, Search, Plus, Check, Pencil, Import } from 'lucide-vue-next'
-import ModalWrapper from '../common/ModalWrapper.vue'
+import ModalWrapper from '../子元件/ModalWrapper.vue';
 import httpClient from '@/service/httpClient'
-import SearchInput from '../../../component/子元件/SearchInput.vue'
+import SearchInput from '@/component/子元件/SearchInput.vue'
 
 const props = defineProps<{
   isOpen: boolean
