@@ -189,9 +189,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import OneSupplier from '@/components/Onesupplier.vue'
+import OneSupplier from '@/components2222/Onesupplier.vue'
 import httpClient from '@/service/httpClient'
-import HeadNavBar from '@/components/HeadNavBar.vue'
+import HeadNavBar from '@/components2222/HeadNavBar.vue'
 
 
 // 存放所有供應商
