@@ -19,7 +19,7 @@
    用途：統一修改整個專案的顏色、圓角、陰影與字型。
    注意：這裡的 var() 是 CSS 變數的標準用法，不是 JavaScript 的 var。
    -------------------------------------------------------------------------- */
-/* :root {
+:root {
   --erp-primary: #5b45e8;
   --erp-primary-hover: #4935ce;
   --erp-secondary: #2563eb;
@@ -38,7 +38,7 @@
   --erp-shadow-sm: 0 4px 14px rgba(31, 42, 77, 0.07);
   --erp-shadow-md: 0 14px 36px rgba(44, 51, 110, 0.11);
   --erp-font: Inter, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
-} */
+}
 
 /* --------------------------------------------------------------------------
    02. 頁面骨架
