@@ -266,6 +266,15 @@ const navItems = [
 
 
 
+},
+{
+ id: "testings15313",
+    label: "測試用欄位",
+    icon: Sliders,
+    path: "/supplier",
+
+
+
 }
   
 ];
