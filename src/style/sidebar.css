@@ -1,0 +1,23 @@
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  width: 220px;
+  height: 100vh;
+  padding: 24px 16px;
+  color: white;
+  background:
+    radial-gradient(
+      circle at 20% 8%,
+      #654fea 0,
+      transparent 28%
+    ),
+    linear-gradient(
+      165deg,
+      #171f80 10%,
+      #3520a1 58%,
+      #1247a2
+    );
+  box-shadow: 12px 0 36px rgba(35, 34, 121, 0.17);
+  z-index: 20;
+}

@@ -1,24 +1,22 @@
 <template>
-  <h1>You did it!</h1>
-  <!-- 1. 你的原本導覽列組件 -->
-  <NavBar />
 
-  <!-- 2. 主要路由內容切換區 -->
+  <div class="erp-shell">
+
+    <Sidebar />
+
+   <main class="erp-main ml-64 min-h-screen">
   <RouterView />
+</main>
 
-  <!-- 3. ✅ 補上通知中心側邊抽屜（點擊 NavBar 裡的鈴鐺時會自動滑出） -->
-  <NotificationCenterDrawer />
 
-  <p>
-    Visit
-    <a href="https://vuejs.org/" target="_blank" rel="noopener"> vuejs.org </a>
-  </p>
+  </div>
+
 </template>
 
-<script setup>
-import { RouterView } from "vue-router";
-import NavBar from "@/component/NavBar.vue";
 
-// 💡 補上通知抽屜組件的正確引入路徑
-import NotificationCenterDrawer from "@/testErp-sheng/components/NotificationCenterDrawer.vue";
+<script setup lang="ts">
+
+import { RouterView } from 'vue-router'
+import Sidebar from './testXinyou/Sidebar.vue'
+
 </script>

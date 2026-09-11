@@ -1,46 +1,44 @@
-import { createRouter, createWebHistory } from "vue-router";
-import materail from "@/views/materialview/Material.vue";
-import product from "@/views/productview/Product.vue";
-import bom from "@/views/bomview/bom.vue";
-import LoginPage from "@/testErp-sheng/pages/LoginPage.vue";
-import PermissionPage from "@/testErp-sheng/pages/PermissionPage.vue";
-const routes = [
+import { createRouter, createWebHistory } from 'vue-router'
+import Home from '@/views/Home.vue'
+
+ const routes = [
   {
-    path: "/",
-    redirect: "/material",
+    path: '/home',
+    name: 'home',
+    component: Home
   },
+    {
+    path: '/supplier/addsupplier',
+    name: 'addsupplier',
+    component: () => import("@/views/supplierview/addsuppliers.vue")
+  },
+    {
+    path: '/supplier',
+    name: 'supplier',
+    component: () => import("@/views/supplierview/suppliers.vue")
+  },
+   {
+     path: '/product',
+    name: 'product',
+     component: ()=> import("@/testXinyou/ProductBomManagement.vue")
+   },
   {
-    path: "/material",
-    name: "material",
-    component: materail,
+    path: '/bom',
+    name: 'bom',
+    component: ()=> import("@/testXinyou/InventoryManagement.vue")
   },
-  {
-    path: "/product",
-    name: "product",
-    component: product,
-  },
-  {
-    path: "/bom",
-    name: "bom",
-    component: bom,
-  },
-  {
-    path: "/LoginPage",
-    name: "LoginPage",
-    component: LoginPage,
-  },
-  {
-    path: "/PermissionPage",
-    name: "PermissionPage",
-    component: PermissionPage,
-  },
-  {
-    path: "/PermissionPage",
-    alias: ["/permissions"],
-    name: "PermissionPage",
-    component: PermissionPage,
-  },
-];
+  // { 
+  //   path: '/workflows', 
+  //   name: 'workflow-dashboard', 
+  //   component: WorkflowDashboard 
+  // },
+  // { 
+  //   path: '/workflows/:id', 
+  //   name: 'workflow-detail', 
+  //   component: WorkflowDetail, 
+  //   props: true 
+  // },
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
