@@ -10,9 +10,9 @@
    
 </template>
 <script setup>
-import card from '@/components/Card.vue'
-import HeadNavBar from '@/components/HeadNavBar.vue';
-import AllRightCard from '@/components/AllRightCard.vue';
+import card from '@/components2222/Card.vue'
+import HeadNavBar from '@/components2222/HeadNavBar.vue';
+import AllRightCard from '@/components2222/AllRightCard.vue';
 </script>
 <style >
 

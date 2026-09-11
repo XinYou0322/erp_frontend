@@ -14,7 +14,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import OneSupplier from '@/components/Onesupplier.vue'
+import OneSupplier from '@/components2222/Onesupplier.vue'
 import httpClient from '@/service/httpClient'
 
 // 存放所有供應商
