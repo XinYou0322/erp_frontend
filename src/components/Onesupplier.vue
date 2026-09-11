@@ -1,7 +1,7 @@
 <template>
 
   <tr>
-    <td>{{ id }}</td>
+    <td>{{serialNumber}}</td>
     <td>{{ name }}</td>
     <td>{{ phone }}</td>
     <td>{{ address }}</td>
@@ -28,8 +28,10 @@
 
 </template>
 <script setup>
+
 // 接收父元件資料
 const props = defineProps({
+  serialNumber: Number,
   id: Number,
   name: String,
   phone: String, 

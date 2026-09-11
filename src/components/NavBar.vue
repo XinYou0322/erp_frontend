@@ -7,7 +7,7 @@
     <RouterLink to="/product">商品管理</RouterLink>
     <RouterLink to="/bom">BOM管理</RouterLink>
     <RouterLink to="/supplier">供應商管理</RouterLink>
-      <RouterLink to="/addsupplier">新增供應商</RouterLink>
+  
     
   </div>
 

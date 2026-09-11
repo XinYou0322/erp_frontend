@@ -1,6 +1,9 @@
 <template>
   <div class="erp-page">
-    <HeadNavBar />
+    <HeadNavBar title="總覽"
+                :total="supplierList.length"
+                title2="新增"
+  />
     <section class="erp-card erp-card--flat">
       <!-- 供應商表格 -->
       <div class="erp-table-wrap">
@@ -19,8 +22,11 @@
           <!-- 資料 -->
           <tbody>
             <OneSupplier
-              v-for="oneSupplier in supplierList"
+              v-for="(oneSupplier, index) in supplierList"
               :key="oneSupplier.id"
+              :serial-number="index + 1"
+
+
               :id="oneSupplier.id"
               :name="oneSupplier.name"
               :phone="oneSupplier.phone"
@@ -187,6 +193,7 @@ import OneSupplier from '@/components/Onesupplier.vue'
 import httpClient from '@/service/httpClient'
 import HeadNavBar from '@/components/HeadNavBar.vue'
 
+
 // 存放所有供應商
 const supplierList = ref([])
 // 查看詳細資料使用
@@ -201,11 +208,15 @@ onMounted(() => {
 function fetchData() {
   httpClient({
     method: 'get',
-    url: '/api/supplier/all'
+    url: '/api/suppliers/All'
   })
     .then(response => {
       supplierList.value =
         response.data
+      console.log('後端完整回傳：', response.data)
+      console.log('是不是陣列：', Array.isArray(response.data))
+      console.log('供應商數量：', response.data.length)
+      console.log('supplierList：', supplierList.value)
     })
     .catch(error => {
       console.error(

@@ -8,7 +8,7 @@ import Home from '@/views/Home.vue'
     component: Home
   },
     {
-    path: '/addsupplier',
+    path: '/supplier/addsupplier',
     name: 'addsupplier',
     component: () => import("@/views/supplierview/addsuppliers.vue")
   },
