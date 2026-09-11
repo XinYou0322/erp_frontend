@@ -17,6 +17,6 @@
 <script setup lang="ts">
 
 import { RouterView } from 'vue-router'
-import Sidebar from './testXinyou/Sidebar.vue'
+import Sidebar from './component/父元件/Sidebar.vue'
 
 </script>
