@@ -1,9 +1,6 @@
 <template>
   <div class="erp-page">
-    <HeadNavBar title="總覽"
-                :total="supplierList.length"
-                title2="新增"
-  />
+    <HeadNavBar />
     <section class="erp-card erp-card--flat">
       <!-- 供應商表格 -->
       <div class="erp-table-wrap">
@@ -13,20 +10,18 @@
             <tr>
               <th>ID</th>
               <th>供應商名稱</th>
-              <th>電話</th>
-              <th>地址</th>
-              <th>Email</th>
+              <th>狀態</th>
+              <th>建立人</th>
+              <th>建立時間</th>
+              <th>預計到貨日</th>
               <th>操作</th>
             </tr>
           </thead>
           <!-- 資料 -->
           <tbody>
             <OneSupplier
-              v-for="(oneSupplier, index) in supplierList"
+              v-for="oneSupplier in supplierList"
               :key="oneSupplier.id"
-              :serial-number="index + 1"
-
-
               :id="oneSupplier.id"
               :name="oneSupplier.name"
               :phone="oneSupplier.phone"
@@ -188,129 +183,6 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import OneSupplier from '@/components/Onesupplier.vue'
-import httpClient from '@/service/httpClient'
-import HeadNavBar from '@/components/HeadNavBar.vue'
-
-
-// 存放所有供應商
-const supplierList = ref([])
-// 查看詳細資料使用
-const detailSupplier = ref(null)
-// 修改資料使用
-const editData = ref(null)
-// 頁面載入
-onMounted(() => {
-  fetchData()
-})
-// 查詢全部供應商
-function fetchData() {
-  httpClient({
-    method: 'get',
-    url: '/api/suppliers/All'
-  })
-    .then(response => {
-      supplierList.value =
-        response.data
-      console.log('後端完整回傳：', response.data)
-      console.log('是不是陣列：', Array.isArray(response.data))
-      console.log('供應商數量：', response.data.length)
-      console.log('supplierList：', supplierList.value)
-    })
-    .catch(error => {
-      console.error(
-        '取得供應商資料失敗：',
-        error
-      )
-    })
-}
-// 查看單筆詳細資料
-// GET /api/supplier/{id}
-
-function showDetail(id) {
-  httpClient({
-    method: 'get',
-    url: `/api/supplier/${id}`
-  })
-    .then(response => {
-      detailSupplier.value =
-        response.data
-    })
-    .catch(error => {
-      console.error(
-        '取得供應商詳細資料失敗：',
-        error
-      )
-    })
-}
-// 關閉詳細資料
-function closeDetail() {
-  detailSupplier.value = null
-}
-// 開啟修改畫面
-function editSupplier(supplier) {
-  // 建立一份新的物件
-  // 避免直接改到列表中的原始資料
-  editData.value = {
-    id: supplier.id,
-    name: supplier.name,
-    phone: supplier.phone,
-    address: supplier.address,
-    email: supplier.email
-  }
-}
-// 確認修改
-// PUT /api/update/{id}
-function updateSupplier() {
-  httpClient({
-    method: 'put',
-    url: `/api/update/${editData.value.id}`,
-    data: editData.value
-  })
-    .then(() => {
-      alert('修改成功')
-      // 關閉修改畫面
-      editData.value = null
-      // 重新查詢列表
-      fetchData()
-    })
-    .catch(error => {
-      console.error(
-        '修改供應商失敗：',
-        error
-      )
-    })
-}
-// 取消修改
-function cancelEdit() {
-  editData.value = null
-}
-// 刪除供應商
-// DELETE /api/supplier/{id}
-function deleteSupplier(id) {
-  // 使用者先確認
-  const result =
-    confirm('確定要刪除這筆供應商資料嗎？')
-  if (!result) {
-    return
-  }
-  httpClient({
-    method: 'delete',
-    url: `/api/supplier/${id}`
-  })
-    .then(() => {
-      alert('刪除成功')
-      // 刪除完成重新查詢
-      fetchData()
-    })
-    .catch(error => {
-      console.error(
-        '刪除供應商失敗：',
-        error
-      )
-    })
-}
 
 </script>
 <style >

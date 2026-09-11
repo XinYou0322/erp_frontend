@@ -1,20 +1,37 @@
-import { createRouter, createWebHistory } from "vue-router";
-import materail from "@/views/materialview/Material.vue";
-import product from "@/views/productview/Product.vue";
-import bom from "@/views/bomview/bom.vue";
-import LoginPage from "@/testErp-sheng/pages/LoginPage.vue";
-import PermissionPage from "@/testErp-sheng/pages/PermissionPage.vue";
-const routes = [
+import { createRouter, createWebHistory } from 'vue-router'
+import Home from '@/views/Home.vue'
+
+ const routes = [
   {
-    path: "/",
-    redirect: "/material",
+    path: '/home',
+    name: 'home',
+    component: Home
+  },
+    {
+    path: '/supplier/addsupplier',
+    name: 'addsupplier',
+    component: () => import("@/views/supplierview/addsuppliers.vue")
+  },
+    {
+    path: '/supplier',
+    name: 'supplier',
+    component: () => import("@/views/supplierview/suppliers.vue")
   },
   {
-    path: "/material",
-    name: "material",
-    component: materail,
+    path: '/pos',
+    name: 'pos',
+    component: () => import("@/views/pos/pos.vue")
   },
-  {
+
+//     name: 'product',
+//     component: product
+//   },
+//   {
+//     path: '/bom',
+//     name: 'bom',
+//     component: bom
+//   }
+{
     path: "/product",
     name: "product",
     component: product,

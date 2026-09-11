@@ -1,3 +1,8 @@
+<script setup>
+import Navbar from '@/components/NavBar.vue';
+import testbar from '@/components/testbar.vue';
+</script>
+
 <template>
   <div class="min-h-screen bg-[#F0F7FF] flex">
 <!--
