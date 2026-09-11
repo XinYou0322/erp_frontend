@@ -1,7 +1,8 @@
 <template>
 
-  <div class="erp-shell">
 
+  <div class="erp-shell">
+<WaveBackground />
     <Sidebar />
 
    <main class="erp-main ml-64 min-h-screen">
