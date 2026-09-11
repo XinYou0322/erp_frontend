@@ -6,6 +6,7 @@
         <RouterLink to="/supplier" class="erp-nav__item">供應商管理</RouterLink>
         <!-- <RouterLink to="/addsupplier" class="erp-nav__item">新增供應商</RouterLink> -->
         <RouterLink to="/pos" class="erp-nav__item">POS系統</RouterLink>
+         <RouterLink to="/workflows">簽核中心</RouterLink>
     </aside>
 </template>
 <script setup>

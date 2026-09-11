@@ -88,7 +88,8 @@
 </template>
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { RouterView } from 'vue-router'
+import { RouterView } from "vue-router";
+import AppShell from "@/component/layout/AppShell.vue";
 import Navbar from '@/components/NavBar.vue';
 import testbar from '@/components/testbar.vue';
 
@@ -152,10 +153,7 @@ const orders = ref<LiveOrder[]>([...mockLiveOrders]);
 // };
 
 
-
-
-
-<script setup>
-import { RouterView } from "vue-router";
-import AppShell from "@/component/layout/AppShell.vue";
 </script>
+
+
+
