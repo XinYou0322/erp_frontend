@@ -17,11 +17,11 @@ import Home from '@/views/Home.vue'
     name: 'supplier',
     component: () => import("@/views/supplierview/suppliers.vue")
   },
-  // {
-  //   path: '/product',
-  //   name: 'product',
-  //   component: product
-  // },
+   {
+     path: '/product',
+    name: 'product',
+     component: ()=> import("@/testXinyou/ProductBomManagement.vue")
+   },
   {
     path: '/bom',
     name: 'bom',
