@@ -5,12 +5,9 @@ import App from './App.vue'
 import router from './router'
 import './testXinyou/main.css'
 const app = createApp(App)
-import App from "./App.vue";
-import router from "./router";
 
 import "./testErp-sheng/index.css";
 
-const app = createApp(App);
 
 app.use(createPinia());
 app.use(router);
