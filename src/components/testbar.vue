@@ -1,5 +1,5 @@
 <template >
-    <aside class="erp-sidebar erp-sidebar--aurora">
+    <aside class="erp-sidebar erp-sidebar--botanical">
         <RouterLink to="/mate   rial" class="erp-nav__item">原物料管理</RouterLink>
         <RouterLink to="/product" class="erp-nav__item">商品管理</RouterLink>
         <RouterLink to="/bom" class="erp-nav__item">BOM管理</RouterLink>
