@@ -1,91 +1,17 @@
 <template>
-  <div class="min-h-screen bg-[#F0F7FF] flex">
-<!--
-背景波浪
--->
-<WaveBackground />
 
+   <div  class="erp-shell">
 
+    <testbar />
 
+    <main class="erp-main">
+      <router-view />
+    </main>
 
-
-<!--
-  Sidebar
-  current-tab  ：目前選中的選單
-  select-tab   ：切換選單
-  open-report  ：開啟營運報表
-  open-profile ：開啟個人資料
-  open-pos     ：開啟 POS 點餐
--->
-<Sidebar
-  :current-tab="currentTab"
-  @select-tab="currentTab = $event"
-  @open-report="reportModalOpen = true"
-  @open-profile="profileModalOpen = true"
-  @open-pos="posModalOpen = true"
-/>
-
-   <!-- 右側主要區域 -->
-<div class="flex-1 ml-64 flex flex-col min-h-screen">
-  <h1>You did it!</h1>
-  <!-- 1. 你的原本導覽列組件 -->
-  <NavBar />
-
-  <Header
-    :search-query="searchQuery"
-    :is-realtime-active="isRealtimeActive"
-    @search-change="searchQuery = $event"
-    @open-filter="filterModalOpen = true"
-    @open-report="reportModalOpen = true"
-    @open-profile="profileModalOpen = true"
-    @open-add-product="addProductModalOpen = true"
-    @open-pos="posModalOpen = true"
-    @toggle-realtime="isRealtimeActive = !isRealtimeActive"
-  />
-
-  <!-- 主要內容：只留一個 main -->
-  <main class="flex-1 p-6 w-full max-w-[1600px] mx-auto overflow-y-auto">
-
-    <Dashboard
-      v-if="currentTab === 'dashboard'"
-      :products="products"
-      :orders="orders"
-      :inventory="inventory"
-      @open-report="reportModalOpen = true"
-      @navigate-to-products="currentTab = 'products'"
-      @navigate-to-inventory="currentTab = 'inventory'"
-    />
-
-
-  <MaterialManagement
-    v-else-if="currentTab === 'materials'"
-  />
-<InventoryLogManagement
-  v-else-if="currentTab === 'inventoryLogs'"
-/>
-
-  <InventoryManagement
-  v-else-if="currentTab === 'inventory'"
-  @open-report="reportModalOpen = true"
-  @open-add-material="addMaterialModalOpen = true"
-  @open-inventory-intake="inventoryIntakeModalOpen = true"
-/>
-<ProductBomManagement
-  v-else-if="currentTab === 'recipes'"
-/>
-
-  </main>
-
-</div>
   </div>
-  <!-- 2. 主要路由內容切換區 -->
-  <RouterView />
 
-  <!-- 3. ✅ 補上通知中心側邊抽屜（點擊 NavBar 裡的鈴鐺時會自動滑出） -->
-  <NotificationCenterDrawer />
-
- 
 </template>
+
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { RouterView } from "vue-router";

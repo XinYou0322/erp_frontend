@@ -17,27 +17,27 @@ import Home from '@/views/Home.vue'
     name: 'supplier',
     component: () => import("@/views/supplierview/suppliers.vue")
   },
-  {
-    path: '/product',
-    name: 'product',
-    component: product
-  },
+  // {
+  //   path: '/product',
+  //   name: 'product',
+  //   component: product
+  // },
   {
     path: '/bom',
     name: 'bom',
-    component: bom
+    component: ()=> import("@/testXinyou/InventoryManagement.vue")
   },
-  { 
-    path: '/workflows', 
-    name: 'workflow-dashboard', 
-    component: WorkflowDashboard 
-  },
-  { 
-    path: '/workflows/:id', 
-    name: 'workflow-detail', 
-    component: WorkflowDetail, 
-    props: true 
-  },
+  // { 
+  //   path: '/workflows', 
+  //   name: 'workflow-dashboard', 
+  //   component: WorkflowDashboard 
+  // },
+  // { 
+  //   path: '/workflows/:id', 
+  //   name: 'workflow-detail', 
+  //   component: WorkflowDetail, 
+  //   props: true 
+  // },
 ]
 
 const router = createRouter({
