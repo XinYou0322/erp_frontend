@@ -171,7 +171,6 @@ import {
   ChevronDown,
   FlaskConical,
   Receipt,
-  ShieldUser,
 } from "lucide-vue-next";
 
 const route = useRoute();
@@ -259,17 +258,24 @@ const navItems = [
     icon: Sliders,
     path: "/settings",
   },
-  {
-    id: "PermissionPage",
-    label: "權限與用戶管理",
-    icon: ShieldUser,
-    path: "/PermissionPage",
-  },
-  {
-    id: "testings",
+{
+ id: "testings",
     label: "測試用欄位",
     icon: Sliders,
     path: "/material",
-  },
+
+
+
+},
+{
+ id: "testings15313",
+    label: "測試用欄位",
+    icon: Sliders,
+    path: "/supplier",
+
+
+
+}
+  
 ];
 </script>
