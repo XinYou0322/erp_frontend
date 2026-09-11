@@ -1,4 +1,3 @@
-
 <template>
   <div class="min-h-screen bg-[#F0F7FF] flex">
 <!--
@@ -155,4 +154,8 @@ const orders = ref<LiveOrder[]>([...mockLiveOrders]);
 
 
 
+
+<script setup>
+import { RouterView } from "vue-router";
+import AppShell from "@/component/layout/AppShell.vue";
 </script>
