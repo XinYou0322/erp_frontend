@@ -17,25 +17,32 @@ import Home from '@/views/Home.vue'
     name: 'supplier',
     component: () => import("@/views/supplierview/suppliers.vue")
   },
+  // {
+  //   path: '/product',
+  //   name: 'product',
+  //   component: product
+  // },
   {
-    path: '/pos',
-    name: 'pos',
-    component: () => import("@/views/pos/pos.vue")
+    path: '/bom',
+    name: 'bom',
+    component: ()=> import("@/testXinyou/InventoryManagement.vue")
   },
-
-//     name: 'product',
-//     component: product
-//   },
-//   {
-//     path: '/bom',
-//     name: 'bom',
-//     component: bom
-//   }
- ]
+  // { 
+  //   path: '/workflows', 
+  //   name: 'workflow-dashboard', 
+  //   component: WorkflowDashboard 
+  // },
+  // { 
+  //   path: '/workflows/:id', 
+  //   name: 'workflow-detail', 
+  //   component: WorkflowDetail, 
+  //   props: true 
+  // },
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: routes
-})
+  routes: routes,
+});
 
-export default router
+export default router;

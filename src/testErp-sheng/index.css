@@ -1,0 +1,152 @@
+/**
+ * =====================================================================
+ * 【全域樣式表 (Global Stylesheet)】: src/index.css
+ * =====================================================================
+ * 職責說明：
+ * 1. 引入 Tailwind CSS 核心樣式引擎 (@import "tailwindcss")。
+ * 2. 定義設計系統 Design Tokens (CSS 變數，控制主題色彩、容器背景、文字色)。
+ * 3. 設定 Google Material Symbols 圖示字型的渲染屬性。
+ * 4. 提供科技感 Bento Card 玻璃擬態效果 (backdrop-blur, border glow)。
+ * 5. 客製化暗色系視窗滾動條 (Scrollbar)。
+ */
+
+/* 引入現代化 Tailwind CSS v4 引擎 */
+@import url('https://googleapis.com');
+
+@import "tailwindcss";
+
+@layer base {
+  /* ===================================================================
+   * 1. 設計系統變數 (Design Tokens & Color Palette)
+   * 採用 Material Design 3 / Bento 暗黑科技風設計語彙
+   * =================================================================== */
+  :root {
+    /* 主題色 (Primary - 翠綠翡翠色，代表通過、安全、啟動) */
+    --primary: #10b981;
+    --primary-container: #059669;
+    --on-primary: #020617;
+
+    /* 次要色 (Secondary - 科技青藍色，代表操作、分析、亮點) */
+    --secondary: #06b6d4;
+    --secondary-container: #0891b2;
+
+    /* 輔助警示色 (Tertiary - 琥珀金橘色，代表審核中、警告、缺料) */
+    --tertiary: #f59e0b;
+
+    /* 暗色基底表面 (Surfaces - 由深至淺的立體階層) */
+    --surface: #020617;               /* 最底層黑色畫布 */
+    --surface-bright: #0f172a;        /* 亮面 Slate-900 */
+    --surface-dim: #020617;
+    --surface-container-lowest: #020617;
+    --surface-container-low: #090d16; /* 次層容器底色 */
+    --surface-container: #0f172a;     /* 主要卡片容器底色 */
+    --surface-container-high: #1e293b;/* 懸浮/高階卡片底色 */
+    --surface-container-highest: #334155;
+
+    /* 前景文字色彩 (Text Typography) */
+    --on-surface: #f8fafc;            /* 高對比亮白主文字 */
+    --on-surface-variant: #94a3b8;    /* 次要灰階輔助文字 */
+
+    /* 邊界與分隔線 (Outlines & Dividers) */
+    --outline: #334155;               /* 標準卡片邊框 */
+    --outline-variant: #1e293b;       /* 次要弱化邊框 */
+
+    /* 錯誤與危險 (Error - 玫瑰紅色，代表異常、嚴重短缺) */
+    --error: #f43f5e;
+    --error-container: #881337;
+    --on-error: #ffffff;
+  }
+
+  /* 網頁全域基礎排版與背景設定 */
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #020617; /* 極黑 Slate-950 背景，減少眼部疲勞 */
+    color: #f8fafc;
+  }
+
+  /* 數據專用等寬字型 (專門用於料號、金額、數量對齊) */
+  .font-data-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* =====================================================================
+ * 2. Google Material Symbols Outlined 圖示專用微調
+ * 確保圖示字型渲染銳利、不折行且具備 FILL 填滿動畫切換能力
+ * ===================================================================== */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* 當圖示需要填滿狀態時加上 .fill 類別 */
+.material-symbols-outlined.fill {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* =====================================================================
+ * 3. 便當盒卡片風格 (Bento Grid Card) 與毛玻璃發光特效
+ * ===================================================================== */
+.bento-card {
+  background-color: rgba(15, 23, 42, 0.75); /* 半透明 slate-900 */
+  backdrop-filter: blur(12px);               /* 背景高斯模糊，毛玻璃感 */
+  border: 1px solid rgba(51, 65, 85, 0.6);   /* 微弱細緻邊框 */
+  border-radius: 1.25rem;                     /* 20px 圓角 */
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease-in-out;
+}
+
+/* 滑鼠懸停時發出翡翠綠微光 */
+.bento-card:hover {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+/* 陰影層次階級 (立體浮凸感) */
+.shadow-level-1 {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+
+.shadow-level-2 {
+  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.6);
+}
+
+.card-shadow {
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
+}
+
+/* 輸入框聚焦時的翠綠呼吸光暈 */
+.input-glow:focus {
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+}
+
+/* =====================================================================
+ * 4. 客製化暗色系視窗捲軸 (Dark Mode Custom Scrollbar)
+ * 避免原生白色捲軸破壞暗黑科技介面的沉浸感
+ * ===================================================================== */
+::-webkit-scrollbar {
+  width: 6px;  /* 寬度收窄至 6px，維持介面俐落 */
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #090d16; /* 捲軸軌道極暗底色 */
+}
+::-webkit-scrollbar-thumb {
+  background: #334155; /* 滑塊顏色 Slate-700 */
+  border-radius: 9999px; /* 完全圓角膠囊造型 */
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569; /* 滑鼠移入時加亮滑塊 */
+}
+
