@@ -23,40 +23,33 @@ import Home from '@/views/Home.vue'
     component: () => import("@/views/pos/pos.vue")
   },
 
-//     name: 'product',
-//     component: product
+
+// {
+//     path: "/product",
+//     name: "product",
+//     component: product,
 //   },
 //   {
-//     path: '/bom',
-//     name: 'bom',
-//     component: bom
-//   }
-{
-    path: "/product",
-    name: "product",
-    component: product,
-  },
-  {
-    path: "/bom",
-    name: "bom",
-    component: bom,
-  },
-  {
-    path: "/LoginPage",
-    name: "LoginPage",
-    component: LoginPage,
-  },
-  {
-    path: "/PermissionPage",
-    name: "PermissionPage",
-    component: PermissionPage,
-  },
-  {
-    path: "/PermissionPage",
-    alias: ["/permissions"],
-    name: "PermissionPage",
-    component: PermissionPage,
-  },
+//     path: "/bom",
+//     name: "bom",
+//     component: bom,
+//   },
+//   {
+//     path: "/LoginPage",
+//     name: "LoginPage",
+//     component: LoginPage,
+//   },
+//   {
+//     path: "/PermissionPage",
+//     name: "PermissionPage",
+//     component: PermissionPage,
+//   },
+//   {
+//     path: "/PermissionPage",
+//     alias: ["/permissions"],
+//     name: "PermissionPage",
+//     component: PermissionPage,
+//   },
 ];
 
 const router = createRouter({

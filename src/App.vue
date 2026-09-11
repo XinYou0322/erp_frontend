@@ -1,7 +1,3 @@
-<script setup>
-import Navbar from '@/components/NavBar.vue';
-import testbar from '@/components/testbar.vue';
-</script>
 
 <template>
   <div class="min-h-screen bg-[#F0F7FF] flex">
@@ -89,15 +85,13 @@ import testbar from '@/components/testbar.vue';
   <!-- 3. ✅ 補上通知中心側邊抽屜（點擊 NavBar 裡的鈴鐺時會自動滑出） -->
   <NotificationCenterDrawer />
 
-  <p>
-    Visit
-    <a href="https://vuejs.org/" target="_blank" rel="noopener"> vuejs.org </a>
-  </p>
+ 
 </template>
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { RouterView } from 'vue-router'
-
+import Navbar from '@/components/NavBar.vue';
+import testbar from '@/components/testbar.vue';
 
 // 💡 補上通知抽屜組件的正確引入路徑
 import NotificationCenterDrawer from "@/testErp-sheng/components/NotificationCenterDrawer.vue";
