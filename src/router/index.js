@@ -38,6 +38,11 @@ import { createRouter, createWebHistory } from 'vue-router'
     component: ()=> import("@/view/InventoryLogManagement.vue")
   },
 
+   {
+    path: '/ComponentShowcase',
+    name: 'ComponentShowcase',
+    component: ()=> import("@/view/ComponentShowcase.vue")
+  },
   // { 
   //   path: '/workflows', 
   //   name: 'workflow-dashboard', 

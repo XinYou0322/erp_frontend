@@ -270,9 +270,9 @@ const navItems = [
 },
 {
  id: "testings15313",
-    label: "測試用欄位",
+    label: "展示用",
     icon: Sliders,
-    path: "/supplier",
+    path: "/ComponentShowcase",
 
 
 
