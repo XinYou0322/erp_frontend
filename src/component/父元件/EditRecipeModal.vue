@@ -7,39 +7,163 @@
     :icon="FlaskConical"
     @close="emit('close')"
   >
-    <div v-if="product" class="space-y-5">
-      <div class="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50/60 border border-blue-100 flex flex-wrap items-center justify-between gap-3">
+    <div
+      v-if="product"
+      class="space-y-5"
+    >
+      <!-- 商品資訊 -->
+      <div
+        class="
+          flex
+          flex-wrap
+          items-center
+          justify-between
+          gap-3
+          rounded-xl
+          border
+          border-[var(--outline)]
+          bg-[var(--surface-container-high)]
+          p-4
+        "
+      >
         <div>
-          <div class="flex items-center space-x-2">
-            <span class="font-bold text-sm text-[#181c23]">{{ product.name }}</span>
-            <span class="text-xs px-2 py-0.5 rounded bg-blue-100 text-[#0059bb] font-medium font-mono">{{ product.sku }}</span>
-            <span class="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">{{ product.category }}</span>
+          <div class="flex items-center gap-2">
+            <span
+              class="
+                text-sm
+                font-bold
+                text-[var(--on-surface)]
+              "
+            >
+              {{ product.name }}
+            </span>
+
+            <span
+              class="
+                rounded
+                bg-[var(--primary)]/15
+                px-2
+                py-0.5
+                text-xs
+                font-medium
+                font-data-mono
+                text-[var(--primary)]
+              "
+            >
+              {{ product.sku }}
+            </span>
+
+            <span
+              class="
+                rounded
+                bg-[var(--surface-container-highest)]
+                px-2
+                py-0.5
+                text-xs
+                text-[var(--on-surface-variant)]
+              "
+            >
+              {{ product.category }}
+            </span>
           </div>
-          <p class="text-xs text-gray-500 mt-1">
+
+          <p
+            class="
+              mt-1
+              text-xs
+              text-[var(--on-surface-variant)]
+            "
+          >
             銷售單位：{{ product.unit || '杯' }}
           </p>
         </div>
 
-        <div class="flex items-center space-x-4 text-xs font-mono">
+        <!-- 售價 / 成本 / 毛利率 -->
+        <div
+          class="
+            flex
+            items-center
+            gap-4
+            text-xs
+            font-data-mono
+          "
+        >
           <div class="text-right">
-            <span class="text-gray-400 block text-[10px]">門市售價</span>
-            <span class="font-bold text-base text-gray-900">
+            <span
+              class="
+                block
+                text-[10px]
+                text-[var(--on-surface-variant)]
+              "
+            >
+              門市售價
+            </span>
+
+            <span
+              class="
+                text-base
+                font-bold
+                text-[var(--on-surface)]
+              "
+            >
               NT$ {{ Number(product.sellingPrice || 0).toFixed(1) }}
             </span>
           </div>
 
-          <div class="text-right border-l pl-4 border-blue-200">
-            <span class="text-gray-400 block text-[10px]">配方單杯成本</span>
-            <span class="font-bold text-base text-blue-700">
+          <div
+            class="
+              border-l
+              border-[var(--outline)]
+              pl-4
+              text-right
+            "
+          >
+            <span
+              class="
+                block
+                text-[10px]
+                text-[var(--on-surface-variant)]
+              "
+            >
+              配方單杯成本
+            </span>
+
+            <span
+              class="
+                text-base
+                font-bold
+                text-[var(--primary)]
+              "
+            >
               NT$ {{ calculatedTotalCost.toFixed(1) }}
             </span>
           </div>
 
-          <div class="text-right border-l pl-4 border-blue-200">
-            <span class="text-gray-400 block text-[10px]">即時預估毛利率</span>
+          <div
+            class="
+              border-l
+              border-[var(--outline)]
+              pl-4
+              text-right
+            "
+          >
             <span
-              class="font-bold text-base"
-              :class="calculatedMargin >= 65 ? 'text-emerald-600' : 'text-amber-600'"
+              class="
+                block
+                text-[10px]
+                text-[var(--on-surface-variant)]
+              "
+            >
+              即時預估毛利率
+            </span>
+
+            <span
+              class="text-base font-bold"
+              :class="
+                calculatedMargin >= 65
+                  ? 'text-[var(--primary)]'
+                  : 'text-[var(--tertiary)]'
+              "
             >
               {{ calculatedMargin }}%
             </span>
@@ -47,59 +171,161 @@
         </div>
       </div>
 
+      <!-- BOM 原物料 -->
       <div class="space-y-3">
         <div class="flex items-center justify-between">
-          <h4 class="font-bold text-xs text-gray-700 flex items-center space-x-1.5">
-            <Layers class="w-4 h-4 text-[#0070ea]" />
-            <span>單杯消耗原物料清單 (Bill of Materials)</span>
+          <h4
+            class="
+              flex
+              items-center
+              gap-1.5
+              text-xs
+              font-bold
+              text-[var(--on-surface)]
+            "
+          >
+            <Layers
+              class="
+                h-4
+                w-4
+                text-[var(--primary)]
+              "
+            />
+
+            <span>
+              單杯消耗原物料清單 (Bill of Materials)
+            </span>
           </h4>
 
           <button
             type="button"
             @click="addIngredientRow"
-            class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#0059bb] font-bold text-xs flex items-center space-x-1 transition-colors cursor-pointer"
+            class="
+              flex
+              cursor-pointer
+              items-center
+              gap-1
+              rounded-lg
+              border
+              border-[var(--primary)]/30
+              bg-[var(--primary)]/10
+              px-2.5
+              py-1
+              text-xs
+              font-bold
+              text-[var(--primary)]
+              transition-colors
+              hover:bg-[var(--primary)]/20
+            "
           >
-            <Plus class="w-3.5 h-3.5" />
+            <Plus class="h-3.5 w-3.5" />
+
             <span>加入配方原料</span>
           </button>
         </div>
 
+        <!-- Loading -->
         <div
           v-if="loading"
-          class="border border-gray-200/80 rounded-xl bg-white p-6 text-center text-xs text-gray-400"
+          class="
+            rounded-xl
+            border
+            border-[var(--outline)]
+            bg-[var(--surface-container)]
+            p-6
+            text-center
+            text-xs
+            text-[var(--on-surface-variant)]
+          "
         >
           正在載入原物料與配方資料...
         </div>
 
+        <!-- BOM Table -->
         <div
           v-else
-          class="border border-gray-200/80 rounded-xl overflow-hidden bg-white"
+          class="
+            overflow-hidden
+            rounded-xl
+            border
+            border-[var(--outline)]
+            bg-[var(--surface-container)]
+          "
         >
-          <table class="w-full text-left text-xs border-collapse">
+          <table
+            class="
+              w-full
+              border-collapse
+              text-left
+              text-xs
+            "
+          >
             <thead>
-              <tr class="bg-gray-50 border-b border-gray-200/80 text-[11px] font-bold text-gray-500 uppercase">
-                <th class="py-2.5 px-3">原物料綁定庫存品項</th>
-                <th class="py-2.5 px-3 w-28">單杯用量</th>
-                <th class="py-2.5 px-3 w-24">計量單位</th>
-                <th class="py-2.5 px-3 w-28">原料進料成本</th>
-                <th class="py-2.5 px-3 w-24 text-right">單杯分攤成本</th>
-                <th class="py-2.5 px-2 w-10 text-center">操作</th>
+              <tr
+                class="
+                  border-b
+                  border-[var(--outline)]
+                  bg-[var(--surface-container-high)]
+                  text-[11px]
+                  font-bold
+                  uppercase
+                  text-[var(--on-surface-variant)]
+                "
+              >
+                <th class="px-3 py-2.5">
+                  原物料綁定庫存品項
+                </th>
+
+                <th class="w-28 px-3 py-2.5">
+                  單杯用量
+                </th>
+
+                <th class="w-24 px-3 py-2.5">
+                  計量單位
+                </th>
+
+                <th class="w-28 px-3 py-2.5">
+                  原料進料成本
+                </th>
+
+                <th class="w-24 px-3 py-2.5 text-right">
+                  單杯分攤成本
+                </th>
+
+                <th class="w-10 px-2 py-2.5 text-center">
+                  操作
+                </th>
               </tr>
             </thead>
 
-            <tbody class="divide-y divide-gray-100">
+            <tbody
+              class="
+                divide-y
+                divide-[var(--outline-variant)]
+              "
+            >
               <tr
                 v-for="(item, idx) in ingredientsList"
                 :key="idx"
-                class="hover:bg-blue-50/30 transition-colors"
+                class="
+                  transition-colors
+                  hover:bg-[var(--surface-container-high)]
+                "
               >
-                <td class="py-2.5 px-3">
+                <!-- 原物料 -->
+                <td class="px-3 py-2.5">
                   <select
                     v-model="item.materialId"
-                    @change="onMaterialChange(item)"
                     class="input-field py-1 text-xs"
+                    @change="onMaterialChange(item)"
                   >
-                    <option value="" disabled>請選擇原物料...</option>
+                    <option
+                      value=""
+                      disabled
+                    >
+                      請選擇原物料...
+                    </option>
+
                     <option
                       v-for="material in materials"
                       :key="material.id"
@@ -110,44 +336,95 @@
                   </select>
                 </td>
 
-                <td class="py-2.5 px-3">
+                <!-- 用量 -->
+                <td class="px-3 py-2.5">
                   <input
                     v-model.number="item.quantity"
                     type="number"
                     step="any"
                     min="0"
-                    class="input-field no-number-spinner py-1 text-xs font-mono"
+                    class="
+                      input-field
+                      no-number-spinner
+                      py-1
+                      text-xs
+                      font-data-mono
+                    "
                   />
                 </td>
 
-                <td class="py-2.5 px-3">
-                  <span class="px-2 py-1 bg-gray-100 rounded text-gray-600 font-mono">
+                <!-- 單位 -->
+                <td class="px-3 py-2.5">
+                  <span
+                    class="
+                      rounded
+                      bg-[var(--surface-container-highest)]
+                      px-2
+                      py-1
+                      font-data-mono
+                      text-[var(--on-surface-variant)]
+                    "
+                  >
                     {{ item.unit || '-' }}
                   </span>
                 </td>
 
-                <td class="py-2.5 px-3 text-gray-500 font-mono">
+                <!-- 原料成本 -->
+                <td
+                  class="
+                    px-3
+                    py-2.5
+                    font-data-mono
+                    text-[var(--on-surface-variant)]
+                  "
+                >
                   NT$ {{ getMaterialUnitCost(item.materialId) }}
                 </td>
 
-                <td class="py-2.5 px-3 text-right font-mono font-bold text-gray-800">
+                <!-- 單杯成本 -->
+                <td
+                  class="
+                    px-3
+                    py-2.5
+                    text-right
+                    font-data-mono
+                    font-bold
+                    text-[var(--on-surface)]
+                  "
+                >
                   NT$ {{ computeIngredientCost(item).toFixed(1) }}
                 </td>
 
-                <td class="py-2.5 px-2 text-center">
+                <!-- 刪除 -->
+                <td class="px-2 py-2.5 text-center">
                   <button
                     type="button"
-                    @click="removeIngredientRow(idx)"
-                    class="p-1 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
                     title="刪除此原料"
+                    @click="removeIngredientRow(idx)"
+                    class="
+                      cursor-pointer
+                      p-1
+                      text-[var(--on-surface-variant)]
+                      transition-colors
+                      hover:text-[var(--error)]
+                    "
                   >
-                    <Trash2 class="w-3.5 h-3.5" />
+                    <Trash2 class="h-3.5 w-3.5" />
                   </button>
                 </td>
               </tr>
 
+              <!-- 空資料 -->
               <tr v-if="ingredientsList.length === 0">
-                <td colspan="6" class="py-6 text-center text-gray-400 text-xs">
+                <td
+                  colspan="6"
+                  class="
+                    py-6
+                    text-center
+                    text-xs
+                    text-[var(--on-surface-variant)]
+                  "
+                >
                   尚未配置原物料清單，請點擊上方「加入配方原料」設定配比。
                 </td>
               </tr>
@@ -156,30 +433,62 @@
         </div>
       </div>
 
-      <div class="p-3 rounded-xl bg-gray-50 border border-gray-200/80 text-xs text-gray-500 flex items-center justify-between">
+      <!-- BOM 說明 -->
+      <div
+        class="
+          flex
+          items-center
+          justify-between
+          rounded-xl
+          border
+          border-[var(--outline)]
+          bg-[var(--surface-container-low)]
+          p-3
+          text-xs
+          text-[var(--on-surface-variant)]
+        "
+      >
         <span>
           儲存後會直接更新此商品的整份 BOM，並由後端重新計算商品成本。
         </span>
-        <span class="font-bold text-emerald-600">BOM 成本連動</span>
+
+        <span
+          class="
+            font-bold
+            text-[var(--primary)]
+          "
+        >
+          BOM 成本連動
+        </span>
       </div>
     </div>
 
+    <!-- Footer -->
     <template #footer>
       <button
         type="button"
-        @click="emit('close')"
         class="btn-secondary text-xs"
+        @click="emit('close')"
       >
         取消
       </button>
 
       <button
         type="button"
+        class="
+          btn-primary
+          flex
+          items-center
+          gap-1.5
+          text-xs
+        "
         @click="handleSaveRecipe"
-        class="btn-primary text-xs flex items-center space-x-1.5"
       >
-        <Save class="w-4 h-4" />
-        <span>儲存配方與更新成本</span>
+        <Save class="h-4 w-4" />
+
+        <span>
+          儲存配方與更新成本
+        </span>
       </button>
     </template>
   </ModalWrapper>

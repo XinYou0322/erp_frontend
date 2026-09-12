@@ -8,90 +8,254 @@
     @close="emit('close')"
   >
     <div class="space-y-5">
+
+      <!-- 說明區 -->
       <div
-        class="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50/60 border border-blue-100 flex flex-wrap items-center justify-between gap-3"
+        class="
+          p-4
+          rounded-xl
+          bg-[var(--surface-container-high)]
+          border
+          border-[var(--outline)]
+          flex
+          flex-wrap
+          items-center
+          justify-between
+          gap-3
+        "
       >
         <div>
-          <div class="font-bold text-sm text-[#181c23]">庫存異動作業</div>
-          <p class="text-xs text-gray-500 mt-1">
+          <div
+            class="
+              font-bold
+              text-sm
+              text-[var(--on-surface)]
+            "
+          >
+            庫存異動作業
+          </div>
+
+          <p
+            class="
+              text-xs
+              text-[var(--on-surface-variant)]
+              mt-1
+            "
+          >
             所有數量請輸入正數，系統會依異動類型自動判斷加庫或扣庫。
           </p>
         </div>
 
         <div class="flex items-center space-x-2 text-xs">
+
+          <!-- 扣庫 -->
           <span
-            class="px-2.5 py-1 rounded-full bg-red-50 text-red-700 font-bold"
+            class="
+              px-2.5
+              py-1
+              rounded-full
+              bg-[var(--error)]/15
+              text-[var(--error)]
+              border
+              border-[var(--error)]/30
+              font-bold
+            "
           >
             耗損 / 報廢 / 領料 = 扣庫
           </span>
+
+          <!-- 加庫 -->
           <span
-            class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold"
+            class="
+              px-2.5
+              py-1
+              rounded-full
+              bg-[var(--primary)]/15
+              text-[var(--primary)]
+              border
+              border-[var(--primary)]/30
+              font-bold
+            "
           >
             盤盈 = 加庫
           </span>
+
         </div>
       </div>
 
+
+      <!-- 明細標題 -->
       <div class="flex items-center justify-between">
+
         <h4
-          class="font-bold text-xs text-gray-700 flex items-center space-x-1.5"
+          class="
+            font-bold
+            text-xs
+            text-[var(--on-surface)]
+            flex
+            items-center
+            space-x-1.5
+          "
         >
-          <Boxes class="w-4 h-4 text-[#0070ea]" />
-          <span>異動明細</span>
+          <Boxes
+            class="
+              w-4
+              h-4
+              text-[var(--primary)]
+            "
+          />
+
+          <span>
+            異動明細
+          </span>
         </h4>
+
 
         <button
           type="button"
           @click="addAdjustmentRow"
-          class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#0059bb] font-bold text-xs flex items-center space-x-1 transition-colors cursor-pointer"
+          class="
+            px-2.5
+            py-1
+            rounded-lg
+            bg-[var(--primary)]/10
+            hover:bg-[var(--primary)]/20
+            text-[var(--primary)]
+            border
+            border-[var(--primary)]/30
+            font-bold
+            text-xs
+            flex
+            items-center
+            space-x-1
+            transition-colors
+            cursor-pointer
+          "
         >
           <Plus class="w-3.5 h-3.5" />
-          <span>加入異動項目</span>
+
+          <span>
+            加入異動項目
+          </span>
         </button>
+
       </div>
 
+
+      <!-- Loading -->
       <div
         v-if="loading"
-        class="border border-gray-200/80 rounded-xl bg-white p-6 text-center text-xs text-gray-400"
+        class="
+          border
+          border-[var(--outline)]
+          rounded-xl
+          bg-[var(--surface-container)]
+          p-6
+          text-center
+          text-xs
+          text-[var(--on-surface-variant)]
+        "
       >
         正在載入原物料資料...
       </div>
 
+
+      <!-- Table -->
       <div
         v-else
-        class="border border-gray-200/80 rounded-xl overflow-hidden bg-white"
+        class="
+          border
+          border-[var(--outline)]
+          rounded-xl
+          overflow-hidden
+          bg-[var(--surface-container)]
+        "
       >
         <div class="overflow-x-auto">
+
           <table
-            class="w-full min-w-[1050px] text-left text-xs border-collapse"
+            class="
+              w-full
+              min-w-[1050px]
+              text-left
+              text-xs
+              border-collapse
+            "
           >
+
             <thead>
               <tr
-                class="bg-gray-50 border-b border-gray-200/80 text-[11px] font-bold text-gray-500 uppercase"
+                class="
+                  bg-[var(--surface-container-high)]
+                  border-b
+                  border-[var(--outline)]
+                  text-[11px]
+                  font-bold
+                  text-[var(--on-surface-variant)]
+                  uppercase
+                "
               >
-                <th class="py-2.5 px-3 min-w-[190px]">原物料</th>
-                <th class="py-2.5 px-3 min-w-[170px]">庫存批次</th>
-                <th class="py-2.5 px-3 min-w-[145px]">異動類型</th>
-                <th class="py-2.5 px-3 w-28">數量</th>
-                <th class="py-2.5 px-3 w-20">單位</th>
-                <th class="py-2.5 px-3 min-w-[190px]">備註 / 原因</th>
-                <th class="py-2.5 px-2 w-12 text-center">操作</th>
+                <th class="py-2.5 px-3 min-w-[190px]">
+                  原物料
+                </th>
+
+                <th class="py-2.5 px-3 min-w-[170px]">
+                  庫存批次
+                </th>
+
+                <th class="py-2.5 px-3 min-w-[145px]">
+                  異動類型
+                </th>
+
+                <th class="py-2.5 px-3 w-28">
+                  數量
+                </th>
+
+                <th class="py-2.5 px-3 w-20">
+                  單位
+                </th>
+
+                <th class="py-2.5 px-3 min-w-[190px]">
+                  備註 / 原因
+                </th>
+
+                <th class="py-2.5 px-2 w-12 text-center">
+                  操作
+                </th>
               </tr>
             </thead>
 
-            <tbody class="divide-y divide-gray-100">
+
+            <tbody
+              class="
+                divide-y
+                divide-[var(--outline-variant)]
+              "
+            >
+
               <tr
                 v-for="(item, idx) in adjustmentItems"
                 :key="idx"
-                class="hover:bg-blue-50/30 transition-colors"
+                class="
+                  hover:bg-[var(--surface-container-high)]
+                  transition-colors
+                "
               >
+
+                <!-- 原物料 -->
                 <td class="py-2.5 px-3">
                   <select
                     v-model="item.materialId"
                     @change="onMaterialChange(item)"
                     class="input-field py-1 text-xs"
                   >
-                    <option value="" disabled>請選擇原物料...</option>
+                    <option
+                      value=""
+                      disabled
+                    >
+                      請選擇原物料...
+                    </option>
+
                     <option
                       v-for="material in materials"
                       :key="material.materialId"
@@ -102,30 +266,42 @@
                   </select>
                 </td>
 
+
+                <!-- 庫存批次 -->
                 <td class="py-2.5 px-3">
                   <select
                     v-model="item.inventoryId"
                     :disabled="!item.materialId || item.batchLoading"
                     class="input-field py-1 text-xs"
                   >
-                    <option value="" disabled>
+                    <option
+                      value=""
+                      disabled
+                    >
                       {{
-                        item.batchLoading ? "讀取批次中..." : "請選擇批次..."
+                        item.batchLoading
+                          ? "讀取批次中..."
+                          : "請選擇批次..."
                       }}
                     </option>
+
                     <option
                       v-for="batch in item.batches.filter(
-                        (batch) => Number(batch.quantity) > 0,
+                        (batch) => Number(batch.quantity) > 0
                       )"
                       :key="batch.inventoryId"
                       :value="batch.inventoryId"
                     >
-                      #{{ batch.inventoryId }} ｜剩餘 {{ batch.quantity }}
-                      {{ item.unit }} ｜{{ batch.expiryDate || "無效期" }}
+                      #{{ batch.inventoryId }}
+                      ｜剩餘 {{ batch.quantity }}
+                      {{ item.unit }}
+                      ｜{{ batch.expiryDate || "無效期" }}
                     </option>
                   </select>
                 </td>
 
+
+                <!-- 異動類型 -->
                 <td class="py-2.5 px-3">
                   <select
                     v-model="item.action"
@@ -141,24 +317,43 @@
                   </select>
                 </td>
 
+
+                <!-- 數量 -->
                 <td class="py-2.5 px-3">
                   <input
                     v-model.number="item.quantity"
                     type="number"
                     min="0"
                     step="any"
-                    class="input-field no-number-spinner py-1 text-xs font-mono"
+                    class="
+                      input-field
+                      no-number-spinner
+                      py-1
+                      text-xs
+                      font-data-mono
+                    "
                   />
                 </td>
 
+
+                <!-- 單位 -->
                 <td class="py-2.5 px-3">
                   <span
-                    class="px-2 py-1 bg-gray-100 rounded text-gray-600 font-mono"
+                    class="
+                      px-2
+                      py-1
+                      bg-[var(--surface-container-highest)]
+                      rounded
+                      text-[var(--on-surface-variant)]
+                      font-data-mono
+                    "
                   >
                     {{ item.unit || "-" }}
                   </span>
                 </td>
 
+
+                <!-- 備註 -->
                 <td class="py-2.5 px-3">
                   <input
                     v-model="item.note"
@@ -168,49 +363,108 @@
                   />
                 </td>
 
+
+                <!-- 刪除 -->
                 <td class="py-2.5 px-2 text-center">
                   <button
                     type="button"
                     @click="removeAdjustmentRow(idx)"
-                    class="p-1 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                    class="
+                      p-1
+                      text-[var(--on-surface-variant)]
+                      hover:text-[var(--error)]
+                      transition-colors
+                      cursor-pointer
+                    "
                     title="刪除此筆"
                   >
                     <Trash2 class="w-3.5 h-3.5" />
                   </button>
                 </td>
+
               </tr>
 
+
+              <!-- 空資料 -->
               <tr v-if="adjustmentItems.length === 0">
-                <td colspan="7" class="py-8 text-center text-gray-400 text-xs">
+
+                <td
+                  colspan="7"
+                  class="
+                    py-8
+                    text-center
+                    text-[var(--on-surface-variant)]
+                    text-xs
+                  "
+                >
                   尚未加入異動項目，請點擊右上角「加入異動項目」。
                 </td>
+
               </tr>
+
             </tbody>
+
           </table>
+
         </div>
       </div>
 
+
+      <!-- 錯誤訊息 -->
       <div
         v-if="errorMessage"
-        class="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-600"
+        class="
+          rounded-xl
+          border
+          border-[var(--error)]/30
+          bg-[var(--error)]/10
+          p-3
+          text-xs
+          text-[var(--error)]
+        "
       >
         {{ errorMessage }}
       </div>
 
+
+      <!-- Transaction 說明 -->
       <div
-        class="p-3 rounded-xl bg-gray-50 border border-gray-200/80 text-xs text-gray-500 flex items-center justify-between gap-3"
+        class="
+          p-3
+          rounded-xl
+          bg-[var(--surface-container-low)]
+          border
+          border-[var(--outline)]
+          text-xs
+          text-[var(--on-surface-variant)]
+          flex
+          items-center
+          justify-between
+          gap-3
+        "
       >
         <span>
           儲存時會一次送出所有異動；後端使用
           Transaction，任一筆失敗時整批不會寫入。
         </span>
-        <span class="font-bold text-[#0059bb] whitespace-nowrap"
-          >批次異動模式</span
+
+        <span
+          class="
+            font-bold
+            text-[var(--primary)]
+            whitespace-nowrap
+          "
         >
+          批次異動模式
+        </span>
       </div>
+
     </div>
 
+
+    <!-- Footer -->
     <template #footer>
+
       <button
         type="button"
         @click="emit('close')"
@@ -219,19 +473,32 @@
         取消
       </button>
 
+
       <button
         type="button"
         :disabled="saving"
         @click="handleSave"
-        class="btn-primary text-xs flex items-center space-x-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="
+          btn-primary
+          text-xs
+          flex
+          items-center
+          space-x-1.5
+          disabled:opacity-50
+          disabled:cursor-not-allowed
+        "
       >
         <Save class="w-4 h-4" />
-        <span>{{ saving ? "儲存中..." : "儲存全部異動" }}</span>
+
+        <span>
+          {{ saving ? "儲存中..." : "儲存全部異動" }}
+        </span>
       </button>
+
     </template>
+
   </ModalWrapper>
 </template>
-
 <script setup>
 import { ref, watch } from "vue";
 import { ClipboardList, Boxes, Plus, Trash2, Save } from "lucide-vue-next";

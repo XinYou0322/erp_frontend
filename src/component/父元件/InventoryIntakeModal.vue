@@ -15,9 +15,17 @@
 
       <!-- 原物料 -->
       <div>
-        <label class="block font-bold text-gray-700 text-xs mb-1">
+        <label
+          class="
+            block
+            font-bold
+            text-[var(--on-surface)]
+            text-xs
+            mb-1
+          "
+        >
           原物料
-          <span class="text-red-500">*</span>
+          <span class="text-[var(--error)]">*</span>
         </label>
 
         <select
@@ -25,7 +33,10 @@
           required
           class="input-field"
         >
-          <option value="" disabled>
+          <option
+            value=""
+            disabled
+          >
             請選擇原物料
           </option>
 
@@ -42,9 +53,17 @@
 
       <!-- 進貨數量 -->
       <div>
-        <label class="block font-bold text-gray-700 text-xs mb-1">
+        <label
+          class="
+            block
+            font-bold
+            text-[var(--on-surface)]
+            text-xs
+            mb-1
+          "
+        >
           進貨數量
-          <span class="text-red-500">*</span>
+          <span class="text-[var(--error)]">*</span>
         </label>
 
         <input
@@ -53,7 +72,7 @@
           min="0.0001"
           step="any"
           required
-          class="input-field"
+          class="input-field no-number-spinner"
           placeholder="請輸入本次進貨數量"
         />
       </div>
@@ -61,14 +80,22 @@
 
       <!-- 有效期限 -->
       <div>
-        <label class="block font-bold text-gray-700 text-xs mb-1">
+        <label
+          class="
+            block
+            font-bold
+            text-[var(--on-surface)]
+            text-xs
+            mb-1
+          "
+        >
           有效期限
         </label>
 
         <input
           v-model="expiryDate"
           type="date"
-          class="input-field font-mono"
+          class="input-field font-data-mono"
         />
       </div>
 
@@ -85,19 +112,29 @@
         取消
       </button>
 
+
       <button
         type="submit"
         form="add-inventory-form"
-        class="btn-primary text-xs flex items-center space-x-1.5"
+        class="
+          btn-primary
+          text-xs
+          flex
+          items-center
+          space-x-1.5
+        "
       >
         <Check class="w-4 h-4" />
-        <span>確認入庫</span>
+
+        <span>
+          確認入庫
+        </span>
       </button>
 
     </template>
+
   </ModalWrapper>
 </template>
-
 
 <script setup>
 

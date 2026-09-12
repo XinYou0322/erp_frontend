@@ -18,9 +18,17 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
         <div>
-          <label class="block font-bold text-gray-700 text-xs mb-1">
+          <label
+            class="
+              block
+              font-bold
+              text-[var(--on-surface)]
+              text-xs
+              mb-1
+            "
+          >
             原物料名稱
-            <span class="text-red-500">*</span>
+            <span class="text-[var(--error)]">*</span>
           </label>
 
           <input
@@ -34,9 +42,17 @@
 
 
         <div>
-          <label class="block font-bold text-gray-700 text-xs mb-1">
+          <label
+            class="
+              block
+              font-bold
+              text-[var(--on-surface)]
+              text-xs
+              mb-1
+            "
+          >
             物料代碼
-            <span class="text-red-500">*</span>
+            <span class="text-[var(--error)]">*</span>
           </label>
 
           <input
@@ -53,9 +69,18 @@
 
       <!-- 單位 -->
       <div>
-        <label class="block font-bold text-gray-700 text-xs mb-1">
+
+        <label
+          class="
+            block
+            font-bold
+            text-[var(--on-surface)]
+            text-xs
+            mb-1
+          "
+        >
           計量單位
-          <span class="text-red-500">*</span>
+          <span class="text-[var(--error)]">*</span>
         </label>
 
         <select
@@ -74,16 +99,31 @@
           <option value="箱">箱</option>
           <option value="支">支</option>
         </select>
+
       </div>
 
 
       <!-- 安全庫存 / 成本 -->
       <div
-        class="p-3.5 rounded-xl bg-blue-50/50 border border-blue-100 space-y-3"
+        class="
+          p-3.5
+          rounded-xl
+          bg-[var(--surface-container-high)]
+          border
+          border-[var(--outline)]
+          space-y-3
+        "
       >
 
         <div
-          class="flex items-center space-x-1.5 text-xs font-bold text-[#0059bb]"
+          class="
+            flex
+            items-center
+            space-x-1.5
+            text-xs
+            font-bold
+            text-[var(--primary)]
+          "
         >
           <Layers class="w-4 h-4" />
 
@@ -98,7 +138,15 @@
           <!-- 安全庫存 -->
           <div>
 
-            <label class="block font-semibold text-gray-600 text-xs mb-1">
+            <label
+              class="
+                block
+                font-semibold
+                text-[var(--on-surface-variant)]
+                text-xs
+                mb-1
+              "
+            >
               安全庫存
             </label>
 
@@ -110,11 +158,18 @@
                 step="any"
                 min="0"
                 required
-                class="input-field no-number-spinner bg-white pr-12"
+                class="input-field no-number-spinner pr-12"
               />
 
               <span
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"
+                class="
+                  absolute
+                  right-3
+                  top-1/2
+                  -translate-y-1/2
+                  text-[var(--on-surface-variant)]
+                  text-xs
+                "
               >
                 {{ unit }}
               </span>
@@ -127,7 +182,15 @@
           <!-- 成本 -->
           <div>
 
-            <label class="block font-semibold text-gray-600 text-xs mb-1">
+            <label
+              class="
+                block
+                font-semibold
+                text-[var(--on-surface-variant)]
+                text-xs
+                mb-1
+              "
+            >
               原物料成本 (NT$)
             </label>
 
@@ -139,11 +202,18 @@
                 step="any"
                 min="0"
                 required
-                class="input-field no-number-spinner bg-white pr-14"
+                class="input-field no-number-spinner pr-14"
               />
 
               <span
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"
+                class="
+                  absolute
+                  right-3
+                  top-1/2
+                  -translate-y-1/2
+                  text-[var(--on-surface-variant)]
+                  text-xs
+                "
               >
                 /{{ unit }}
               </span>
@@ -173,7 +243,13 @@
       <button
         type="submit"
         form="add-material-form"
-        class="btn-primary text-xs flex items-center space-x-1.5"
+        class="
+          btn-primary
+          text-xs
+          flex
+          items-center
+          space-x-1.5
+        "
       >
 
         <Check class="w-4 h-4" />

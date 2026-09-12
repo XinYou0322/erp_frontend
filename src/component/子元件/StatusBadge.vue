@@ -1,97 +1,191 @@
 <template>
   <span
-    class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+    class="
+      inline-flex
+      items-center
+      space-x-1.5
+      px-2.5
+      py-0.5
+      rounded-full
+      text-xs
+      font-semibold
+    "
     :class="statusClasses"
   >
+
     <span
       v-if="showDot"
-      class="w-1.5 h-1.5 rounded-full"
+      class="
+        w-1.5
+        h-1.5
+        rounded-full
+      "
       :class="dotClasses"
     ></span>
+
     <span>{{ labelText }}</span>
+
   </span>
 </template>
 
+
 <script setup lang="ts">
-import { computed } from 'vue';
+
+import { computed } from 'vue'
+
 
 const props = withDefaults(
   defineProps<{
-    status: 'active' | 'low_stock' | 'out_of_stock' | 'archived' | 'normal' | 'low' | 'urgent' | 'pending' | 'preparing' | 'completed';
-    label?: string;
-    showDot?: boolean;
+    status:
+      | 'active'
+      | 'low_stock'
+      | 'out_of_stock'
+      | 'archived'
+      | 'normal'
+      | 'low'
+      | 'urgent'
+      | 'pending'
+      | 'preparing'
+      | 'completed'
+
+    label?: string
+    showDot?: boolean
   }>(),
   {
-    showDot: true,
+    showDot: true
   }
-);
+)
+
 
 const statusClasses = computed(() => {
+
   switch (props.status) {
+
+    // 正常 / 成功
     case 'active':
     case 'normal':
     case 'completed':
-      return 'bg-emerald-50 text-emerald-700 border border-emerald-200/50';
+      return `
+        bg-[var(--primary)]/15
+        text-[var(--primary)]
+        border
+        border-[var(--primary)]/30
+      `
+
+
+    // 警告 / 進行中
     case 'low_stock':
     case 'low':
     case 'preparing':
-      return 'bg-amber-50 text-amber-700 border border-amber-200/50';
+      return `
+        bg-[var(--tertiary)]/15
+        text-[var(--tertiary)]
+        border
+        border-[var(--tertiary)]/30
+      `
+
+
+    // 危險 / 缺貨
     case 'out_of_stock':
     case 'urgent':
-      return 'bg-red-50 text-red-700 border border-red-200/50';
+      return `
+        bg-[var(--error)]/15
+        text-[var(--error)]
+        border
+        border-[var(--error)]/30
+      `
+
+
+    // 次要 / 未處理
     case 'archived':
     case 'pending':
     default:
-      return 'bg-gray-100 text-gray-600 border border-gray-200/50';
+      return `
+        bg-[var(--surface-container-high)]
+        text-[var(--on-surface-variant)]
+        border
+        border-[var(--outline)]
+      `
   }
-});
+
+})
+
 
 const dotClasses = computed(() => {
+
   switch (props.status) {
+
     case 'active':
     case 'normal':
     case 'completed':
-      return 'bg-emerald-500';
+      return 'bg-[var(--primary)]'
+
+
     case 'low_stock':
     case 'low':
-      return 'bg-amber-500 animate-pulse';
+      return 'bg-[var(--tertiary)] animate-pulse'
+
+
     case 'preparing':
-      return 'bg-amber-500 animate-ping';
+      return 'bg-[var(--tertiary)] animate-ping'
+
+
     case 'out_of_stock':
     case 'urgent':
-      return 'bg-red-500 animate-pulse';
+      return 'bg-[var(--error)] animate-pulse'
+
+
     case 'archived':
     case 'pending':
     default:
-      return 'bg-gray-400';
+      return 'bg-[var(--on-surface-variant)]'
   }
-});
+
+})
+
 
 const labelText = computed(() => {
-  if (props.label) return props.label;
-  switch (props.status) {
-    case 'active':
-      return '販售中';
-    case 'low_stock':
-      return '庫存告急';
-    case 'out_of_stock':
-      return '已售罄';
-    case 'archived':
-      return '已封存';
-    case 'normal':
-      return '存量充足';
-    case 'low':
-      return '偏低需補';
-    case 'urgent':
-      return '緊急缺料';
-    case 'pending':
-      return '等候接單';
-    case 'preparing':
-      return '調飲製作中';
-    case 'completed':
-      return '已出餐';
-    default:
-      return props.status;
+
+  if (props.label) {
+    return props.label
   }
-});
+
+  switch (props.status) {
+
+    case 'active':
+      return '販售中'
+
+    case 'low_stock':
+      return '庫存告急'
+
+    case 'out_of_stock':
+      return '已售罄'
+
+    case 'archived':
+      return '已封存'
+
+    case 'normal':
+      return '存量充足'
+
+    case 'low':
+      return '偏低需補'
+
+    case 'urgent':
+      return '緊急缺料'
+
+    case 'pending':
+      return '等候接單'
+
+    case 'preparing':
+      return '調飲製作中'
+
+    case 'completed':
+      return '已出餐'
+
+    default:
+      return props.status
+  }
+
+})
+
 </script>
