@@ -1,53 +1,53 @@
 import { createRouter, createWebHistory } from "vue-router";
-import Home from "@/views222222/Home.vue";
+import { useAuthStore } from "@/stores/auth.store";
 
 const routes = [
   {
-    path: "/home",
-    name: "home",
-    component: Home,
+    path: "/",
+    redirect: "/permissions",
   },
   {
-    path: "/supplier/addsupplier",
-    name: "addsupplier",
-    component: () => import("@/views222222/supplierview/addsuppliers.vue"),
+    path: "/login",
+    name: "login",
+    component: () => import("@/view/LoginPage.vue"),
+    meta: { guestOnly: true },
   },
   {
-    path: "/supplier",
-    name: "supplier",
-    component: () => import("@/views222222/supplierview/suppliers.vue"),
+    path: "/LoginPage",
+    redirect: "/login",
   },
   {
-    path: "/product",
-    name: "product",
-    component: () => import("@/testXinyou/ProductBomManagement.vue"),
-  },
-  {
-    path: "/bom",
-    name: "bom",
-    component: () => import("@/testXinyou/InventoryManagement.vue"),
+    path: "/permissions",
+    name: "permissions",
+    component: () => import("@/view/PermissionPage.vue"),
+    meta: { requiresAuth: true },
   },
   {
     path: "/PermissionPage",
-    name: "PermissionPage",
-    component: () => import("@/view/PermissionPage.vue"),
+    redirect: "/permissions",
   },
-  // {
-  //   path: '/workflows',
-  //   name: 'workflow-dashboard',
-  //   component: WorkflowDashboard
-  // },
-  // {
-  //   path: '/workflows/:id',
-  //   name: 'workflow-detail',
-  //   component: WorkflowDetail,
-  //   props: true
-  // },
+  {
+    path: "/material",
+    name: "material",
+    component: () => import("@/view/MaterialManagement.vue"),
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: routes,
+  routes,
+});
+
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore();
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    next("/login");
+  } else if (to.meta.guestOnly && authStore.isAuthenticated) {
+    next("/permissions");
+  } else {
+    next();
+  }
 });
 
 export default router;

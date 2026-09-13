@@ -4,15 +4,15 @@
  * =====================================================================
  * 職責說明：
  * 1. 集中管理全系統即時通知、預警通報與待辦提醒（庫存預警、簽核審批、採購物流、資安風險、系統公告）。
- * 2. 支援未讀計數、分類篩選、單則/批次已讀標記、通知清除與本地持久化儲存 (localStorage)。
- * 3. 具備深層路由導航跳轉 (Action Route Deep-Link)，點擊通知可直接導向對應業務功能頁面。
- * 4. 內建 Web Audio API 微音效播送與系統事件自動偵測同步 (Auto Sync System Alerts)。
+ * 2. 串接後端 NotificationController 與 WebSocket 即時推播中樞。
+ * 3. 支援未讀計數、分類篩選、單則/批次已讀標記、通知清除與本地快取。
+ * 4. 內建 Web Audio API 微音效播送與系統事件自動偵測同步。
  */
 
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import { StorageService } from "../service/storage.service";
-import httpClient from "/src/service/httpClient.js";
+import httpClient from "@/service/httpClient";
 
 /** 預設初始通知資料集 */
 const INITIAL_NOTIFICATIONS = [
@@ -23,7 +23,7 @@ const INITIAL_NOTIFICATIONS = [
       "【衣索比亞 耶加雪菲 生豆】當前庫存僅存 8.0 kg，已低於安全庫存警戒線 (20 kg)，建議立即安排採購。",
     type: "warning",
     category: "inventory",
-    timestamp: new Date(Date.now() - 1000 * 60 * 12).toISOString(), // 12 分鐘前
+    timestamp: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
     isRead: false,
     actionLabel: "前往庫存補充",
     actionRoute: "/bom",
@@ -35,7 +35,7 @@ const INITIAL_NOTIFICATIONS = [
       "單號 PO-2026-0301（宏達咖啡原物料，$18,400）目前停留在「主管審核」階段，待您簽核放行。",
     type: "info",
     category: "workflow",
-    timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 分鐘前
+    timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
     isRead: false,
     actionLabel: "進行審批簽核",
     actionRoute: "/workflows",
@@ -47,34 +47,10 @@ const INITIAL_NOTIFICATIONS = [
       "佳賀包裝科技供應之【牛皮紙透氣閥夾鏈袋 250g】1,000 PCS 已全數入庫驗收完畢。",
     type: "success",
     category: "supplier",
-    timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(), // 3 小時前
+    timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
     isRead: true,
     actionLabel: "查看採購歷程",
     actionRoute: "/suppliers",
-  },
-  {
-    id: "ntf-sec-01",
-    title: "資安稽核：異地 IP 登入警示",
-    message:
-      "帳號 linda.wang@humanist.coffee 於 13:42 透過非常用 IP (210.68.12.9) 登入系統後台。",
-    type: "danger",
-    category: "security",
-    timestamp: new Date(Date.now() - 1000 * 60 * 360).toISOString(), // 6 小時前
-    isRead: false,
-    actionLabel: "查看安全日誌",
-    actionRoute: "/permissions",
-  },
-  {
-    id: "ntf-sys-01",
-    title: "系統資料自動雲端備份完成",
-    message:
-      "每日例行性 ERP 多階 BOM 結構樹、供應商資產與 POS 銷售單據已成功加密快照備份。",
-    type: "info",
-    category: "system",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 天前
-    isRead: true,
-    actionLabel: "查看系統設定",
-    actionRoute: "/overview",
   },
 ];
 
@@ -100,7 +76,12 @@ export const useNotificationStore = defineStore("notification", () => {
     StorageService.get("notification_auto_low_stock", true),
   );
 
-  // 當通知清單異動時自動快取至 localStorage
+  /** 後端同步未讀計數 */
+  const backendUnreadCount = ref(null);
+
+  let socket = null;
+
+  // 快取持久化
   watch(
     notifications,
     (newList) => {
@@ -122,6 +103,9 @@ export const useNotificationStore = defineStore("notification", () => {
   // =====================================================================
   /** 未讀通知總數量 */
   const unreadCount = computed(() => {
+    if (backendUnreadCount.value !== null) {
+      return backendUnreadCount.value;
+    }
     return notifications.value.filter((n) => !n.isRead).length;
   });
 
@@ -174,50 +158,9 @@ export const useNotificationStore = defineStore("notification", () => {
       );
   });
 
-  let socket = null;
-  // 連接後端 WebSocket
-  function connectWebSocket(userId) {
-    if (socket) socket.close();
-    const wsUrl = `ws://localhost:8080/ws/notifications?userId=${userId}`;
-    socket = new WebSocket(wsUrl);
-    socket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.action === "NEW_NOTIFICATION" && data.notification) {
-          const item = data.notification;
-          // 映射後端欄位到前端
-          addNotification(
-            {
-              id: item.id,
-              title: item.title,
-              message: item.content, // 後端 content -> 前端 message
-              type: item.type,
-              category: item.category,
-              actionRoute: item.actionRoute,
-              timestamp: item.createdAt,
-            },
-            true,
-          );
-        }
-      } catch (e) {
-        console.error("解析通知推播失敗", e);
-      }
-    };
-  }
-  // 撈取未讀數量
-  async function fetchUnreadCount() {
-    try {
-      const res = await httpClient.get("/api/notifications/unread-count");
-      // 更新狀態...
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
   // =====================================================================
-  // 3. 輔助函式 (Audio Notification Sound)
+  // 3. 提示音效 (Audio Notification)
   // =====================================================================
-  /** 播放優雅輕快的 Web Audio 微音效 (無需加載外置音頻檔) */
   const playNotificationChime = () => {
     if (!soundEnabled.value) return;
     try {
@@ -227,17 +170,16 @@ export const useNotificationStore = defineStore("notification", () => {
       const ctx = new AudioContextClass();
 
       const now = ctx.currentTime;
-      // 雙音和弦 (E5 -> G#5)
       const osc1 = ctx.createOscillator();
       const osc2 = ctx.createOscillator();
       const gain = ctx.createGain();
 
       osc1.type = "sine";
-      osc1.frequency.setValueAtTime(659.25, now); // E5
-      osc1.frequency.exponentialRampToValueAtTime(830.61, now + 0.12); // G#5
+      osc1.frequency.setValueAtTime(659.25, now);
+      osc1.frequency.exponentialRampToValueAtTime(830.61, now + 0.12);
 
       osc2.type = "triangle";
-      osc2.frequency.setValueAtTime(329.63, now); // E4
+      osc2.frequency.setValueAtTime(329.63, now);
       osc2.frequency.exponentialRampToValueAtTime(415.3, now + 0.12);
 
       gain.gain.setValueAtTime(0.15, now);
@@ -257,72 +199,216 @@ export const useNotificationStore = defineStore("notification", () => {
   };
 
   // =====================================================================
-  // 4. 操作函式 (Actions)
+  // 4. WebSocket 即時通訊與後端 API 串接
   // =====================================================================
-  /**
-   * 新增一筆通知
-   * @param {Object} item 通知內容
-   * @param {boolean} [playSound=true] 是否播放提示音
-   */
+
+  /** 連接後端 WebSocket 推播中樞 */
+  function connectWebSocket(userId) {
+    if (!userId) return;
+    if (
+      socket &&
+      (socket.readyState === WebSocket.OPEN ||
+        socket.readyState === WebSocket.CONNECTING)
+    ) {
+      return;
+    }
+    try {
+      const baseURL =
+        import.meta.env.VITE_AXIOS_HTTP_BASEURL || "http://localhost:8080";
+      const wsProto = baseURL.startsWith("https") ? "wss" : "ws";
+      const wsHost = baseURL.replace(/^https?:\/\//, "");
+      const wsUrl = `${wsProto}://${wsHost}/ws/notifications?userId=${userId}`;
+
+      socket = new WebSocket(wsUrl);
+
+      socket.onopen = () => {
+        console.log(`[WebSocket] 通知中心已連線: userId=${userId}`);
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.action === "NEW_NOTIFICATION" && data.notification) {
+            const item = data.notification;
+            addNotification(
+              {
+                id: item.id,
+                title: item.title,
+                message: item.content,
+                type: item.type,
+                category: item.category,
+                actionRoute: item.actionRoute,
+                timestamp: item.createdAt,
+                isRead: item.read || false,
+              },
+              true,
+            );
+            if (typeof data.unreadCount === "number") {
+              backendUnreadCount.value = data.unreadCount;
+            }
+          }
+        } catch (e) {
+          console.error("[WebSocket] 解析通知訊息失敗:", e);
+        }
+      };
+
+      socket.onclose = () => {
+        console.log("[WebSocket] 連線關閉");
+        socket = null;
+      };
+
+      socket.onerror = (err) => {
+        console.warn("[WebSocket] 連線異常:", err);
+      };
+    } catch (err) {
+      console.warn("WebSocket 建立失敗:", err);
+    }
+  }
+
+  /** 從後端取得真實未讀通知數量 */
+  async function fetchUnreadCount() {
+    try {
+      const res = await httpClient.get("/api/notifications/unread-count");
+      if (typeof res.data === "number") {
+        backendUnreadCount.value = res.data;
+      }
+    } catch (err) {
+      // 靜默降級使用前端計算
+    }
+  }
+
+  /** 從後端拉取真實歷史通知 */
+  async function fetchNotifications() {
+    try {
+      const res = await httpClient.get("/api/notifications", {
+        params: {
+          category: activeCategory.value,
+          onlyUnread: onlyUnread.value,
+          page: 0,
+          size: 30,
+        },
+      });
+      if (Array.isArray(res.data)) {
+        const serverItems = res.data.map((item) => ({
+          id: item.id,
+          title: item.title,
+          message: item.content,
+          type: item.type,
+          category: item.category,
+          actionRoute: item.actionRoute,
+          timestamp: item.createdAt,
+          isRead: item.read || false,
+        }));
+        notifications.value = serverItems;
+      }
+    } catch (err) {
+      console.warn("拉取後端通知失敗，保留本地快取清單:", err);
+    }
+  }
+
+  // =====================================================================
+  // 5. 操作函式 (Actions)
+  // =====================================================================
   const addNotification = (item, playSound = true) => {
     const newNotification = {
-      id: `ntf-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      id:
+        item.id ||
+        `ntf-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       title: item.title || "系統新通知",
       message: item.message || "",
-      type: item.type || "info", // 'warning' | 'danger' | 'info' | 'success'
+      type: item.type || "info",
       category: item.category || "system",
       timestamp: item.timestamp || new Date().toISOString(),
-      isRead: false,
+      isRead: item.isRead || false,
       actionLabel: item.actionLabel || "",
       actionRoute: item.actionRoute || "",
     };
 
     notifications.value.unshift(newNotification);
+    if (backendUnreadCount.value !== null) {
+      backendUnreadCount.value++;
+    }
     if (playSound) {
       playNotificationChime();
     }
   };
 
-  /** 單則標記為已讀 */
-  const markAsRead = (id) => {
+  /** 單則標記已讀 (同步後端) */
+  const markAsRead = async (id) => {
     const target = notifications.value.find((n) => n.id === id);
-    if (target) {
+    if (target && !target.isRead) {
       target.isRead = true;
+      if (backendUnreadCount.value !== null && backendUnreadCount.value > 0) {
+        backendUnreadCount.value--;
+      }
+    }
+    try {
+      await httpClient.patch(`/api/notifications/${id}/read`);
+    } catch (e) {
+      // 忽略錯誤
     }
   };
 
-  /** 切換單則已讀/未讀狀態 */
   const toggleRead = (id) => {
     const target = notifications.value.find((n) => n.id === id);
     if (target) {
-      target.isRead = !target.isRead;
+      if (target.isRead) {
+        target.isRead = false;
+        if (backendUnreadCount.value !== null) backendUnreadCount.value++;
+      } else {
+        markAsRead(id);
+      }
     }
   };
 
-  /** 全部標記為已讀 */
-  const markAllAsRead = () => {
+  /** 全部標記為已讀 (同步後端) */
+  const markAllAsRead = async () => {
     notifications.value.forEach((n) => {
       n.isRead = true;
     });
+    backendUnreadCount.value = 0;
+    try {
+      await httpClient.post("/api/notifications/mark-all-read", {
+        category: activeCategory.value,
+      });
+    } catch (e) {
+      console.warn("標記全部已讀請求失敗:", e);
+    }
   };
 
-  /** 刪除單則通知 */
   const removeNotification = (id) => {
     notifications.value = notifications.value.filter((n) => n.id !== id);
   };
 
-  /** 清空所有已讀通知 */
   const clearRead = () => {
     notifications.value = notifications.value.filter((n) => !n.isRead);
   };
 
-  /** 清空所有通知 */
-  const clearAll = () => {
+  /** 清空通知 (同步後端) */
+  const clearAll = async () => {
     notifications.value = [];
+    backendUnreadCount.value = 0;
+    try {
+      await httpClient.delete(
+        `/api/notifications/clear?category=${activeCategory.value}`,
+      );
+    } catch (e) {
+      console.warn("清空通知失敗:", e);
+    }
   };
 
-  /** 產生一則測試通知 (用於 UI 體驗驗證) */
-  const triggerSampleAlert = () => {
+  /** 觸發後端產生一則測試通知 */
+  const triggerSampleAlert = async (userId) => {
+    try {
+      if (userId) {
+        await httpClient.post("/api/notifications/trigger-sample", { userId });
+        return;
+      }
+    } catch (err) {
+      console.warn("後端觸發測試通知失敗，降級使用本地模擬:", err);
+    }
+
+    // 本地模擬防禦
     const samples = [
       {
         title: "生豆即時降載預警",
@@ -330,46 +416,27 @@ export const useNotificationStore = defineStore("notification", () => {
           "【哥倫比亞 薇拉 水洗豆】烘豆車間連續提領 25kg，庫存即將觸及安全下限！",
         type: "warning",
         category: "inventory",
-        actionLabel: "檢查庫存明細",
-        actionRoute: "/bom",
+        actionRoute: "/material",
       },
       {
         title: "新請假審批申請",
         message: "員工「Alex Smith」送出特休假單申請 (2天)，待主管核簽。",
         type: "info",
         category: "workflow",
-        actionLabel: "前往假單審批",
-        actionRoute: "/workflows",
+        actionRoute: "/permissions",
       },
       {
-        title: "POS 收銀日結報表產出",
-        message:
-          "今日門市營業累計 $32,850 已自動核對完成，營收超越預期目標 115%！",
+        title: "採購訂單到貨通知",
+        message: "供應商「大宗生豆進口商」已完成出貨，預計明日抵達總倉。",
         type: "success",
-        category: "system",
-        actionLabel: "查看營運儀表板",
-        actionRoute: "/analytics",
-      },
-      {
-        title: "供應商合約到期提醒",
-        message:
-          "「永勝烘焙包材」年度特約供貨合約將於 14 天後到期，請評估是否續約。",
-        type: "info",
         category: "supplier",
-        actionLabel: "檢視供應商資料",
-        actionRoute: "/suppliers",
+        actionRoute: "/material",
       },
     ];
-
     const randomSample = samples[Math.floor(Math.random() * samples.length)];
     addNotification(randomSample, true);
   };
 
-  /**
-   * 格式化相對時間 (如 "3 分鐘前"、"2 小時前")
-   * @param {string} isoString
-   * @returns {string}
-   */
   const formatTimeAgo = (isoString) => {
     if (!isoString) return "";
     const diffMs = Date.now() - new Date(isoString).getTime();
@@ -391,18 +458,15 @@ export const useNotificationStore = defineStore("notification", () => {
   };
 
   return {
-    // 狀態
     notifications,
     activeCategory,
     onlyUnread,
     soundEnabled,
     autoAlertLowStock,
-    // 計算屬性
     unreadCount,
     unreadCountsByCategory,
     hasUrgentNotification,
     filteredNotifications,
-    // 動作
     addNotification,
     markAsRead,
     toggleRead,
@@ -414,5 +478,7 @@ export const useNotificationStore = defineStore("notification", () => {
     formatTimeAgo,
     playNotificationChime,
     connectWebSocket,
+    fetchUnreadCount,
+    fetchNotifications,
   };
 });

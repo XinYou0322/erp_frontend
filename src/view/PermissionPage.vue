@@ -85,6 +85,10 @@ const filteredUsers = computed(() => {
   return list;
 });
 
+const activeUsersCount = computed(() => {
+  return authStore.users.filter((u: any) => u.status !== "inactive").length;
+});
+
 // Modals State
 const isAddUserModalOpen = ref(false);
 const isEditUserModalOpen = ref(false);
@@ -116,11 +120,16 @@ const defaultAvatars = [
   "https://lh3.googleusercontent.com/aida-public/AB6AXuAPSzRjOVgMOfqYtdalxwMql8EMJ5XUl4edCD4WRoM0JOH6kNYGykoTj68TsWZ7S0coZa5mqtzzAvk-7KVvWxKipQaIrVt8DIHhs-ovm13kLY-T31xn95nORxIK-gfKUnb5XCGJTqc8REKUyctrzoJAn44wI9rxRT9WDSbRg65dRCBa20ep0CMwI7nFESqsh-lH0fWBuxag5aWaj2ihOCAjCsGHmFF4ED8H-2aOubZVrC-mIkdWPA",
 ];
 
+onMounted(() => {
+  authStore.fetchUsersFromApi();
+  authStore.fetchRolesFromApi();
+});
+
 const handleOpenAddUser = () => {
   userForm.value = {
     name: "",
     email: "",
-    password: "user123",
+    password: "Test1234!",
     role: "employee",
     department: "門市收銀課",
     phone: "+886 9",
@@ -129,16 +138,33 @@ const handleOpenAddUser = () => {
   isAddUserModalOpen.value = true;
 };
 
-const handleSaveNewUser = () => {
+const handleSaveNewUser = async () => {
   if (!userForm.value.name || !userForm.value.email) {
     uiStore.showToast("請完整填寫姓名與電子郵件", "error");
     return;
   }
-  authStore.addUser({
+
+  // 決定對應後端 roleId
+  let targetRoleId = 1;
+  if (authStore.serverRoles && authStore.serverRoles.length > 0) {
+    if (userForm.value.role === "admin") {
+      const r = authStore.serverRoles.find((x: any) => (x.roleName || x.name)?.includes("店長")) as any;
+      if (r) targetRoleId = r.id;
+    } else if (userForm.value.role === "manager") {
+      const r = authStore.serverRoles.find((x: any) => (x.roleName || x.name)?.includes("經理")) as any;
+      if (r) targetRoleId = r.id;
+    } else if (userForm.value.role === "employee") {
+      const r = authStore.serverRoles.find((x: any) => (x.roleName || x.name)?.includes("正職")) as any;
+      if (r) targetRoleId = r.id;
+    }
+  }
+
+  await authStore.createUserApi({
     name: userForm.value.name,
     email: userForm.value.email,
-    password: userForm.value.password || "123456",
+    password: userForm.value.password || "Test1234!",
     role: userForm.value.role,
+    roleId: targetRoleId,
     department: userForm.value.department,
     phone: userForm.value.phone,
     avatar: userForm.value.avatar,
@@ -147,7 +173,7 @@ const handleSaveNewUser = () => {
   isAddUserModalOpen.value = false;
 };
 
-const handleOpenEditUser = (user: UserProfile) => {
+const handleOpenEditUser = (user: any) => {
   userForm.value = {
     id: user.id,
     name: user.name,
@@ -161,13 +187,28 @@ const handleOpenEditUser = (user: UserProfile) => {
   isEditUserModalOpen.value = true;
 };
 
-const handleSaveEditUser = () => {
+const handleSaveEditUser = async () => {
   if (!userForm.value.id) return;
-  authStore.updateUser(userForm.value.id, {
+
+  let targetRoleId = 1;
+  if (authStore.serverRoles && authStore.serverRoles.length > 0) {
+    if (userForm.value.role === "admin") {
+      const r = authStore.serverRoles.find((x: any) => (x.roleName || x.name)?.includes("店長")) as any;
+      if (r) targetRoleId = r.id;
+    } else if (userForm.value.role === "manager") {
+      const r = authStore.serverRoles.find((x: any) => (x.roleName || x.name)?.includes("經理")) as any;
+      if (r) targetRoleId = r.id;
+    } else if (userForm.value.role === "employee") {
+      const r = authStore.serverRoles.find((x: any) => (x.roleName || x.name)?.includes("正職")) as any;
+      if (r) targetRoleId = r.id;
+    }
+  }
+
+  await authStore.updateUserApi(userForm.value.id, {
     name: userForm.value.name,
     email: userForm.value.email,
-    password: userForm.value.password,
     role: userForm.value.role,
+    roleId: targetRoleId,
     department: userForm.value.department,
     phone: userForm.value.phone,
     avatar: userForm.value.avatar,
@@ -176,20 +217,20 @@ const handleSaveEditUser = () => {
   isEditUserModalOpen.value = false;
 };
 
-const handleToggleStatus = (user: UserProfile) => {
-  if (user.id === authStore.currentUser.id) {
+const handleToggleStatus = async (user: any) => {
+  if (user.id === authStore.currentUser?.id) {
     uiStore.showToast("無法停用當前正在登入操作的使用者！", "error");
     return;
   }
-  authStore.toggleUserStatus(user.id);
+  await authStore.toggleUserStatusApi(user.id, user.status);
   uiStore.showToast(
     `已變更 ${user.name} 狀態為 ${user.status === "active" ? "已停用" : "啟用中"}`,
   );
 };
 
-const handleDeleteUser = (user: UserProfile) => {
+const handleDeleteUser = async (user: any) => {
   try {
-    authStore.deleteUser(user.id);
+    await authStore.deleteUserApi(user.id);
     uiStore.showToast(`已成功刪除使用者「${user.name}」`, "warning");
   } catch (err: any) {
     uiStore.showToast(err.message || "刪除失敗", "error");
@@ -304,12 +345,7 @@ const handleResetDefaultPermissions = () => {
           <span
             class="font-data-mono font-bold text-lg text-cyan-400 mt-0.5 block"
           >
-            {{
-              authStore.users.filter(
-                (u: { status: string }) => u.status !== "inactive",
-              ).length
-            }}
-            位
+            {{ activeUsersCount }} 位
           </span>
         </div>
       </div>

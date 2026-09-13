@@ -13,9 +13,11 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useNotificationStore } from "../../stores/notification.store";
+import { useAuthStore } from "../../stores/auth.store";
 import { useUIStore } from "../../stores/ui.store";
 
 const router = useRouter();
+const authStore = useAuthStore();
 const notifStore = useNotificationStore();
 const uiStore = useUIStore();
 
@@ -224,7 +226,7 @@ const getCategoryLabel = (cat: string) => {
             class="pt-2 border-t border-slate-800/80 flex items-center justify-between"
           >
             <button
-              @click="notifStore.triggerSampleAlert"
+              @click="notifStore.triggerSampleAlert(authStore.currentUser?.id)"
               class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-semibold cursor-pointer"
             >
               <span class="material-symbols-outlined text-[14px]"

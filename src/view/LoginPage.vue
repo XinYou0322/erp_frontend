@@ -4,8 +4,8 @@ import { useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth.store";
 import { useUIStore } from "../stores/ui.store";
 import { UserProfile, UserRole } from "../types";
-import BaseBadge from "../base/BaseBadge.vue";
-import BaseModal from "../base/BaseModal.vue";
+import BaseBadge from "../component/子元件/BaseBadge.vue";
+import BaseModal from "../component/子元件/BaseModal.vue";
 import { useNotificationStore } from "../stores/notification.store";
 
 const router = useRouter();
@@ -16,8 +16,8 @@ const uiStore = useUIStore();
 const activeLoginMode = ref<"credentials" | "quick-select">("credentials");
 
 // Form state
-const email = ref("admin@humanisterp.com");
-const password = ref("admin");
+const email = ref("store_manager01");
+const password = ref("Test1234!");
 const rememberMe = ref(true);
 const isPasswordVisible = ref(false);
 const isLoading = ref(false);
@@ -363,15 +363,39 @@ const handleRegisterSubmit = () => {
             >
               快速帶入測試帳密 (點擊自動填寫)：
             </span>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mb-2">
+              <button
+                @click="handleQuickFill('store_manager01', 'Test1234!')"
+                class="p-2 bg-slate-950 hover:bg-slate-800 border border-emerald-500/40 rounded-xl text-left transition-colors cursor-pointer"
+              >
+                <span class="font-bold text-white text-[11px] block"
+                  >後端測試：店長 (陳志明)</span
+                >
+                <span class="text-[9px] text-emerald-400 font-data-mono"
+                  >store_manager01</span
+                >
+              </button>
+
+              <button
+                @click="handleQuickFill('purchase_manager01', 'Test1234!')"
+                class="p-2 bg-slate-950 hover:bg-slate-800 border border-cyan-500/40 rounded-xl text-left transition-colors cursor-pointer"
+              >
+                <span class="font-bold text-white text-[11px] block"
+                  >後端測試：經理 (王建國)</span
+                >
+                <span class="text-[9px] text-cyan-400 font-data-mono"
+                  >purchase_manager01</span
+                >
+              </button>
+
               <button
                 @click="handleQuickFill('admin@humanisterp.com', 'admin')"
                 class="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/40 rounded-xl text-left transition-colors cursor-pointer"
               >
                 <span class="font-bold text-white text-[11px] block"
-                  >系統管理員</span
+                  >本地測試：管理員</span
                 >
-                <span class="text-[9px] text-emerald-400 font-data-mono"
+                <span class="text-[9px] text-slate-400 font-data-mono"
                   >admin</span
                 >
               </button>

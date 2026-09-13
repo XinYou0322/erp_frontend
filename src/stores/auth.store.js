@@ -14,7 +14,7 @@ export const useAuthStore = defineStore("auth", () => {
   const currentUser = ref(
     StorageService.get("current_user", users.value[0] || INITIAL_USERS[0]),
   );
-  const isAuthenticated = ref(StorageService.get("is_authenticated", true));
+  const isAuthenticated = ref(StorageService.get("is_authenticated", false));
   const rolePermissions = ref(
     StorageService.get("role_permissions_matrix", DEFAULT_ROLE_PERMISSIONS),
   );
@@ -22,35 +22,65 @@ export const useAuthStore = defineStore("auth", () => {
     StorageService.get("security_audit_logs", INITIAL_SECURITY_AUDIT_LOGS),
   );
 
+  // 後端真實角色清單
+  const serverRoles = ref([]);
+
   // 刷卡打卡狀態
   const isClockedIn = ref(StorageService.get("is_clocked_in", true));
   const clockTime = ref("08:55 AM");
 
+  // --- 角色映射 (後端中文職稱 <-> 前端四級 RBAC 角色) ---
+  function mapRoleToSystemRole(role) {
+    if (!role) return "guest";
+    const str = String(role).trim().toLowerCase();
+    if (str === "admin" || str.includes("店長") || str.includes("管理員"))
+      return "admin";
+    if (str === "manager" || str.includes("經理") || str.includes("組長"))
+      return "manager";
+    if (
+      str === "employee" ||
+      str.includes("正職") ||
+      str.includes("pt") ||
+      str.includes("班長") ||
+      str.includes("員工") ||
+      str.includes("收銀")
+    )
+      return "employee";
+    return "guest";
+  }
+
   // --- Computed Roles ---
   const currentRole = computed(() => currentUser.value?.role);
-  const isAdmin = computed(() => currentUser.value?.role === "admin");
+  const normalizedRole = computed(() =>
+    mapRoleToSystemRole(currentUser.value?.role),
+  );
+  const isAdmin = computed(() => normalizedRole.value === "admin");
   const isManager = computed(
     () =>
-      currentUser.value?.role === "manager" ||
-      currentUser.value?.role === "admin",
+      normalizedRole.value === "manager" || normalizedRole.value === "admin",
   );
-  const isEmployee = computed(() => currentUser.value?.role === "employee");
-  const isGuest = computed(() => currentUser.value?.role === "guest");
+  const isEmployee = computed(() => normalizedRole.value === "employee");
+  const isGuest = computed(() => normalizedRole.value === "guest");
 
   // 當前使用者的權限清單
   const userPermissions = computed(() => {
     if (!currentUser.value?.role) return [];
-    return rolePermissions.value[currentUser.value.role] || [];
+    // 優先匹配原始角色，若無則依標準映射角色匹配權限
+    return (
+      rolePermissions.value[currentUser.value.role] ||
+      rolePermissions.value[normalizedRole.value] ||
+      []
+    );
   });
 
   // --- Permission Helpers ---
   function hasPermission(key) {
-    if (currentUser.value?.role === "admin") return true;
+    if (isAdmin.value) return true;
     return userPermissions.value.includes(key);
   }
 
   function canAccessModule(moduleName) {
-    if (currentUser.value?.role === "admin") return true;
+    if (isAdmin.value) return true;
     const prefix = `${moduleName}.`;
     return userPermissions.value.some((p) => p.startsWith(prefix));
   }
@@ -67,7 +97,7 @@ export const useAuthStore = defineStore("auth", () => {
       action,
       module,
       details,
-      ipAddress: "192.168.1.10", // 建議未來由後端提供或透過 API 獲取
+      ipAddress: "192.168.1.10",
       status,
     };
 
@@ -106,10 +136,10 @@ export const useAuthStore = defineStore("auth", () => {
    * 整合後的非同步憑證登入（優先走 API，失敗時可選擇是否降級走本地比對）
    */
   async function loginWithCredentials(email, password) {
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanEmail = email.trim();
 
     try {
-      // 1. 呼叫後端驗證 API
+      // 1. 呼叫後端驗證 API (Spring Boot Session 寫入)
       const response = await httpClient.post("/api/users/login", {
         username: cleanEmail,
         password: password,
@@ -119,7 +149,7 @@ export const useAuthStore = defineStore("auth", () => {
       const authenticatedUser = {
         ...user,
         role: user.role?.name || user.role,
-        roleName: user.role?.description || "一般使用者",
+        roleName: user.role?.description || user.role?.name || "使用者",
       };
 
       login(authenticatedUser);
@@ -130,13 +160,15 @@ export const useAuthStore = defineStore("auth", () => {
         user: authenticatedUser,
       };
     } catch (error) {
-      // 2. API 失敗時的防禦機制：若後端掛掉，可改由本地 LocalStorage 進行緊急比對（或直接回傳錯誤）
+      // 2. API 失敗時的防禦機制：若後端掛掉，可改由本地 LocalStorage 進行緊急比對
       const matched = users.value.find(
-        (u) => u.email.toLowerCase() === cleanEmail,
+        (u) =>
+          u.email.toLowerCase() === cleanEmail.toLowerCase() ||
+          u.name === cleanEmail,
       );
 
       if (matched) {
-        if (matched.status === "inactive") {
+        if (matched.status === "inactive" || matched.status === "INACTIVE") {
           return {
             success: false,
             message: "該帳號已被系統管理員停用，無法登入。",
@@ -158,7 +190,7 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
-  function logout() {
+  async function logout() {
     if (currentUser.value) {
       recordAuditLog(
         "系統登出",
@@ -167,8 +199,15 @@ export const useAuthStore = defineStore("auth", () => {
         "warning",
       );
     }
+    try {
+      await httpClient.post("/api/users/logout");
+    } catch (e) {
+      console.warn("後端登出 Session 銷毀失敗:", e);
+    }
     isAuthenticated.value = false;
+    currentUser.value = null;
     StorageService.set("is_authenticated", false);
+    StorageService.remove("current_user");
   }
 
   function switchUser(user) {
@@ -222,7 +261,141 @@ export const useAuthStore = defineStore("auth", () => {
     );
   }
 
-  // --- User Accounts CRUD (補全與優化) ---
+  // =========================================================================
+  // 後端真實 API 串接：使用者管理 (User Management RESTful CRUD)
+  // =========================================================================
+
+  /** 從後端取得分頁使用者清單 */
+  async function fetchUsersFromApi(keyword = "", page = 0, size = 50) {
+    try {
+      const res = await httpClient.get("/api/users", {
+        params: { keyword, page, size, sortBy: "id", direction: "desc" },
+      });
+      if (res.data && res.data.content) {
+        // 將後端 UserResponseDTO 轉換對齊為前端使用者資料結構
+        const mappedUsers = res.data.content.map((u) => ({
+          id: u.id,
+          name: u.name,
+          username: u.username,
+          email: u.email,
+          role: u.role?.name || "employee",
+          roleName: u.role?.description || u.role?.name || "一般員工",
+          roleId: u.role?.id,
+          department: u.department?.name || "門市營運部",
+          status: (u.status || "ACTIVE").toLowerCase(),
+          createdAt: u.createdAt
+            ? u.createdAt.slice(0, 10)
+            : new Date().toISOString().slice(0, 10),
+          lastLogin: "已連線",
+        }));
+        users.value = mappedUsers;
+        StorageService.set("system_users", users.value);
+        return res.data;
+      }
+    } catch (err) {
+      console.warn("從後端載入使用者列表失敗，使用本地備援資料:", err);
+    }
+  }
+
+  /** 從後端取得所有角色清單 */
+  async function fetchRolesFromApi() {
+    try {
+      const res = await httpClient.get("/api/roles");
+      if (res.data) {
+        serverRoles.value = res.data;
+        return res.data;
+      }
+    } catch (err) {
+      console.warn("載入角色清單失敗:", err);
+    }
+    return [];
+  }
+
+  /** 呼叫後端新增使用者 API */
+  async function createUserApi(userDto) {
+    try {
+      const res = await httpClient.post("/api/users", {
+        username: userDto.username || userDto.email.split("@")[0],
+        password: userDto.password || "Test1234!",
+        name: userDto.name,
+        email: userDto.email,
+        roleId: Number(userDto.roleId) || 1,
+      });
+      await fetchUsersFromApi();
+      recordAuditLog(
+        "開立帳號",
+        "permissions",
+        `成功建立使用者「${userDto.name}」(${userDto.email})。`,
+      );
+      return res.data;
+    } catch (err) {
+      // 降級為本地新增
+      return addUser(userDto);
+    }
+  }
+
+  /** 呼叫後端修改使用者 API */
+  async function updateUserApi(id, userDto) {
+    try {
+      const statusUpper = (userDto.status || "active").toUpperCase();
+      const res = await httpClient.put(`/api/users/${id}`, {
+        name: userDto.name,
+        email: userDto.email,
+        roleId: Number(userDto.roleId) || 1,
+        status: statusUpper === "INACTIVE" ? "INACTIVE" : "ACTIVE",
+      });
+      await fetchUsersFromApi();
+      recordAuditLog(
+        "修改使用者",
+        "permissions",
+        `成功更新使用者 ID ${id} 資料。`,
+      );
+      return res.data;
+    } catch (err) {
+      return updateUser(id, userDto);
+    }
+  }
+
+  /** 呼叫後端修改狀態 API */
+  async function toggleUserStatusApi(id, currentStatus) {
+    try {
+      const nextStatus =
+        currentStatus === "active" || currentStatus === "ACTIVE"
+          ? "INACTIVE"
+          : "ACTIVE";
+      const res = await httpClient.patch(
+        `/api/users/${id}/status?status=${nextStatus}`,
+      );
+      await fetchUsersFromApi();
+      recordAuditLog(
+        "使用者狀態異動",
+        "permissions",
+        `變更使用者 ID ${id} 狀態為 ${nextStatus}。`,
+      );
+      return res.data;
+    } catch (err) {
+      return toggleUserStatus(id);
+    }
+  }
+
+  /** 呼叫後端刪除使用者 API */
+  async function deleteUserApi(id) {
+    try {
+      const res = await httpClient.delete(`/api/users/${id}`);
+      await fetchUsersFromApi();
+      recordAuditLog(
+        "刪除帳號",
+        "permissions",
+        `成功刪除使用者 ID ${id}。`,
+        "danger",
+      );
+      return res.data;
+    } catch (err) {
+      return deleteUser(id);
+    }
+  }
+
+  // --- Local Fallback CRUD ---
   function addUser(user) {
     const roleNames = {
       admin: "系統管理員",
@@ -237,9 +410,9 @@ export const useAuthStore = defineStore("auth", () => {
       email: user.email,
       password: user.password || "123456",
       role: user.role,
-      roleName: roleNames[user.role] || "使用者",
-      department: user.department,
-      avatar: user.avatar || "https://unsplash.com", // 使用更穩定的預設頭像
+      roleName: roleNames[user.role] || user.role || "使用者",
+      department: user.department || "門市部",
+      avatar: user.avatar || "https://unsplash.com",
       phone: user.phone || "+886 900-000-000",
       status: "active",
       createdAt: new Date().toISOString().slice(0, 10),
@@ -248,13 +421,6 @@ export const useAuthStore = defineStore("auth", () => {
 
     users.value = [...users.value, newUser];
     StorageService.set("system_users", users.value);
-
-    recordAuditLog(
-      "開立帳號",
-      "permissions",
-      `新增使用者「${newUser.name}」(${newUser.email})，指派為 ${newUser.roleName}。`,
-      "success",
-    );
     return newUser;
   }
 
@@ -262,62 +428,36 @@ export const useAuthStore = defineStore("auth", () => {
     const idx = users.value.findIndex((u) => u.id === id);
     if (idx !== -1) {
       users.value[idx] = { ...users.value[idx], ...updates };
-
       if (currentUser.value?.id === id) {
         currentUser.value = { ...currentUser.value, ...updates };
         StorageService.set("current_user", currentUser.value);
       }
-
       StorageService.set("system_users", users.value);
-      recordAuditLog(
-        "修改使用者",
-        "permissions",
-        `更新了使用者「${users.value[idx].name}」的個人與權限資料。`,
-        "success",
-      );
     }
   }
 
-  /**
-   * 補全：切換使用者啟用/停用狀態
-   */
   function toggleUserStatus(id) {
     const idx = users.value.findIndex((u) => u.id === id);
     if (idx !== -1) {
       const currentStatus = users.value[idx].status;
-      const newStatus = currentStatus === "active" ? "inactive" : "active";
-
+      const newStatus =
+        currentStatus === "active" || currentStatus === "ACTIVE"
+          ? "inactive"
+          : "active";
       users.value[idx].status = newStatus;
       StorageService.set("system_users", users.value);
-
-      recordAuditLog(
-        "使用者狀態異動",
-        "permissions",
-        `將使用者「${users.value[idx].name}」的帳號狀態變更為：${newStatus === "active" ? "啟用" : "停用"}。`,
-        "warning",
-      );
-
-      // 如果被停用的是目前登入者，強制登出
       if (currentUser.value?.id === id && newStatus === "inactive") {
         logout();
       }
     }
   }
 
-  // 補全：刪除使用者帳號
   function deleteUser(id) {
     if (currentUser.value?.id === id) {
       throw new Error("無法刪除當前登入中的帳號！");
     }
     users.value = users.value.filter((u) => u.id !== id);
     StorageService.set("system_users", users.value);
-
-    recordAuditLog(
-      "刪除帳號",
-      "permissions",
-      `管理員刪除了 ID 為 ${id} 的使用者帳號。`,
-      "danger",
-    );
   }
 
   return {
@@ -326,9 +466,11 @@ export const useAuthStore = defineStore("auth", () => {
     isAuthenticated,
     rolePermissions,
     auditLogs,
+    serverRoles,
     isClockedIn,
     clockTime,
     currentRole,
+    normalizedRole,
     isAdmin,
     isManager,
     isEmployee,
@@ -344,6 +486,12 @@ export const useAuthStore = defineStore("auth", () => {
     switchRole,
     toggleRolePermission,
     resetPermissionsToDefault,
+    fetchUsersFromApi,
+    fetchRolesFromApi,
+    createUserApi,
+    updateUserApi,
+    toggleUserStatusApi,
+    deleteUserApi,
     addUser,
     updateUser,
     toggleUserStatus,
