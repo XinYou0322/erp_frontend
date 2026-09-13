@@ -18,5 +18,6 @@
 
 import { RouterView } from 'vue-router'
 import Sidebar from './component/父元件/Sidebar.vue'
+import WaveBackground from './view/WaveBackground.vue';
 
 </script>

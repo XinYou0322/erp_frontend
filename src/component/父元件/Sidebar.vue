@@ -275,7 +275,13 @@ const navItems = [
 
 
 
-}
+},  
+{
+    id: "workflow",
+    label: "簽核系統",
+    icon: Sliders,
+    path: "/workflows",
+  }
   
 ];
 </script>

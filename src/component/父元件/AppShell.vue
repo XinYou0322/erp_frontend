@@ -1,6 +1,6 @@
 <script setup>
-import AppSidebar from './AppSidebar.vue'
-import AppTopBar from './AppTopBar.vue'
+import AppSidebar from '../子元件/AppSidebar.vue'
+import AppTopBar from '../子元件/AppTopBar.vue'
 </script>
 
 <template>
