@@ -43,18 +43,46 @@
 
     <!-- Toolbar -->
     <div
-      class="glass-panel p-4 rounded-2xl flex flex-col gap-4"
+      class="
+        p-4
+        rounded-2xl
+        flex
+        flex-col
+        gap-4
+        bg-[var(--surface-container)]
+        border
+        border-[var(--outline)]
+      "
     >
 
       <div
-        class="flex flex-col lg:flex-row lg:items-center justify-between gap-3"
+        class="
+          flex
+          flex-col
+          lg:flex-row
+          lg:items-center
+          justify-between
+          gap-3
+        "
       >
         <div>
-          <div class="font-bold text-sm text-gray-800">
+          <div
+            class="
+              font-bold
+              text-sm
+              text-[var(--on-surface)]
+            "
+          >
             庫存異動紀錄
           </div>
 
-          <div class="text-xs text-gray-400 mt-1">
+          <div
+            class="
+              text-xs
+              text-[var(--on-surface-variant)]
+              mt-1
+            "
+          >
             查詢原物料進貨、銷售扣減、耗損與盤點調整歷程
           </div>
         </div>
@@ -65,29 +93,60 @@
           <button
             type="button"
             @click="loadLogs"
-            class="btn-secondary text-xs px-3 py-1.5 flex items-center space-x-1.5"
+            class="
+              btn-secondary
+              text-xs
+              px-3
+              py-1.5
+              flex
+              items-center
+              space-x-1.5
+            "
           >
             <RefreshCw class="w-3.5 h-3.5" />
             <span>重新整理</span>
           </button>
-<button
-  type="button"
-  @click="inventoryAdjustmentModalOpen = true"
-  class="btn-primary text-xs px-3.5 py-1.5 flex items-center space-x-1.5"
->
-  <span>庫存調整</span>
-</button>
+
+          <button
+            type="button"
+            @click="inventoryAdjustmentModalOpen = true"
+            class="
+              btn-primary
+              text-xs
+              px-3.5
+              py-1.5
+              flex
+              items-center
+              space-x-1.5
+            "
+          >
+            <span>庫存調整</span>
+          </button>
+
         </div>
       </div>
 
 
       <!-- Filter -->
       <div
-        class="grid grid-cols-1 md:grid-cols-3 gap-3"
+        class="
+          grid
+          grid-cols-1
+          md:grid-cols-3
+          gap-3
+        "
       >
 
         <div>
-          <label class="block text-[11px] font-bold text-gray-500 mb-1">
+          <label
+            class="
+              block
+              text-[11px]
+              font-bold
+              text-[var(--on-surface-variant)]
+              mb-1
+            "
+          >
             搜尋原物料
           </label>
 
@@ -101,7 +160,15 @@
 
 
         <div>
-          <label class="block text-[11px] font-bold text-gray-500 mb-1">
+          <label
+            class="
+              block
+              text-[11px]
+              font-bold
+              text-[var(--on-surface-variant)]
+              mb-1
+            "
+          >
             原物料
           </label>
 
@@ -125,7 +192,15 @@
 
 
         <div>
-          <label class="block text-[11px] font-bold text-gray-500 mb-1">
+          <label
+            class="
+              block
+              text-[11px]
+              font-bold
+              text-[var(--on-surface-variant)]
+              mb-1
+            "
+          >
             異動類型
           </label>
 
@@ -155,7 +230,16 @@
     <!-- Loading -->
     <div
       v-if="loading"
-      class="glass-panel rounded-2xl p-8 text-center text-sm text-gray-500"
+      class="
+        rounded-2xl
+        p-8
+        text-center
+        text-sm
+        bg-[var(--surface-container)]
+        border
+        border-[var(--outline)]
+        text-[var(--on-surface-variant)]
+      "
     >
       正在讀取庫存異動紀錄...
     </div>
@@ -164,7 +248,15 @@
     <!-- Error -->
     <div
       v-else-if="errorMessage"
-      class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-600"
+      class="
+        rounded-2xl
+        border
+        border-[var(--error)]/30
+        bg-[var(--error)]/10
+        p-4
+        text-sm
+        text-[var(--error)]
+      "
     >
       {{ errorMessage }}
     </div>
@@ -173,7 +265,14 @@
     <!-- Log Table -->
     <div
       v-else
-      class="glass-panel rounded-2xl border border-white/80 overflow-hidden shadow-sm"
+      class="
+        rounded-2xl
+        overflow-hidden
+        bg-[var(--surface-container)]
+        border
+        border-[var(--outline)]
+        shadow-sm
+      "
     >
 
       <div class="overflow-x-auto">
@@ -182,7 +281,16 @@
 
           <thead>
             <tr
-              class="bg-gray-50/70 border-b border-gray-200/80 text-[11px] font-bold text-gray-500 uppercase tracking-wider"
+              class="
+                bg-[var(--surface-container-high)]
+                border-b
+                border-[var(--outline)]
+                text-[11px]
+                font-bold
+                text-[var(--on-surface-variant)]
+                uppercase
+                tracking-wider
+              "
             >
               <th class="py-3 px-4">
                 異動時間
@@ -211,21 +319,41 @@
           </thead>
 
 
-          <tbody class="divide-y divide-gray-100/80 text-xs">
+          <tbody
+            class="
+              divide-y
+              divide-[var(--outline-variant)]
+              text-xs
+            "
+          >
 
             <tr
               v-for="log in filteredLogs"
               :key="log.id"
-              class="zebra-row hover:bg-blue-50/40 transition-colors"
+              class="
+                hover:bg-[var(--surface-container-high)]
+                transition-colors
+              "
             >
 
               <!-- Time -->
               <td class="py-3.5 px-4 whitespace-nowrap">
-                <div class="font-mono text-gray-700">
+                <div
+                  class="
+                    font-data-mono
+                    text-[var(--on-surface)]
+                  "
+                >
                   {{ formatDateTime(log.createdAt) }}
                 </div>
 
-                <div class="text-[10px] text-gray-400 mt-1">
+                <div
+                  class="
+                    text-[10px]
+                    text-[var(--on-surface-variant)]
+                    mt-1
+                  "
+                >
                   Log ID：{{ log.id }}
                 </div>
               </td>
@@ -234,11 +362,24 @@
               <!-- Material -->
               <td class="py-3.5 px-4">
 
-                <div class="font-bold text-sm text-[#181c23]">
+                <div
+                  class="
+                    font-bold
+                    text-sm
+                    text-[var(--on-surface)]
+                  "
+                >
                   {{ log.materialName }}
                 </div>
 
-                <div class="text-[11px] text-gray-400 font-mono mt-0.5">
+                <div
+                  class="
+                    text-[11px]
+                    text-[var(--on-surface-variant)]
+                    font-data-mono
+                    mt-0.5
+                  "
+                >
                   {{ log.materialCode }}
                 </div>
 
@@ -249,7 +390,12 @@
               <td class="py-3.5 px-4">
 
                 <span
-                  class="px-2.5 py-1 rounded-full font-bold"
+                  class="
+                    px-2.5
+                    py-1
+                    rounded-full
+                    font-bold
+                  "
                   :class="getActionClass(log.action)"
                 >
                   {{ getActionLabel(log.action) }}
@@ -262,11 +408,15 @@
               <td class="py-3.5 px-4">
 
                 <span
-                  class="font-mono font-bold text-sm"
+                  class="
+                    font-data-mono
+                    font-bold
+                    text-sm
+                  "
                   :class="
                     Number(log.quantity) >= 0
-                      ? 'text-emerald-600'
-                      : 'text-red-600'
+                      ? 'text-[var(--primary)]'
+                      : 'text-[var(--error)]'
                   "
                 >
                   {{
@@ -286,14 +436,19 @@
 
                 <span
                   v-if="log.refId !== null && log.refId !== undefined"
-                  class="font-mono text-gray-700"
+                  class="
+                    font-data-mono
+                    text-[var(--on-surface)]
+                  "
                 >
                   #{{ log.refId }}
                 </span>
 
                 <span
                   v-else
-                  class="text-gray-400"
+                  class="
+                    text-[var(--on-surface-variant)]
+                  "
                 >
                   -
                 </span>
@@ -306,14 +461,18 @@
 
                 <span
                   v-if="log.note"
-                  class="text-gray-700"
+                  class="
+                    text-[var(--on-surface)]
+                  "
                 >
                   {{ log.note }}
                 </span>
 
                 <span
                   v-else
-                  class="text-gray-400"
+                  class="
+                    text-[var(--on-surface-variant)]
+                  "
                 >
                   無備註
                 </span>
@@ -328,7 +487,12 @@
 
               <td
                 colspan="6"
-                class="py-12 text-center text-sm text-gray-400"
+                class="
+                  py-12
+                  text-center
+                  text-sm
+                  text-[var(--on-surface-variant)]
+                "
               >
                 目前沒有符合條件的庫存異動紀錄
               </td>
@@ -342,11 +506,14 @@
       </div>
 
     </div>
-<InventoryAdjustmentModal
-  :is-open="inventoryAdjustmentModalOpen"
-  @close="inventoryAdjustmentModalOpen = false"
-  @success="handleAdjustmentSuccess"
-/>
+
+
+    <InventoryAdjustmentModal
+      :is-open="inventoryAdjustmentModalOpen"
+      @close="inventoryAdjustmentModalOpen = false"
+      @success="handleAdjustmentSuccess"
+    />
+
   </div>
 </template>
 
