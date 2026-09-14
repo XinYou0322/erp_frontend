@@ -1,48 +1,54 @@
 <template>
-  <section ref="pageRoot" class="erp-page erp-add-supplier">
-    <header class="erp-page-head erp-add-supplier__head">
+  <section ref="pageRoot" class="w-full min-h-full p-6 text-[var(--on-surface)]">
+    <header class="flex flex-col gap-4 mb-6 lg:flex-row lg:items-center lg:justify-between">
       <div>
-        <h1 class="erp-page-head__title">新增供應商</h1>
-        <p class="erp-page-head__description">
+        <h1 class="text-2xl font-bold tracking-tight text-[var(--on-surface)]">
+          新增供應商
+        </h1>
+        <p class="mt-1 text-sm text-[var(--on-surface-variant)]">
           可一次新增多筆供應商，勾選要儲存的資料並拖曳調整順序。
         </p>
       </div>
 
       <button
-        class="erp-btn erp-btn--primary erp-add-supplier__save"
+        class="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--primary)] px-4 py-2.5 text-sm font-semibold text-[var(--on-primary)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         type="submit"
         form="add-supplier-form"
         :disabled="!canSave"
       >
-        <svg aria-hidden="true" viewBox="0 0 24 24">
+        <svg class="h-5 w-5 fill-none stroke-current stroke-2" aria-hidden="true" viewBox="0 0 24 24">
           <path d="M5 4h12l2 2v14H5zM8 4v6h8V4M8 20v-6h8v6" />
         </svg>
         {{ isSaving ? '儲存中…' : `儲存已選 ${selectedCount} 筆` }}
       </button>
     </header>
 
-    <div class="erp-add-supplier__toolbar">
-      <label class="erp-add-supplier__select-all">
+    <div class="mb-5 flex items-center gap-4 rounded-xl border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-4 py-3">
+      <label class="flex cursor-pointer items-center gap-2 text-sm font-medium text-[var(--on-surface)]">
         <input
           ref="selectAllInput"
           v-model="allSelected"
-          class="erp-supplier-checkbox"
+          class="h-4 w-4 accent-[var(--primary)]"
           type="checkbox"
         />
         <span>全選</span>
       </label>
 
-      <span class="erp-add-supplier__divider" aria-hidden="true"></span>
+      <span class="h-5 w-px bg-[var(--outline)]" aria-hidden="true"></span>
 
-      <p class="erp-add-supplier__counter" aria-live="polite">
-        已選 <strong>{{ selectedCount }}</strong> / {{ suppliers.length }}
+      <p class="text-sm text-[var(--on-surface-variant)]" aria-live="polite">
+        已選 <strong class="text-[var(--primary)]">{{ selectedCount }}</strong> / {{ suppliers.length }}
       </p>
     </div>
 
     <p
       v-if="formMessage || apiError || successMessage"
-      class="erp-add-supplier__message"
-      :class="{ 'is-success': successMessage && !formMessage && !apiError }"
+      class="mb-5 rounded-xl border px-4 py-3 text-sm"
+      :class="
+        successMessage && !formMessage && !apiError
+          ? 'border-[var(--primary)]/40 bg-[var(--primary)]/10 text-[var(--primary)]'
+          : 'border-[var(--error)]/40 bg-[var(--error)]/10 text-[var(--error)]'
+      "
       role="alert"
     >
       {{ apiError || formMessage || successMessage }}
@@ -50,36 +56,37 @@
 
     <form
       id="add-supplier-form"
-      class="erp-supplier-batch"
+      class="space-y-4"
       novalidate
       @submit.prevent="saveSelectedSuppliers"
     >
       <article
         v-for="(supplier, index) in suppliers"
         :key="supplier.localId"
-        class="erp-supplier-entry"
+        class="erp-supplier-entry rounded-2xl border bg-[var(--surface-container)] p-5 shadow-level-1 transition"
         :class="{
-          'is-selected': supplier.selected,
-          'is-invalid': supplier.invalid,
-          'is-dragging': draggedLocalId === supplier.localId
+          'border-[var(--primary)]/60': supplier.selected && !supplier.invalid,
+          'border-[var(--outline)]': !supplier.selected && !supplier.invalid,
+          'is-invalid border-[var(--error)]': supplier.invalid,
+          'opacity-60': draggedLocalId === supplier.localId
         }"
         @dragover.prevent
         @drop="dropSupplier(supplier.localId)"
       >
-        <div class="erp-supplier-entry__topbar">
-          <label class="erp-supplier-entry__selector">
+        <div class="mb-5 flex items-center justify-between gap-4 border-b border-[var(--outline-variant)] pb-4">
+          <label class="flex cursor-pointer items-center gap-2 text-sm font-medium text-[var(--on-surface)]">
             <input
               v-model="supplier.selected"
-              class="erp-supplier-checkbox"
+              class="h-4 w-4 accent-[var(--primary)]"
               type="checkbox"
               :aria-label="`選取第 ${index + 1} 筆供應商`"
             />
             <span>選取此筆</span>
           </label>
 
-          <div class="erp-supplier-entry__actions">
+          <div class="flex items-center gap-1">
             <button
-              class="erp-icon-btn erp-supplier-entry__icon-btn"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[var(--on-surface-variant)] transition hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]"
               type="button"
               :aria-expanded="supplier.expanded"
               :aria-controls="`supplier-note-${supplier.localId}`"
@@ -87,20 +94,20 @@
               @click="toggleSupplier(supplier)"
             >
               <svg
-                class="erp-supplier-entry__chevron"
-                :class="{ 'is-open': supplier.expanded }"
+                class="h-5 w-5 fill-none stroke-current stroke-2 transition-transform"
+                :class="{ 'rotate-180': supplier.expanded }"
                 aria-hidden="true"
                 viewBox="0 0 24 24"
               >
                 <path d="m7 10 5 5 5-5" />
               </svg>
-              <span class="erp-u-sr-only">
+              <span class="sr-only">
                 {{ supplier.expanded ? '收合備註' : '展開備註' }}
               </span>
             </button>
 
             <span
-              class="erp-supplier-entry__drag"
+              class="inline-flex h-9 w-9 cursor-grab items-center justify-center rounded-lg text-[var(--on-surface-variant)] transition hover:bg-[var(--surface-container-high)] hover:text-[var(--secondary)] active:cursor-grabbing"
               draggable="true"
               role="button"
               tabindex="0"
@@ -109,7 +116,7 @@
               @dragstart="startDrag(supplier.localId, $event)"
               @dragend="finishDrag"
             >
-              <svg aria-hidden="true" viewBox="0 0 24 24">
+              <svg class="h-5 w-5 fill-current" aria-hidden="true" viewBox="0 0 24 24">
                 <circle cx="9" cy="5" r="1.5" />
                 <circle cx="15" cy="5" r="1.5" />
                 <circle cx="9" cy="12" r="1.5" />
@@ -121,51 +128,51 @@
 
             <button
               v-if="suppliers.length > 1"
-              class="erp-icon-btn erp-supplier-entry__icon-btn erp-supplier-entry__remove"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[var(--on-surface-variant)] transition hover:bg-[var(--error)]/10 hover:text-[var(--error)]"
               type="button"
               title="移除此筆"
               :aria-label="`移除第 ${index + 1} 筆供應商`"
               @click="removeSupplier(supplier.localId)"
             >
-              <svg aria-hidden="true" viewBox="0 0 24 24">
+              <svg class="h-5 w-5 fill-none stroke-current stroke-2" aria-hidden="true" viewBox="0 0 24 24">
                 <path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" />
               </svg>
-              <span class="erp-u-sr-only">移除此筆</span>
+              <span class="sr-only">移除此筆</span>
             </button>
           </div>
         </div>
 
-        <div class="erp-supplier-entry__grid">
-          <div class="erp-field erp-supplier-entry__field--name">
-            <label class="erp-field__label" :for="`supplier-name-${supplier.localId}`">
-              供應商名稱 <span class="erp-required">*</span>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12">
+          <div class="xl:col-span-3">
+            <label class="mb-1.5 block text-sm font-medium text-[var(--on-surface)]" :for="`supplier-name-${supplier.localId}`">
+              供應商名稱 <span class="text-[var(--error)]">*</span>
             </label>
             <input
               :id="`supplier-name-${supplier.localId}`"
               v-model="supplier.name"
-              class="erp-input"
-              :class="{ 'is-error': supplier.errors.name }"
+              class="w-full rounded-xl border bg-[var(--surface-container-low)] px-3 py-2.5 text-sm text-[var(--on-surface)] outline-none transition placeholder:text-[var(--on-surface-variant)]/60 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20"
+              :class="supplier.errors.name ? 'border-[var(--error)]' : 'border-[var(--outline)]'"
               type="text"
               maxlength="50"
               autocomplete="organization"
               placeholder="輸入供應商名稱"
               @input="clearError(supplier, 'name')"
             />
-            <span v-if="supplier.errors.name" class="erp-field__error">
+            <span v-if="supplier.errors.name" class="mt-1 block text-xs text-[var(--error)]">
               {{ supplier.errors.name }}
             </span>
           </div>
 
-          <div class="erp-field erp-supplier-entry__field--phone">
-            <label class="erp-field__label" :for="`supplier-phone-${supplier.localId}`">
-              聯絡電話 <span class="erp-required">*</span>
+          <div class="md:col-span-2 xl:col-span-4">
+            <label class="mb-1.5 block text-sm font-medium text-[var(--on-surface)]" :for="`supplier-phone-${supplier.localId}`">
+              聯絡電話 <span class="text-[var(--error)]">*</span>
             </label>
 
-            <div class="erp-phone-composer">
+            <div class="flex items-center gap-2">
               <input
                 v-model="supplier.callingCode"
-                class="erp-input erp-phone-composer__code"
-                :class="{ 'is-error': supplier.errors.callingCode }"
+                class="w-20 rounded-xl border bg-[var(--surface-container-low)] px-3 py-2.5 text-sm text-[var(--on-surface)] outline-none transition placeholder:text-[var(--on-surface-variant)]/60 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20"
+                :class="supplier.errors.callingCode ? 'border-[var(--error)]' : 'border-[var(--outline)]'"
                 type="tel"
                 inputmode="tel"
                 maxlength="4"
@@ -173,12 +180,12 @@
                 placeholder="+886"
                 @input="clearError(supplier, 'callingCode')"
               />
-              <span class="erp-phone-composer__separator" aria-hidden="true">-</span>
+              <span class="text-[var(--on-surface-variant)]" aria-hidden="true">-</span>
               <input
                 :id="`supplier-phone-${supplier.localId}`"
                 v-model="supplier.phone"
-                class="erp-input erp-phone-composer__number"
-                :class="{ 'is-error': supplier.errors.phone }"
+                class="min-w-0 flex-1 rounded-xl border bg-[var(--surface-container-low)] px-3 py-2.5 text-sm text-[var(--on-surface)] outline-none transition placeholder:text-[var(--on-surface-variant)]/60 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20"
+                :class="supplier.errors.phone ? 'border-[var(--error)]' : 'border-[var(--outline)]'"
                 type="tel"
                 inputmode="numeric"
                 maxlength="15"
@@ -186,56 +193,53 @@
                 placeholder="例如 223456789"
                 @input="clearError(supplier, 'phone')"
               />
-              <span
-                class="erp-phone-composer__separator erp-phone-composer__separator--extension"
-                aria-hidden="true"
-              >-</span>
+              <span class="text-[var(--on-surface-variant)]" aria-hidden="true">-</span>
               <input
                 v-model="supplier.extension"
-                class="erp-input erp-phone-composer__extension"
-                :class="{ 'is-error': supplier.errors.extension }"
+                class="w-28 rounded-xl border bg-[var(--surface-container-low)] px-3 py-2.5 text-sm text-[var(--on-surface)] outline-none transition placeholder:text-[var(--on-surface-variant)]/60 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20"
+                :class="supplier.errors.extension ? 'border-[var(--error)]' : 'border-[var(--outline)]'"
                 type="tel"
                 inputmode="numeric"
                 maxlength="10"
                 aria-label="分機碼"
-                placeholder="分機（選填）"
+                placeholder="分機"
                 @input="clearError(supplier, 'extension')"
               />
             </div>
 
-            <span v-if="phoneError(supplier)" class="erp-field__error">
+            <span v-if="phoneError(supplier)" class="mt-1 block text-xs text-[var(--error)]">
               {{ phoneError(supplier) }}
             </span>
           </div>
 
-          <div class="erp-field erp-supplier-entry__field--email">
-            <label class="erp-field__label" :for="`supplier-email-${supplier.localId}`">
-              電子信箱 <span class="erp-required">*</span>
+          <div class="xl:col-span-3">
+            <label class="mb-1.5 block text-sm font-medium text-[var(--on-surface)]" :for="`supplier-email-${supplier.localId}`">
+              電子信箱 <span class="text-[var(--error)]">*</span>
             </label>
             <input
               :id="`supplier-email-${supplier.localId}`"
               v-model="supplier.email"
-              class="erp-input"
-              :class="{ 'is-error': supplier.errors.email }"
+              class="w-full rounded-xl border bg-[var(--surface-container-low)] px-3 py-2.5 text-sm text-[var(--on-surface)] outline-none transition placeholder:text-[var(--on-surface-variant)]/60 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20"
+              :class="supplier.errors.email ? 'border-[var(--error)]' : 'border-[var(--outline)]'"
               type="email"
               autocomplete="email"
               placeholder="name@company.com"
               @input="clearError(supplier, 'email')"
             />
-            <span v-if="supplier.errors.email" class="erp-field__error">
+            <span v-if="supplier.errors.email" class="mt-1 block text-xs text-[var(--error)]">
               {{ supplier.errors.email }}
             </span>
           </div>
 
-          <div class="erp-field erp-supplier-entry__field--status">
-            <label class="erp-field__label" :for="`supplier-status-${supplier.localId}`">
-              供應商狀態 <span class="erp-required">*</span>
+          <div class="xl:col-span-2">
+            <label class="mb-1.5 block text-sm font-medium text-[var(--on-surface)]" :for="`supplier-status-${supplier.localId}`">
+              供應商狀態 <span class="text-[var(--error)]">*</span>
             </label>
             <select
               :id="`supplier-status-${supplier.localId}`"
               v-model="supplier.status"
-              class="erp-select"
-              :class="{ 'is-error': supplier.errors.status }"
+              class="w-full rounded-xl border bg-[var(--surface-container-low)] px-3 py-2.5 text-sm text-[var(--on-surface)] outline-none transition focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20"
+              :class="supplier.errors.status ? 'border-[var(--error)]' : 'border-[var(--outline)]'"
               @change="clearError(supplier, 'status')"
             >
               <option
@@ -246,27 +250,27 @@
                 {{ option.label }}
               </option>
             </select>
-            <span v-if="supplier.errors.status" class="erp-field__error">
+            <span v-if="supplier.errors.status" class="mt-1 block text-xs text-[var(--error)]">
               {{ supplier.errors.status }}
             </span>
           </div>
 
-          <div class="erp-field erp-supplier-entry__field--address">
-            <label class="erp-field__label" :for="`supplier-address-${supplier.localId}`">
-              地址 <span class="erp-required">*</span>
+          <div class="md:col-span-2 xl:col-span-12">
+            <label class="mb-1.5 block text-sm font-medium text-[var(--on-surface)]" :for="`supplier-address-${supplier.localId}`">
+              地址 <span class="text-[var(--error)]">*</span>
             </label>
             <input
               :id="`supplier-address-${supplier.localId}`"
               v-model="supplier.address"
-              class="erp-input"
-              :class="{ 'is-error': supplier.errors.address }"
+              class="w-full rounded-xl border bg-[var(--surface-container-low)] px-3 py-2.5 text-sm text-[var(--on-surface)] outline-none transition placeholder:text-[var(--on-surface-variant)]/60 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20"
+              :class="supplier.errors.address ? 'border-[var(--error)]' : 'border-[var(--outline)]'"
               type="text"
               maxlength="200"
               autocomplete="street-address"
               placeholder="輸入完整地址"
               @input="clearError(supplier, 'address')"
             />
-            <span v-if="supplier.errors.address" class="erp-field__error">
+            <span v-if="supplier.errors.address" class="mt-1 block text-xs text-[var(--error)]">
               {{ supplier.errors.address }}
             </span>
           </div>
@@ -275,16 +279,16 @@
         <div
           v-show="supplier.expanded"
           :id="`supplier-note-${supplier.localId}`"
-          class="erp-supplier-entry__note"
+          class="mt-5 border-t border-[var(--outline-variant)] pt-5"
         >
-          <div class="erp-field">
-            <label class="erp-field__label" :for="`supplier-note-input-${supplier.localId}`">
+          <div>
+            <label class="mb-1.5 block text-sm font-medium text-[var(--on-surface)]" :for="`supplier-note-input-${supplier.localId}`">
               備註（選填）
             </label>
             <textarea
               :id="`supplier-note-input-${supplier.localId}`"
               v-model="supplier.supplierNotes.content"
-              class="erp-textarea"
+              class="w-full resize-y rounded-xl border border-[var(--outline)] bg-[var(--surface-container-low)] px-3 py-2.5 text-sm text-[var(--on-surface)] outline-none transition placeholder:text-[var(--on-surface-variant)]/60 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20"
               rows="3"
               placeholder="輸入合作條件、聯絡偏好或其他備註"
             ></textarea>
@@ -293,11 +297,11 @@
       </article>
 
       <button
-        class="erp-add-supplier__append"
+        class="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--outline)] bg-[var(--surface-container-low)] px-4 py-4 text-sm font-semibold text-[var(--secondary)] transition hover:border-[var(--secondary)] hover:bg-[var(--surface-container)]"
         type="button"
         @click="addSupplier"
       >
-        <span class="erp-add-supplier__append-icon" aria-hidden="true">＋</span>
+        <span class="text-xl leading-none" aria-hidden="true">＋</span>
         新增另一筆供應商
       </button>
     </form>

@@ -3,6 +3,7 @@
 @import "./glassmorphism.css";
 @import "./waves.css";
 @import "./components.css";
+@import "./total.css";
 
 @layer base {
   body {
