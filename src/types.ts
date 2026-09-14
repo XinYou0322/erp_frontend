@@ -26,7 +26,8 @@ export interface UserProfile {
   avatar?: string;
   department?: string;
   phone?: string;
-  status?: 'active' | 'inactive' | 'locked' | string;
+  status?: 'pending' | 'approved' | 'rejected' | 'active' | 'inactive' | 'locked' | string;
+  reason?: string;
   lastLogin?: string;
   createdAt?: string;
 }

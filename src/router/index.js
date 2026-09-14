@@ -1,8 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/auth.store";
 
-
-
 const routes = [
   {
     path: "/",
@@ -25,15 +23,25 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: "/admin",
+    name: "admin",
+    component: () => import("@/view/PermissionPage.vue"),
+    meta: { requiresAuth: true, adminOnly: true },
+  },
+  {
     path: "/PermissionPage",
     redirect: "/permissions",
   },
+  {
+    path: "/Admin",
+    redirect: "/admin",
+  },
 
-   {
-     path: '/product',
-    name: 'product',
-     component: ()=> import("@/view/ProductBomManagement.vue")
-   },
+  {
+    path: "/product",
+    name: "product",
+    component: () => import("@/view/ProductBomManagement.vue"),
+  },
   {
     path: "/material",
     name: "material",
@@ -42,58 +50,67 @@ const routes = [
   },
 
   {
-    path: '/workflows',
-    name: 'workflow-dashboard',
-    component: () => import('@/view/WorkflowDashboard.vue')
+    path: "/workflows",
+    name: "workflow-dashboard",
+    component: () => import("@/view/WorkflowDashboard.vue"),
   },
   {
-    path: '/workflows/:id',
-    name: 'workflow-detail',
-    component: () => import('@/view/WorkflowDetail.vue'),
-    props: true
+    path: "/workflows/:id",
+    name: "workflow-detail",
+    component: () => import("@/view/WorkflowDetail.vue"),
+    props: true,
   },
   {
-    path: '/inventory',
-    name: 'inventory',
-    component: ()=> import("@/view/InventoryManagement.vue")
+    path: "/inventory",
+    name: "inventory",
+    component: () => import("@/view/InventoryManagement.vue"),
   },
   {
-    path: '/material',
-    name: 'material',
-    component: ()=> import("@/view/MaterialManagement.vue")
+    path: "/material",
+    name: "material",
+    component: () => import("@/view/MaterialManagement.vue"),
   },
- {
-    path: '/inventory/logs',
-    name: 'inventorylogs',
-    component: ()=> import("@/view/InventoryLogManagement.vue")
+  {
+    path: "/inventory/logs",
+    name: "inventorylogs",
+    component: () => import("@/view/InventoryLogManagement.vue"),
   },
 
-   {
-    path: '/ComponentShowcase',
-    name: 'ComponentShowcase',
-    component: ()=> import("@/view/ComponentShowcase.vue")
+  {
+    path: "/ComponentShowcase",
+    name: "ComponentShowcase",
+    component: () => import("@/view/ComponentShowcase.vue"),
   },
 
-     {
-    path: '/Supplier',
-    name: 'Supplier',
-    component: ()=> import("@/view/Supplier.vue")
+  {
+    path: "/Supplier",
+    name: "Supplier",
+    component: () => import("@/view/Supplier.vue"),
   },
-]
+];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, from) => {
   const authStore = useAuthStore();
+
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next("/login");
-  } else if (to.meta.guestOnly && authStore.isAuthenticated) {
-    next("/permissions");
-  } else {
-    next();
+    return "/login";
+  }
+
+  if (to.meta.guestOnly && authStore.isAuthenticated) {
+    return "/permissions";
+  }
+
+  if (to.meta.adminOnly) {
+    const isAdminUser =
+      authStore.isAdmin || authStore.hasPermission("users.manage");
+    if (!isAdminUser) {
+      return "/permissions";
+    }
   }
 });
 

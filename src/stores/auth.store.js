@@ -8,6 +8,9 @@ import {
 import { StorageService } from "../service/storage.service";
 import httpClient from "@/service/httpClient";
 
+const DEFAULT_AVATAR =
+  "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80";
+
 export const useAuthStore = defineStore("auth", () => {
   // --- State ---
   const users = ref(StorageService.get("system_users", INITIAL_USERS));
@@ -107,11 +110,55 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   // --- Core Actions ---
+  function normalizeUserStatus(status) {
+    const value = String(status || "active").toLowerCase();
+    if (
+      [
+        "pending",
+        "approved",
+        "rejected",
+        "active",
+        "inactive",
+        "locked",
+      ].includes(value)
+    ) {
+      return value;
+    }
+    return "active";
+  }
+
+  function canUserLogin(status) {
+    const normalized = normalizeUserStatus(status);
+    return normalized === "approved" || normalized === "active";
+  }
+
   function login(user) {
+    const status = normalizeUserStatus(user?.status);
+
+    if (status === "pending") {
+      return {
+        success: false,
+        message: "此帳號尚待管理員審核，請等待審核結果後再登入。",
+      };
+    }
+
+    if (status === "rejected") {
+      return {
+        success: false,
+        message: "此帳號申請已被駁回，請重新提出申請或聯絡管理員。",
+      };
+    }
+
+    if (status === "inactive" || status === "locked") {
+      return {
+        success: false,
+        message: "該帳號已被停用或鎖定，無法登入。",
+      };
+    }
+
     currentUser.value = user;
     isAuthenticated.value = true;
 
-    // 更新本地與持久化狀態中的最後登入時間
     const idx = users.value.findIndex((u) => u.id === user.id);
     if (idx !== -1) {
       users.value[idx].lastLogin = new Date()
@@ -130,6 +177,12 @@ export const useAuthStore = defineStore("auth", () => {
       `使用者「${user.name}」登入系統成功 (${user.roleName || user.role})。`,
       "success",
     );
+
+    return {
+      success: true,
+      message: `歡迎回來，${user.name}！`,
+      user,
+    };
   }
 
   /**
@@ -148,15 +201,19 @@ export const useAuthStore = defineStore("auth", () => {
 
       const authenticatedUser = {
         ...user,
+        avatar: user.avatar || DEFAULT_AVATAR,
         role: user.role?.name || user.role,
         roleName: user.role?.description || user.role?.name || "使用者",
       };
 
-      login(authenticatedUser);
+      const loginResult = login(authenticatedUser);
+      if (!loginResult.success) {
+        return loginResult;
+      }
 
       return {
         success: true,
-        message: message || `歡迎回來，${authenticatedUser.name}！`,
+        message: message || loginResult.message,
         user: authenticatedUser,
       };
     } catch (error) {
@@ -168,17 +225,33 @@ export const useAuthStore = defineStore("auth", () => {
       );
 
       if (matched) {
-        if (matched.status === "inactive" || matched.status === "INACTIVE") {
+        const matchedStatus = String(matched.status || "active").toLowerCase();
+        if (matchedStatus === "pending") {
+          return {
+            success: false,
+            message: "此帳號尚待管理員審核，請等待審核結果後再登入。",
+          };
+        }
+        if (matchedStatus === "rejected") {
+          return {
+            success: false,
+            message: "此帳號申請已被駁回，請重新提出申請或聯絡管理員。",
+          };
+        }
+        if (matchedStatus === "inactive" || matchedStatus === "INACTIVE") {
           return {
             success: false,
             message: "該帳號已被系統管理員停用，無法登入。",
           };
         }
         if (password && matched.password && matched.password === password) {
-          login(matched);
+          const loginResult = login(matched);
+          if (!loginResult.success) {
+            return loginResult;
+          }
           return {
             success: true,
-            message: `[本地認證] 歡迎回來，${matched.name}！`,
+            message: `[本地認證] ${loginResult.message}`,
             user: matched,
           };
         }
@@ -278,11 +351,14 @@ export const useAuthStore = defineStore("auth", () => {
           name: u.name,
           username: u.username,
           email: u.email,
+          avatar:
+            u.avatar ||
+            "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
           role: u.role?.name || "employee",
           roleName: u.role?.description || u.role?.name || "一般員工",
           roleId: u.role?.id,
           department: u.department?.name || "門市營運部",
-          status: (u.status || "ACTIVE").toLowerCase(),
+          status: normalizeUserStatus(u.status || "ACTIVE"),
           createdAt: u.createdAt
             ? u.createdAt.slice(0, 10)
             : new Date().toISOString().slice(0, 10),
@@ -320,6 +396,7 @@ export const useAuthStore = defineStore("auth", () => {
         name: userDto.name,
         email: userDto.email,
         roleId: Number(userDto.roleId) || 1,
+        avatar: userDto.avatar || "",
       });
       await fetchUsersFromApi();
       recordAuditLog(
@@ -343,6 +420,7 @@ export const useAuthStore = defineStore("auth", () => {
         email: userDto.email,
         roleId: Number(userDto.roleId) || 1,
         status: statusUpper === "INACTIVE" ? "INACTIVE" : "ACTIVE",
+        avatar: userDto.avatar || "",
       });
       await fetchUsersFromApi();
       recordAuditLog(
@@ -396,6 +474,23 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   // --- Local Fallback CRUD ---
+  function normalizeUserStatus(status) {
+    const value = String(status || "active").toLowerCase();
+    if (
+      [
+        "pending",
+        "approved",
+        "rejected",
+        "active",
+        "inactive",
+        "locked",
+      ].includes(value)
+    ) {
+      return value;
+    }
+    return "active";
+  }
+
   function addUser(user) {
     const roleNames = {
       admin: "系統管理員",
@@ -412,9 +507,10 @@ export const useAuthStore = defineStore("auth", () => {
       role: user.role,
       roleName: roleNames[user.role] || user.role || "使用者",
       department: user.department || "門市部",
-      avatar: user.avatar || "https://unsplash.com",
+      avatar: user.avatar || DEFAULT_AVATAR,
       phone: user.phone || "+886 900-000-000",
-      status: "active",
+      status: normalizeUserStatus(user.status || "pending"),
+      reason: user.reason || "",
       createdAt: new Date().toISOString().slice(0, 10),
       lastLogin: "尚未登入",
     };
@@ -433,6 +529,31 @@ export const useAuthStore = defineStore("auth", () => {
         StorageService.set("current_user", currentUser.value);
       }
       StorageService.set("system_users", users.value);
+    }
+  }
+
+  function updateUserStatus(id, status) {
+    const idx = users.value.findIndex((u) => u.id === id);
+    if (idx === -1) return;
+
+    const nextStatus = normalizeUserStatus(status);
+    users.value[idx].status = nextStatus;
+    StorageService.set("system_users", users.value);
+
+    if (nextStatus === "rejected") {
+      recordAuditLog(
+        "帳號申請駁回",
+        "permissions",
+        `已拒絕使用者「${users.value[idx].name}」的帳號申請。`,
+        "danger",
+      );
+    } else if (nextStatus === "approved") {
+      recordAuditLog(
+        "帳號申請核准",
+        "permissions",
+        `已核准使用者「${users.value[idx].name}」的帳號申請。`,
+        "success",
+      );
     }
   }
 
@@ -494,6 +615,7 @@ export const useAuthStore = defineStore("auth", () => {
     deleteUserApi,
     addUser,
     updateUser,
+    updateUserStatus,
     toggleUserStatus,
     deleteUser,
   };

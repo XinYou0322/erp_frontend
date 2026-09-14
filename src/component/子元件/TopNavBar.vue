@@ -21,10 +21,17 @@ const handleUserSelect = (u: UserProfile) => {
   uiStore.showToast(`已切換身分為：${u.name} (${u.roleName})`);
 };
 
-const handleLogout = () => {
-  authStore.logout();
-  isUserMenuOpen.value = false;
-  router.push("/login");
+const handleLogout = async () => {
+  try {
+    // 🟢 加上 await，確保 Pinia 徹底清空狀態與處理完 API 請求
+    await authStore.logout();
+  } catch (error) {
+    console.error("登出時發生異常:", error);
+  } finally {
+    // 🟢 放進 finally 確保不論後端 API 成功或斷線，前端都一定會執行跳轉
+    isUserMenuOpen.value = false;
+    router.push("/login");
+  }
 };
 </script>
 
@@ -143,7 +150,10 @@ const handleLogout = () => {
             </span>
           </div>
           <img
-            :src="authStore.currentUser.avatar"
+            :src="
+              authStore.currentUser?.avatar ||
+              'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80'
+            "
             :alt="authStore.currentUser.name"
             class="w-8 h-8 rounded-xl object-cover border border-emerald-500/40"
           />
@@ -155,7 +165,7 @@ const handleLogout = () => {
         <!-- Dropdown Menu -->
         <div
           v-if="isUserMenuOpen"
-          class="absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-2xl shadow-level-2 p-2 z-50 animate-in fade-in zoom-in-95"
+          class="absolute right-0 mt-2 w-56 max-h-[70vh] overflow-y-auto bg-slate-900 border border-slate-800 rounded-2xl shadow-level-2 p-2 z-50 animate-in fade-in zoom-in-95"
         >
           <div class="px-3 py-2 border-b border-slate-800 mb-1">
             <p class="text-[11px] text-slate-400">當前登入身分</p>
@@ -181,7 +191,13 @@ const handleLogout = () => {
                   : 'text-slate-300 hover:bg-slate-800/60'
               "
             >
-              <img :src="u.avatar" class="w-5 h-5 rounded-md object-cover" />
+              <img
+                :src="
+                  u.avatar ||
+                  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80'
+                "
+                class="w-5 h-5 rounded-md object-cover"
+              />
               <div class="truncate">
                 <span class="block">{{ u.name }}</span>
                 <span class="text-[10px] text-slate-400">{{ u.roleName }}</span>
@@ -191,12 +207,27 @@ const handleLogout = () => {
 
           <div class="pt-1 mt-1 border-t border-slate-800 space-y-0.5">
             <button
+              v-if="
+                authStore.isAdmin || authStore.hasPermission('users.manage')
+              "
+              @click="
+                router.push('/admin');
+                isUserMenuOpen = false;
+              "
+              class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-emerald-400 hover:bg-emerald-500/10 transition-colors cursor-pointer text-left"
+            >
+              <span class="material-symbols-outlined text-[16px]"
+                >shield_person</span
+              >
+              <span>管理員專屬頁面</span>
+            </button>
+            <button
               v-if="authStore.hasPermission('permissions.view')"
               @click="
                 router.push('/permissions');
                 isUserMenuOpen = false;
               "
-              class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-emerald-400 hover:bg-emerald-500/10 transition-colors cursor-pointer text-left"
+              class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800/60 transition-colors cursor-pointer text-left"
             >
               <span class="material-symbols-outlined text-[16px]"
                 >admin_panel_settings</span
