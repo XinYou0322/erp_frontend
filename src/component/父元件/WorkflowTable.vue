@@ -1,5 +1,5 @@
 <script setup>
-import WorkflowStatusBadge from "./WorkflowStatusBadge.vue";
+import WorkflowStatusBadge from "../../component/子元件/WorkflowStatusBadge.vue";
 
 // items 需帶 id（workflow 的實際 id，用於導向明細頁），code 只是顯示用的單號
 const props = defineProps({

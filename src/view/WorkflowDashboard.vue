@@ -1,8 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import WorkflowFilter from "@/component/workflow/WorkflowFilter.vue";
-import WorkflowTable from "@/component/workflow/WorkflowTable.vue";
-import WorkflowEmpty from "@/component/workflow/WorkflowEmpty.vue";
+import WorkflowFilter from "@/component/子元件/WorkflowFilter.vue";
+import WorkflowTable from "@/component/父元件/WorkflowTable.vue";
+import WorkflowEmpty from "@/component/子元件/WorkflowEmpty.vue";
 import { getWorkflows } from "@/service/workflowService";
 
 // TODO: 之後接上登入機制後，改成從登入狀態取得目前使用者 id

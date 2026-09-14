@@ -1,5 +1,5 @@
 <script setup>
-import WorkflowStatusBadge from "./WorkflowStatusBadge.vue";
+import WorkflowStatusBadge from "../../component/子元件/WorkflowStatusBadge.vue";
 
 const props = defineProps({
   workflow: {
