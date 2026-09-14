@@ -73,6 +73,12 @@ const routes = [
     name: 'ComponentShowcase',
     component: ()=> import("@/view/ComponentShowcase.vue")
   },
+
+     {
+    path: '/Supplier',
+    name: 'Supplier',
+    component: ()=> import("@/view/Supplier.vue")
+  },
 ]
 
 const router = createRouter({

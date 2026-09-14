@@ -30,7 +30,7 @@ const handleLogout = () => {
 
 <template>
   <header
-    class="fixed top-0 right-0 left-0 md:left-60 h-16 bg-slate-900/90 backdrop-blur-xl border-b border-slate-800 z-30 px-4 sm:px-6 flex items-center justify-between gap-4"
+    class="fixed top-0 right-0 left-0 md:left-65 h-16 bg-slate-900/90 backdrop-blur-xl border-b border-slate-800 z-30 px-4 sm:px-6 flex items-center justify-between gap-4"
   >
     <!-- Left: Mobile Menu Toggle & Search Bar -->
     <div class="flex items-center gap-3 flex-1 max-w-md">
