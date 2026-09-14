@@ -22,12 +22,12 @@
    * =================================================================== */
   :root {
     /* 主題色 (Primary - 翠綠翡翠色，代表通過、安全、啟動) */
-    --primary: #10b981;
-    --primary-container: #059669;
-    --on-primary: #020617;
+    --primary: #007BFF;
+    --primary-container: #71a9e6;
+    --on-primary: #04025f;
 
     /* 次要色 (Secondary - 科技青藍色，代表操作、分析、亮點) */
-    --secondary: #06b6d4;
+    --secondary: #00D2FF;
     --secondary-container: #0891b2;
 
     /* 輔助警示色 (Tertiary - 琥珀金橘色，代表審核中、警告、缺料) */
@@ -55,6 +55,18 @@
     --error: #f43f5e;
     --error-container: #881337;
     --on-error: #ffffff;
+    /*良好與正常*/
+    --good-container: #1aaa07;
+
+
+ 
+  --font-caption: 10px;
+  --font-small: 12px;
+  --font-body: 14px;
+  --font-title: 16px;
+  --font-heading: 20px;
+  --font-display: 24px;
+
   }
 
   /* 網頁全域基礎排版與背景設定 */

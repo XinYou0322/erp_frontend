@@ -2,43 +2,7 @@
   <div class="space-y-6 pb-12">
 
     <!-- KPI Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-      <MetricCard
-        title="異動紀錄總筆數"
-        :value="`${logs.length} 筆`"
-        growth="即時資料"
-        subtitle="目前系統中的庫存異動紀錄"
-        :icon="History"
-      />
-
-      <MetricCard
-        title="進貨紀錄"
-        :value="`${stockInCount} 筆`"
-        growth="進貨"
-        subtitle="原物料入庫異動"
-        :icon="PackagePlus"
-      />
-
-      <MetricCard
-        title="扣庫紀錄"
-        :value="`${deductCount} 筆`"
-        growth="銷售 / 耗損 / 調整"
-        variant="amber"
-        subtitle="所有負數庫存異動"
-        :icon="PackageMinus"
-      />
-
-      <MetricCard
-        title="涉及原物料"
-        :value="`${materialCount} 種`"
-        growth="異動品項"
-        variant="emerald"
-        subtitle="曾產生庫存異動的原物料"
-        :icon="Boxes"
-      />
-
-    </div>
 
 
     <!-- Toolbar -->
@@ -66,10 +30,11 @@
         "
       >
         <div>
+
           <div
             class="
               font-bold
-              text-sm
+              text-[length:var(--font-heading)]
               text-[var(--on-surface)]
             "
           >
@@ -78,13 +43,14 @@
 
           <div
             class="
-              text-xs
+              text-[length:var(--font-body)]
               text-[var(--on-surface-variant)]
               mt-1
             "
           >
             查詢原物料進貨、銷售扣減、耗損與盤點調整歷程
           </div>
+
         </div>
 
 
@@ -95,7 +61,7 @@
             @click="loadLogs"
             class="
               btn-secondary
-              text-xs
+              text-[length:var(--font-body)]
               px-3
               py-1.5
               flex
@@ -112,7 +78,7 @@
             @click="inventoryAdjustmentModalOpen = true"
             class="
               btn-primary
-              text-xs
+              text-[length:var(--font-body)]
               px-3.5
               py-1.5
               flex
@@ -138,10 +104,11 @@
       >
 
         <div>
+
           <label
             class="
               block
-              text-[11px]
+              text-[length:var(--font-body)]
               font-bold
               text-[var(--on-surface-variant)]
               mb-1
@@ -154,16 +121,21 @@
             v-model="searchQuery"
             type="text"
             placeholder="輸入原物料名稱或料號"
-            class="input-field"
+            class="
+              input-field
+              text-[length:var(--font-body)]
+            "
           />
+
         </div>
 
 
         <div>
+
           <label
             class="
               block
-              text-[11px]
+              text-[length:var(--font-body)]
               font-bold
               text-[var(--on-surface-variant)]
               mb-1
@@ -174,7 +146,10 @@
 
           <select
             v-model="selectedMaterialId"
-            class="input-field"
+            class="
+              input-field
+              text-[length:var(--font-body)]
+            "
           >
             <option value="">
               全部原物料
@@ -188,14 +163,16 @@
               {{ material.name }}（{{ material.code }}）
             </option>
           </select>
+
         </div>
 
 
         <div>
+
           <label
             class="
               block
-              text-[11px]
+              text-[length:var(--font-body)]
               font-bold
               text-[var(--on-surface-variant)]
               mb-1
@@ -206,7 +183,10 @@
 
           <select
             v-model="selectedAction"
-            class="input-field"
+            class="
+              input-field
+              text-[length:var(--font-body)]
+            "
           >
             <option value="">
               全部異動類型
@@ -220,6 +200,7 @@
               {{ getActionLabel(action) }}
             </option>
           </select>
+
         </div>
 
       </div>
@@ -234,7 +215,7 @@
         rounded-2xl
         p-8
         text-center
-        text-sm
+        text-[length:var(--font-title)]
         bg-[var(--surface-container)]
         border
         border-[var(--outline)]
@@ -254,7 +235,7 @@
         border-[var(--error)]/30
         bg-[var(--error)]/10
         p-4
-        text-sm
+        text-[length:var(--font-title)]
         text-[var(--error)]
       "
     >
@@ -285,7 +266,7 @@
                 bg-[var(--surface-container-high)]
                 border-b
                 border-[var(--outline)]
-                text-[11px]
+                text-[length:var(--font-body)]
                 font-bold
                 text-[var(--on-surface-variant)]
                 uppercase
@@ -323,13 +304,13 @@
             class="
               divide-y
               divide-[var(--outline-variant)]
-              text-xs
+              text-[length:var(--font-body)]
             "
           >
 
             <tr
-              v-for="log in filteredLogs"
-              :key="log.id"
+            v-for="log in paginatedLogs"
+  :key="log.id"
               class="
                 hover:bg-[var(--surface-container-high)]
                 transition-colors
@@ -338,9 +319,11 @@
 
               <!-- Time -->
               <td class="py-3.5 px-4 whitespace-nowrap">
+
                 <div
                   class="
                     font-data-mono
+                    text-[length:var(--font-body)]
                     text-[var(--on-surface)]
                   "
                 >
@@ -349,13 +332,14 @@
 
                 <div
                   class="
-                    text-[10px]
+                    text-[length:var(--font-small)]
                     text-[var(--on-surface-variant)]
                     mt-1
                   "
                 >
                   Log ID：{{ log.id }}
                 </div>
+
               </td>
 
 
@@ -365,7 +349,7 @@
                 <div
                   class="
                     font-bold
-                    text-sm
+                    text-[length:var(--font-title)]
                     text-[var(--on-surface)]
                   "
                 >
@@ -374,7 +358,7 @@
 
                 <div
                   class="
-                    text-[11px]
+                    text-[length:var(--font-body)]
                     text-[var(--on-surface-variant)]
                     font-data-mono
                     mt-0.5
@@ -389,17 +373,10 @@
               <!-- Action -->
               <td class="py-3.5 px-4">
 
-                <span
-                  class="
-                    px-2.5
-                    py-1
-                    rounded-full
-                    font-bold
-                  "
-                  :class="getActionClass(log.action)"
-                >
-                  {{ getActionLabel(log.action) }}
-                </span>
+         <StatusBadge
+  :status="getActionStatus(log.action)"
+  :label="getActionLabel(log.action)"
+/>
 
               </td>
 
@@ -411,7 +388,7 @@
                   class="
                     font-data-mono
                     font-bold
-                    text-sm
+                    text-[length:var(--font-title)]
                   "
                   :class="
                     Number(log.quantity) >= 0
@@ -438,6 +415,7 @@
                   v-if="log.refId !== null && log.refId !== undefined"
                   class="
                     font-data-mono
+                    text-[length:var(--font-body)]
                     text-[var(--on-surface)]
                   "
                 >
@@ -447,6 +425,7 @@
                 <span
                   v-else
                   class="
+                    text-[length:var(--font-body)]
                     text-[var(--on-surface-variant)]
                   "
                 >
@@ -462,6 +441,7 @@
                 <span
                   v-if="log.note"
                   class="
+                    text-[length:var(--font-body)]
                     text-[var(--on-surface)]
                   "
                 >
@@ -471,6 +451,7 @@
                 <span
                   v-else
                   class="
+                    text-[length:var(--font-body)]
                     text-[var(--on-surface-variant)]
                   "
                 >
@@ -490,7 +471,7 @@
                 class="
                   py-12
                   text-center
-                  text-sm
+                  text-[length:var(--font-title)]
                   text-[var(--on-surface-variant)]
                 "
               >
@@ -506,7 +487,11 @@
       </div>
 
     </div>
-
+<Pagination
+  :current-page="currentPage"
+  :total-pages="totalPages"
+  @change-page="goToPage"
+/>
 
     <InventoryAdjustmentModal
       :is-open="inventoryAdjustmentModalOpen"
@@ -516,8 +501,6 @@
 
   </div>
 </template>
-
-
 <script setup>
 
 import {
@@ -534,11 +517,11 @@ import {
   RefreshCw,
   Import
 } from 'lucide-vue-next'
-
+import Pagination from '@/component/子元件/Pagination.vue'
 import MetricCard from '@/component/子元件/MetricCard.vue'
 import httpClient from '@/service/httpClient'
 import InventoryAdjustmentModal from '@/component/父元件/InventoryAdjustmentModal.vue'
-
+import StatusBadge from '@/component/子元件/StatusBadge.vue'
 const inventoryAdjustmentModalOpen = ref(false)
 // ==============================
 // 異動紀錄
@@ -715,8 +698,43 @@ const filteredLogs = computed(() => {
   })
 
 })
+// ==============================
+// 分頁
+// ==============================
 
+const currentPage = ref(1)
 
+const pageSize = 10
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredLogs.value.length / pageSize)
+})
+
+const paginatedLogs = computed(() => {
+
+  const start =
+    (currentPage.value - 1) * pageSize
+
+  const end =
+    start + pageSize
+
+  return filteredLogs.value.slice(
+    start,
+    end
+  )
+})
+
+const goToPage = (page) => {
+
+  if (
+    page < 1 ||
+    page > totalPages.value
+  ) {
+    return
+  }
+
+  currentPage.value = page
+}
 // ==============================
 // KPI
 // ==============================
@@ -792,43 +810,36 @@ const getActionLabel = (action) => {
 // ==============================
 // 異動類型樣式
 // ==============================
+const getActionStatus = (action) => {
 
-const getActionClass = (action) => {
+  switch (action) {
 
-  if (action === 'STOCK_IN') {
+    // 庫存增加 → 綠色
+    case 'STOCK_IN':
+    case 'ADJUSTMENT_IN':
+      return 'normal'
 
-    return 'bg-emerald-50 text-emerald-700'
 
+    // 正常扣庫 / 人工扣庫 → 黃色
+    case 'SALE_DEDUCT':
+    case 'MANUAL_USE':
+    case 'ADJUSTMENT_OUT':
+      return 'low'
+
+
+    // 異常耗損 / 報廢 → 紅色
+    case 'WASTE':
+    case 'EXPIRED':
+      return 'urgent'
+
+
+    // 未知類型 → 灰色
+    default:
+      return 'pending'
   }
-
-
-  if (
-    action === 'SALE_DEDUCT'
-    ||
-    action === 'WASTE'
-    ||
-    action === 'EXPIRED'
-  ) {
-
-    return 'bg-red-50 text-red-700'
-
-  }
-
-
-  if (
-    action === 'ADJUSTMENT'
-    ||
-    action === 'MANUAL_USE'
-  ) {
-
-    return 'bg-amber-50 text-amber-700'
-
-  }
-
-
-  return 'bg-gray-100 text-gray-600'
 
 }
+
 
 
 // ==============================

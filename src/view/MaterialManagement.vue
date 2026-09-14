@@ -67,7 +67,7 @@
         <div
           class="
             font-bold
-            text-sm
+            text-[length:var(--font-heading)]
             text-[var(--on-surface)]
           "
         >
@@ -76,7 +76,7 @@
 
         <div
           class="
-            text-xs
+            text-[length:var(--font-body)]
             text-[var(--on-surface-variant)]
             mt-1
           "
@@ -95,7 +95,7 @@
           @click="loadMaterials"
           class="
             btn-secondary
-            text-xs
+            text-[length:var(--font-body)]
             px-3
             py-1.5
           "
@@ -110,7 +110,7 @@
           @click="handleOpenAddMaterial"
           class="
             btn-primary
-            text-xs
+            text-[length:var(--font-body)]
             px-3
             py-1.5
             flex
@@ -138,7 +138,7 @@
         rounded-2xl
         p-8
         text-center
-        text-sm
+        text-[length:var(--font-title)]
         bg-[var(--surface-container)]
         border
         border-[var(--outline)]
@@ -160,7 +160,7 @@
         border-[var(--error)]/30
         bg-[var(--error)]/10
         p-4
-        text-sm
+        text-[length:var(--font-title)]
         text-[var(--error)]
       "
     >
@@ -237,7 +237,7 @@
                 <h3
                   class="
                     font-bold
-                    text-sm
+                    text-[length:var(--font-title)]
                     text-[var(--on-surface)]
                     group-hover:text-[var(--primary)]
                     transition-colors
@@ -250,7 +250,7 @@
 
                 <div
                   class="
-                    text-[11px]
+                    text-[length:var(--font-body)]
                     text-[var(--on-surface-variant)]
                     font-data-mono
                     mt-0.5
@@ -285,7 +285,7 @@
                 text-[var(--primary)]
                 border
                 border-[var(--primary)]/25
-                text-xs
+                text-[length:var(--font-body)]
                 font-bold
                 transition-colors
                 cursor-pointer
@@ -328,7 +328,7 @@
 
               <span
                 class="
-                  text-xs
+                  text-[length:var(--font-body)]
                   text-[var(--on-surface-variant)]
                   font-semibold
                   block
@@ -341,7 +341,7 @@
               <span
                 class="
                   font-bold
-                  text-base
+                  text-[length:var(--font-title)]
                   text-[var(--primary)]
                 "
               >
@@ -361,7 +361,7 @@
 
               <span
                 class="
-                  text-xs
+                  text-[length:var(--font-body)]
                   text-[var(--on-surface-variant)]
                   font-semibold
                   block
@@ -374,7 +374,7 @@
               <span
                 class="
                   font-bold
-                  text-base
+                  text-[length:var(--font-title)]
                   text-[var(--primary)]
                 "
               >
@@ -389,7 +389,7 @@
 
               <span
                 class="
-                  text-xs
+                  text-[length:var(--font-body)]
                   text-[var(--on-surface-variant)]
                   font-semibold
                   block
@@ -402,7 +402,7 @@
               <span
                 class="
                   font-bold
-                  text-base
+                  text-[length:var(--font-title)]
                   text-[var(--primary)]
                 "
               >
@@ -437,7 +437,7 @@
               <label
                 class="
                   block
-                  text-xs
+                  text-[length:var(--font-body)]
                   font-bold
                   text-[var(--on-surface)]
                   mb-1
@@ -449,7 +449,10 @@
               <input
                 v-model="editForm.name"
                 type="text"
-                class="input-field"
+                class="
+                  input-field
+                  text-[length:var(--font-body)]
+                "
               />
 
             </div>
@@ -461,7 +464,7 @@
               <label
                 class="
                   block
-                  text-xs
+                  text-[length:var(--font-body)]
                   font-bold
                   text-[var(--on-surface)]
                   mb-1
@@ -476,6 +479,7 @@
                 class="
                   input-field
                   font-data-mono
+                  text-[length:var(--font-body)]
                 "
               />
 
@@ -490,7 +494,7 @@
                 <label
                   class="
                     block
-                    text-xs
+                    text-[length:var(--font-body)]
                     font-bold
                     text-[var(--on-surface)]
                     mb-1
@@ -501,7 +505,10 @@
 
                 <select
                   v-model="editForm.unit"
-                  class="input-field"
+                  class="
+                    input-field
+                    text-[length:var(--font-body)]
+                  "
                 >
                   <option value="kg">公斤 (kg)</option>
                   <option value="g">公克 (g)</option>
@@ -519,7 +526,7 @@
                 <label
                   class="
                     block
-                    text-xs
+                    text-[length:var(--font-body)]
                     font-bold
                     text-[var(--on-surface)]
                     mb-1
@@ -536,6 +543,7 @@
                   class="
                     input-field
                     no-number-spinner
+                    text-[length:var(--font-body)]
                   "
                 />
 
@@ -547,7 +555,7 @@
                 <label
                   class="
                     block
-                    text-xs
+                    text-[length:var(--font-body)]
                     font-bold
                     text-[var(--on-surface)]
                     mb-1
@@ -564,6 +572,7 @@
                   class="
                     input-field
                     no-number-spinner
+                    text-[length:var(--font-body)]
                   "
                 />
 
@@ -580,7 +589,7 @@
                 @click="cancelEditMaterial"
                 class="
                   btn-secondary
-                  text-xs
+                  text-[length:var(--font-body)]
                 "
               >
                 取消
@@ -592,7 +601,7 @@
                 @click="saveEditMaterial"
                 class="
                   btn-primary
-                  text-xs
+                  text-[length:var(--font-body)]
                 "
               >
                 儲存修改
@@ -603,46 +612,6 @@
           </div>
 
         </div>
-
-
-        <!-- =========================
-             Footer
-             ========================= -->
-        <div
-          class="
-            pt-3
-            border-t
-            border-[var(--outline-variant)]
-            text-[11px]
-            text-[var(--on-surface-variant)]
-            flex
-            items-center
-            justify-between
-          "
-        >
-
-          <span>
-            Material ID：{{ material.id }}
-          </span>
-
-          <span
-            class="
-              px-2
-              py-0.5
-              rounded
-              bg-[var(--primary)]/10
-              text-[var(--primary)]
-              border
-              border-[var(--primary)]/20
-              text-[10px]
-              font-bold
-            "
-          >
-            原物料主檔
-          </span>
-
-        </div>
-
       </div>
     </div>
 
@@ -650,83 +619,11 @@
     <!-- =========================
          Pagination
          ========================= -->
-    <div
-      v-if="totalPages > 1"
-      class="
-        flex
-        items-center
-        justify-center
-        gap-2
-        mt-6
-      "
-    >
-
-      <!-- 上一頁 -->
-      <button
-        type="button"
-        class="btn-secondary text-xs"
-        :disabled="currentPage === 1"
-        @click="goToPage(currentPage - 1)"
-      >
-        上一頁
-      </button>
-
-
-      <!-- 頁碼 -->
-      <button
-        v-for="page in totalPages"
-        :key="page"
-        type="button"
-        @click="goToPage(page)"
-        class="
-          px-3
-          py-2
-          rounded-lg
-          text-xs
-          font-bold
-          transition
-        "
-        :class="
-          currentPage === page
-            ? 'btn-primary'
-            : 'btn-secondary'
-        "
-      >
-        {{ page }}
-      </button>
-
-
-      <!-- 下一頁 -->
-      <button
-        type="button"
-        class="btn-secondary text-xs"
-        :disabled="currentPage === totalPages"
-        @click="goToPage(currentPage + 1)"
-      >
-        下一頁
-      </button>
-
-    </div>
-
-
-    <!-- =========================
-         Empty
-         ========================= -->
-    <div
-      v-else
-      class="
-        rounded-2xl
-        p-10
-        text-center
-        text-sm
-        bg-[var(--surface-container)]
-        border
-        border-[var(--outline)]
-        text-[var(--on-surface-variant)]
-      "
-    >
-      目前沒有原物料資料
-    </div>
+    <Pagination
+      :current-page="currentPage"
+      :total-pages="totalPages"
+      @change-page="goToPage"
+    />
 
 
     <!-- =========================
@@ -754,7 +651,7 @@ import {
 } from "lucide-vue-next";
 import MetricCard from "@/component/子元件/MetricCard.vue";
 import AddMaterialModal from "@/component/父元件/AddMaterialModal.vue";
-
+import Pagination from "@/component/子元件/Pagination.vue";
 import httpClient from "@/service/httpClient";
 
 // ==============================

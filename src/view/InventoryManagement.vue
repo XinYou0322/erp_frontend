@@ -61,7 +61,7 @@
         <div
           class="
             font-bold
-            text-sm
+            text-[length:var(--font-heading)]
             text-[var(--on-surface)]
           "
         >
@@ -70,7 +70,7 @@
 
         <div
           class="
-            text-xs
+            text-[length:var(--font-body)]
             text-[var(--on-surface-variant)]
             mt-1
           "
@@ -87,7 +87,7 @@
           @click="loadInventory"
           class="
             btn-secondary
-            text-xs
+            text-[length:var(--font-body)]
             px-3
             py-1.5
             flex
@@ -105,7 +105,7 @@
           @click="emit('openReport')"
           class="
             btn-secondary
-            text-xs
+            text-[length:var(--font-body)]
             px-3
             py-1.5
             flex
@@ -123,7 +123,7 @@
           @click="inventoryIntakeModalOpen = true"
           class="
             btn-primary
-            text-xs
+            text-[length:var(--font-body)]
             px-3.5
             py-1.5
             flex
@@ -146,7 +146,7 @@
         rounded-2xl
         p-8
         text-center
-        text-sm
+        text-[length:var(--font-title)]
         bg-[var(--surface-container)]
         border
         border-[var(--outline)]
@@ -166,7 +166,7 @@
         border-[var(--error)]/30
         bg-[var(--error)]/10
         p-4
-        text-sm
+        text-[length:var(--font-title)]
         text-[var(--error)]
       "
     >
@@ -196,7 +196,7 @@
                 bg-[var(--surface-container-high)]
                 border-b
                 border-[var(--outline)]
-                text-[11px]
+                text-[length:var(--font-body)]
                 font-bold
                 text-[var(--on-surface-variant)]
                 uppercase
@@ -238,13 +238,13 @@
             class="
               divide-y
               divide-[var(--outline-variant)]
-              text-xs
+              text-[length:var(--font-body)]
             "
           >
 
             <template
-              v-for="item in inventory"
-              :key="item.materialId"
+            v-for="item in paginatedInventory"
+  :key="item.materialId"
             >
 
               <!-- 原物料摘要 -->
@@ -261,7 +261,7 @@
                   <div
                     class="
                       font-bold
-                      text-sm
+                      text-[length:var(--font-title)]
                       text-[var(--on-surface)]
                     "
                   >
@@ -270,7 +270,7 @@
 
                   <div
                     class="
-                      text-[11px]
+                      text-[length:var(--font-body)]
                       text-[var(--on-surface-variant)]
                       font-data-mono
                       mt-0.5
@@ -289,6 +289,7 @@
                     class="
                       font-data-mono
                       font-bold
+                      text-[length:var(--font-body)]
                       text-[var(--on-surface)]
                     "
                   >
@@ -300,7 +301,7 @@
 
                   <div
                     class="
-                      text-[11px]
+                      text-[length:var(--font-body)]
                       text-[var(--primary)]
                       mt-1
                     "
@@ -314,7 +315,7 @@
                   <div
                     v-if="Number(item.expiredQuantity) > 0"
                     class="
-                      text-[11px]
+                      text-[length:var(--font-body)]
                       text-[var(--error)]
                       mt-1
                     "
@@ -327,7 +328,7 @@
 
                   <div
                     class="
-                      text-[10px]
+                      text-[length:var(--font-body)]
                       text-[var(--on-surface-variant)]
                       mt-1
                     "
@@ -343,55 +344,9 @@
                 <!-- 庫存狀態 -->
                 <td class="py-3.5 px-4">
 
-                  <span
-                    v-if="item.status === 'NORMAL'"
-                    class="
-                      px-2.5
-                      py-1
-                      rounded-full
-                      bg-[var(--primary)]/15
-                      text-[var(--primary)]
-                      border
-                      border-[var(--primary)]/30
-                      font-bold
-                    "
-                  >
-                    存量充足
-                  </span>
-
-
-                  <span
-                    v-else-if="item.status === 'LOW'"
-                    class="
-                      px-2.5
-                      py-1
-                      rounded-full
-                      bg-[var(--tertiary)]/15
-                      text-[var(--tertiary)]
-                      border
-                      border-[var(--tertiary)]/30
-                      font-bold
-                    "
-                  >
-                    偏低需補
-                  </span>
-
-
-                  <span
-                    v-else-if="item.status === 'URGENT'"
-                    class="
-                      px-2.5
-                      py-1
-                      rounded-full
-                      bg-[var(--error)]/15
-                      text-[var(--error)]
-                      border
-                      border-[var(--error)]/30
-                      font-bold
-                    "
-                  >
-                    緊急缺料
-                  </span>
+                 <StatusBadge
+  :status="item.status.toLowerCase()"
+/>
 
                 </td>
 
@@ -403,6 +358,7 @@
                     v-if="item.nearestExpiryDate"
                     class="
                       font-data-mono
+                      text-[length:var(--font-body)]
                       text-[var(--on-surface)]
                     "
                   >
@@ -412,6 +368,7 @@
                   <div
                     v-else
                     class="
+                      text-[length:var(--font-body)]
                       text-[var(--on-surface-variant)]
                     "
                   >
@@ -422,7 +379,7 @@
                   <div
                     v-if="item.expiryStatus === 'EXPIRED'"
                     class="
-                      text-[11px]
+                      text-[length:var(--font-body)]
                       text-[var(--error)]
                       font-bold
                       mt-1
@@ -435,7 +392,7 @@
                   <div
                     v-else-if="item.expiryStatus === 'EXPIRING_SOON'"
                     class="
-                      text-[11px]
+                      text-[length:var(--font-body)]
                       text-[var(--tertiary)]
                       font-bold
                       mt-1
@@ -448,7 +405,7 @@
                   <div
                     v-else
                     class="
-                      text-[11px]
+                      text-[length:var(--font-body)]
                       text-[var(--primary)]
                       mt-1
                     "
@@ -466,6 +423,7 @@
                     px-4
                     font-data-mono
                     font-bold
+                    text-[length:var(--font-body)]
                     text-[var(--on-surface)]
                   "
                 >
@@ -481,6 +439,7 @@
                     py-3.5
                     px-4
                     font-data-mono
+                    text-[length:var(--font-body)]
                     text-[var(--on-surface)]
                   "
                 >
@@ -505,7 +464,7 @@
                       border
                       border-[var(--primary)]/30
                       font-bold
-                      text-[11px]
+                      text-[length:var(--font-body)]
                       transition-colors
                       cursor-pointer
                     "
@@ -539,7 +498,7 @@
                   <div
                     v-if="batchLoading"
                     class="
-                      text-xs
+                      text-[length:var(--font-body)]
                       text-[var(--on-surface-variant)]
                       py-3
                     "
@@ -552,7 +511,7 @@
                   <div
                     v-else-if="batches.length === 0"
                     class="
-                      text-xs
+                      text-[length:var(--font-body)]
                       text-[var(--on-surface-variant)]
                       py-3
                     "
@@ -580,7 +539,7 @@
                         border-b
                         border-[var(--outline)]
                         font-bold
-                        text-xs
+                        text-[length:var(--font-title)]
                         text-[var(--on-surface)]
                       "
                     >
@@ -588,7 +547,7 @@
                     </div>
 
 
-                    <table class="w-full text-xs">
+                    <table class="w-full text-[length:var(--font-body)]">
 
                       <thead>
                         <tr
@@ -635,6 +594,7 @@
                               px-4
                               py-2
                               font-data-mono
+                              text-[length:var(--font-body)]
                               text-[var(--on-surface)]
                             "
                           >
@@ -648,6 +608,7 @@
                               py-2
                               font-data-mono
                               font-bold
+                              text-[length:var(--font-body)]
                               text-[var(--on-surface)]
                             "
                           >
@@ -662,6 +623,7 @@
                             <span
                               v-if="!batch.expiryDate"
                               class="
+                                text-[length:var(--font-body)]
                                 text-[var(--on-surface-variant)]
                               "
                             >
@@ -674,7 +636,10 @@
                               v-else-if="
                                 getExpiryStatus(batch.expiryDate) === 'expired'
                               "
-                              class="font-bold"
+                              class="
+                                font-bold
+                                text-[length:var(--font-body)]
+                              "
                               :class="
                                 Number(batch.quantity) === 0
                                   ? 'text-[var(--on-surface-variant)]'
@@ -701,7 +666,7 @@
                                   text-[var(--error)]
                                   border
                                   border-[var(--error)]/30
-                                  text-[11px]
+                                  text-[length:var(--font-body)]
                                   font-bold
                                   transition-colors
                                 "
@@ -718,6 +683,7 @@
                               "
                               class="
                                 font-bold
+                                text-[length:var(--font-body)]
                                 text-[var(--tertiary)]
                               "
                             >
@@ -730,6 +696,7 @@
                             <span
                               v-else
                               class="
+                                text-[length:var(--font-body)]
                                 text-[var(--on-surface)]
                               "
                             >
@@ -743,6 +710,7 @@
                             class="
                               px-4
                               py-2
+                              text-[length:var(--font-body)]
                               text-[var(--on-surface-variant)]
                               font-data-mono
                             "
@@ -772,7 +740,7 @@
                 class="
                   py-12
                   text-center
-                  text-sm
+                  text-[length:var(--font-title)]
                   text-[var(--on-surface-variant)]
                 "
               >
@@ -787,7 +755,11 @@
 
       </div>
     </div>
-
+<Pagination
+  :current-page="currentPage"
+  :total-pages="totalPages"
+  @change-page="goToPage"
+/>
 
     <InventoryIntakeModal
       :is-open="inventoryIntakeModalOpen"
@@ -797,7 +769,6 @@
 
   </div>
 </template>
-
 <script setup>
 import { ref, computed, onMounted } from "vue";
 
@@ -813,15 +784,66 @@ import {
 } from "lucide-vue-next";
 
 import MetricCard from "@/component/子元件/MetricCard.vue";
-
+import Pagination from '@/component/子元件/Pagination.vue'
 import httpClient from "@/service/httpClient";
 import InventoryIntakeModal from "@/component/父元件/InventoryIntakeModal.vue";
-
+import StatusBadge from '@/component/子元件/StatusBadge.vue'
 // ==============================
 // 庫存摘要資料
 // ==============================
 
 const inventory = ref([]);
+
+
+
+
+// 分頁
+// ==============================
+
+const currentPage = ref(1);
+
+const pageSize = 6;
+
+const totalPages = computed(() => {
+  return Math.ceil(
+    inventory.value.length / pageSize
+  );
+});
+
+const paginatedInventory = computed(() => {
+
+  const start =
+    (currentPage.value - 1) * pageSize;
+
+  const end =
+    start + pageSize;
+
+  return inventory.value.slice(
+    start,
+    end
+  );
+});
+
+const goToPage = (page) => {
+
+  if (
+    page < 1 ||
+    page > totalPages.value
+  ) {
+    return;
+  }
+
+  currentPage.value = page;
+
+  // 換頁時把展開的批次收起來
+  expandedMaterialId.value = null;
+  batches.value = [];
+};
+
+
+
+
+
 
 // ==============================
 // 批次資料
