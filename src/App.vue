@@ -16,6 +16,17 @@
         <RouterView />
       </div>
     </template>
+
+
+  <div class="erp-shell">
+<WaveBackground />
+    <Sidebar />
+
+   <main class="erp-main ml-64 min-h-screen">
+  <RouterView />
+</main>
+
+
   </div>
 </template>
 
@@ -58,4 +69,8 @@ watch(
 
 import WaveBackground from './view/WaveBackground.vue';
 
+
+import { RouterView } from 'vue-router'
+import Sidebar from './component/父元件/Sidebar.vue'
+import WaveBackground from './view/WaveBackground.vue';
 </script>

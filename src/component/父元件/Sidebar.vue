@@ -219,15 +219,15 @@ const navItems = [
     label: "飲品品項菜單",
     icon: Layers,
     badge: "8款",
-    path: "/product",
+    path: "/product2",
   },
 
   {
-    id: "recipes",
+    id: "products",
     label: "原料配方 BOM 管理",
     icon: FlaskConical,
     badge: "SOP",
-    path: "/bom",
+    path: "/product",
   },
 
   {
@@ -243,6 +243,7 @@ const navItems = [
     label: "原物料進銷存",
     icon: Package,
     badge: "庫存",
+    
   },
 
   {
@@ -265,11 +266,20 @@ const navItems = [
     icon: ShieldUser,
     path: "/PermissionPage",
   },
-  {
-    id: "testings15313",
+{
+ id: "testings",
     label: "測試用欄位",
     icon: Sliders,
-    path: "/supplier",
+    path: "/material",
+
+
+
+},
+{
+ id: "testings15313",
+    label: "展示用",
+    icon: Sliders,
+    path: "/ComponentShowcase",
 
 
 

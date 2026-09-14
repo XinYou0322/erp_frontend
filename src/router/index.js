@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/auth.store";
 
 
+
 const routes = [
   {
     path: "/",
@@ -27,6 +28,12 @@ const routes = [
     path: "/PermissionPage",
     redirect: "/permissions",
   },
+
+   {
+     path: '/product',
+    name: 'product',
+     component: ()=> import("@/view/ProductBomManagement.vue")
+   },
   {
     path: "/material",
     name: "material",
@@ -44,7 +51,28 @@ const routes = [
     name: 'workflow-detail',
     component: () => import('@/view/WorkflowDetail.vue'),
     props: true
-  }
+  },
+  {
+    path: '/inventory',
+    name: 'inventory',
+    component: ()=> import("@/view/InventoryManagement.vue")
+  },
+  {
+    path: '/material',
+    name: 'material',
+    component: ()=> import("@/view/MaterialManagement.vue")
+  },
+ {
+    path: '/inventory/logs',
+    name: 'inventorylogs',
+    component: ()=> import("@/view/InventoryLogManagement.vue")
+  },
+
+   {
+    path: '/ComponentShowcase',
+    name: 'ComponentShowcase',
+    component: ()=> import("@/view/ComponentShowcase.vue")
+  },
 ]
 
 const router = createRouter({
