@@ -7,9 +7,11 @@ import './style/main.css'
 import'@/style/total.css'
 import './style/workflow-tokens.css'
 
+
+import "@/style/index.css";
+
 const app = createApp(App)
 
-import "./style/index.css";
 
 
 app.use(createPinia());

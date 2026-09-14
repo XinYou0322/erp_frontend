@@ -1,16 +1,12 @@
-import httpClient from '@/service/httpClient';
+import httpClient from "@/service/httpClient";
 
 // 拿 session 內的使用者
-export const sessionUser = () =>{
-    httpClient.get('/api/users/now')
-    .then(function (response) {
-        console.log(response);
-        console.log('response.data.loginUsername', response.data.loginUsername);
-        return response.data.loginUsername
-    })
-    .catch(function (error) {
-        console.log(error);
-        return  error.response.data
-     });
-
-}
+export const sessionUser = async () => {
+  try {
+    const response = await httpClient.get("/api/users/now");
+    return response.data;
+  } catch (error) {
+    console.error("取得當前登入者失敗:", error);
+    throw error;
+  }
+};
