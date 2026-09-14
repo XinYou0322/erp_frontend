@@ -255,11 +255,10 @@ const props = withDefaults(
 )
 
 
-const emit = defineEmits<{
+const emit = defineEmits([
+  'close',
 
-  (e: 'close'): void
-
-}>()
+])
 
 
 const maxWidthClass = computed(() => {
