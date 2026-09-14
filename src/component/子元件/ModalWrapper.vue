@@ -197,62 +197,63 @@
 </template>
 
 
-<script setup lang="ts">
+<script setup >
 
 import { computed } from 'vue'
 
-import type { Component } from 'vue'
+
 
 import { X } from 'lucide-vue-next'
 
 
-const props = withDefaults(
+const props = defineProps({
 
-  defineProps<{
+  isOpen: {
+    type: Boolean,
+    required: true
+  },
 
-    isOpen: boolean
+  title: {
+    type: String,
+    required: true
+  },
 
-    title: string
+  subtitle: {
+    type: String,
+    default: ''
+  },
 
-    subtitle?: string
+  id: {
+    type: String,
+    default: ''
+  },
 
-    id?: string
+  maxWidth: {
+    type: String,
+    default: '2xl'
+  },
 
-    maxWidth?:
-      | 'sm'
-      | 'md'
-      | 'lg'
-      | 'xl'
-      | '2xl'
-      | '3xl'
-      | '6xl'
+  icon: {
+    type: Object,
+    default: null
+  },
 
-    icon?: Component
+  closeOnBackdrop: {
+    type: Boolean,
+    default: true
+  },
 
-    closeOnBackdrop?: boolean
+  confirmClose: {
+    type: Boolean,
+    default: true
+  },
 
-    // 是否關閉前詢問
-    confirmClose?: boolean
-
-    // 關閉確認訊息
-    confirmCloseMessage?: string
-
-  }>(),
-
-  {
-
-    maxWidth: '2xl',
-
-    closeOnBackdrop: true,
-
-    confirmClose: true,
-
-    confirmCloseMessage:
-      '確定要關閉嗎？尚未儲存的資料將會遺失。'
-
+  confirmCloseMessage: {
+    type: String,
+    default: '確定要關閉嗎？尚未儲存的資料將會遺失。'
   }
 
-)
+})
 
 
 const emit = defineEmits([

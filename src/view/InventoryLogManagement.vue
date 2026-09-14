@@ -518,7 +518,6 @@ import {
   Import
 } from 'lucide-vue-next'
 import Pagination from '@/component/子元件/Pagination.vue'
-import MetricCard from '@/component/子元件/MetricCard.vue'
 import httpClient from '@/service/httpClient'
 import InventoryAdjustmentModal from '@/component/父元件/InventoryAdjustmentModal.vue'
 import StatusBadge from '@/component/子元件/StatusBadge.vue'
@@ -532,7 +531,6 @@ const handleAdjustmentSuccess = async () => {
 
 }
 const logs = ref([])
-
 
 // ==============================
 // 頁面狀態
