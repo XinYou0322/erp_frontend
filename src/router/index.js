@@ -79,6 +79,26 @@ const routes = [
     name: 'Supplier',
     component: ()=> import("@/view/Supplier.vue")
   },
+  {
+    path: '/leave-requests',
+    name: 'leave-list',
+    component: () => import('../view/LeaveRequestListView.vue')
+  },
+  {
+    path: '/leave-requests/new',
+    name: 'leave-create',
+    component: () => import('../view/LeaveRequestFormView.vue')
+  },
+  {
+    path: '/leave-requests/:id/edit',
+    name: 'leave-edit',
+    component: () => import('../view/LeaveRequestFormView.vue')
+  },
+  {
+    path: '/leave-requests/:id',
+    name: 'leave-detail',
+    component: () => import('../view/LeaveRequestDetailView.vue')
+  }
 ]
 
 const router = createRouter({

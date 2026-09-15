@@ -1,9 +1,9 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import WorkflowStatusBadge from "@/component/workflow/WorkflowStatusBadge.vue";
-import WorkflowTimeline from "@/component/workflow/WorkflowTimeline.vue";
-import WorkflowActionButtons from "@/component/workflow/WorkflowActionButtons.vue";
+import WorkflowStatusBadge from "@/component/子元件/WorkflowStatusBadge.vue";
+import WorkflowTimeline from "@/component/子元件/WorkflowTimeline.vue";
+import WorkflowActionButtons from "@/component/子元件/WorkflowActionButtons.vue";
 import {
   getWorkflowById,
   getWorkflowLogs,

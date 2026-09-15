@@ -4,9 +4,15 @@ import WorkflowFilter from "@/component/子元件/WorkflowFilter.vue";
 import WorkflowTable from "@/component/父元件/WorkflowTable.vue";
 import WorkflowEmpty from "@/component/子元件/WorkflowEmpty.vue";
 import { getWorkflows } from "@/service/workflowService";
+import { useAuthStore } from "@/stores/auth.store";
 
 // TODO: 之後接上登入機制後，改成從登入狀態取得目前使用者 id
-const CURRENT_APPROVER_ID = 2;
+//const CURRENT_APPROVER_ID = 2;
+
+const authStore = useAuthStore();
+const currentApproverId = computed(() => authStore.currentUser?.id);
+
+console.log("currentUser =", authStore.currentUser);
 
 const rawWorkflows = ref([]);
 const loading = ref(false);
@@ -20,10 +26,18 @@ const filters = ref({
 });
 
 async function loadWorkflows() {
+  if (!currentApproverId.value) {
+    errorMessage.value = "尚未登入";
+    return;
+  }
+
+  console.log("currentApproverId.value 回傳：", currentApproverId.value);
+
   loading.value = true;
   errorMessage.value = "";
   try {
-    const data = await getWorkflows(CURRENT_APPROVER_ID);
+    const data = await getWorkflows(currentApproverId.value);
+    console.log("Workflow API 回傳：", data);
     rawWorkflows.value = data;
   } catch (err) {
     errorMessage.value = "讀取待簽核清單失敗，請稍後再試";
@@ -172,7 +186,7 @@ onMounted(loadWorkflows);
   margin-bottom: 20px;
 }
 
-.stat {
+/* .stat {
   background: var(--wf-paper-raised);
   border: 1px solid var(--wf-line);
   border-radius: var(--wf-radius-md);
@@ -180,6 +194,24 @@ onMounted(loadWorkflows);
   display: flex;
   flex-direction: column;
   gap: 6px;
+} */
+
+.stat {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(51, 65, 85, 0.6);
+  border-radius: var(--wf-radius-md);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.stat:hover {
+  border-color: rgba(16, 185, 129, 0.35);
 }
 
 .stat__label {
