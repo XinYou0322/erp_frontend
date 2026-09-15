@@ -4,7 +4,7 @@ import { useAuthStore } from "../stores/auth.store";
 import { useUIStore } from "../stores/ui.store";
 import { UserProfile, UserRole, PermissionKey } from "../types";
 import { PERMISSION_MODULES } from "../data/permissionData";
-import { DEFAULT_AVATARS } from "../data/defaultAvatars";
+import { DEFAULT_AVATARS, normalizeAvatarUrl } from "../data/defaultAvatars";
 import BaseCard from "../component/子元件/BaseCard.vue";
 import BaseBadge from "../component/子元件/BaseBadge.vue";
 import BaseModal from "../component/子元件/BaseModal.vue";
@@ -850,9 +850,15 @@ const handleResetDefaultPermissions = () => {
                 <td class="py-3 px-3">
                   <div class="flex items-center gap-2.5">
                     <img
-                      :src="user.avatar || defaultAvatars[0]"
+                      :src="
+                        normalizeAvatarUrl(user.avatar || defaultAvatars[0])
+                      "
                       :alt="user.name"
                       class="w-9 h-9 rounded-xl object-cover border border-slate-700"
+                      @error="
+                        ($event.target as HTMLImageElement).src =
+                          defaultAvatars[0]
+                      "
                     />
                     <div>
                       <div class="font-bold text-white">{{ user.name }}</div>
@@ -997,9 +1003,15 @@ const handleResetDefaultPermissions = () => {
                 <td class="py-3 px-3">
                   <div class="flex items-center gap-2.5">
                     <img
-                      :src="user.avatar || defaultAvatars[0]"
+                      :src="
+                        normalizeAvatarUrl(user.avatar || defaultAvatars[0])
+                      "
                       :alt="user.name"
                       class="w-8 h-8 rounded-xl object-cover border border-slate-700 shrink-0"
+                      @error="
+                        ($event.target as HTMLImageElement).src =
+                          defaultAvatars[0]
+                      "
                     />
                     <div>
                       <div class="flex items-center gap-1.5">

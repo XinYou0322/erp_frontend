@@ -6,7 +6,10 @@ import { useInventoryStore } from "../../stores/inventory.store";
 import { useNotificationStore } from "../../stores/notification.store";
 import { useUIStore } from "../../stores/ui.store";
 import { UserProfile } from "../../types";
-import { getDefaultAvatar } from "../../data/defaultAvatars";
+import {
+  getDefaultAvatar,
+  normalizeAvatarUrl,
+} from "../../data/defaultAvatars";
 
 const defaultAvatar = getDefaultAvatar();
 
@@ -153,9 +156,12 @@ const handleLogout = async () => {
             </span>
           </div>
           <img
-            :src="authStore.currentUser?.avatar || defaultAvatar"
+            :src="
+              normalizeAvatarUrl(authStore.currentUser?.avatar || defaultAvatar)
+            "
             :alt="authStore.currentUser.name"
             class="w-8 h-8 rounded-xl object-cover border border-emerald-500/40"
+            @error="($event.target as HTMLImageElement).src = defaultAvatar"
           />
           <span class="material-symbols-outlined text-slate-400 text-[18px]">
             expand_more
@@ -192,8 +198,9 @@ const handleLogout = async () => {
               "
             >
               <img
-                :src="u.avatar || defaultAvatar"
+                :src="normalizeAvatarUrl(u.avatar || defaultAvatar)"
                 class="w-5 h-5 rounded-md object-cover"
+                @error="($event.target as HTMLImageElement).src = defaultAvatar"
               />
               <div class="truncate">
                 <span class="block">{{ u.name }}</span>

@@ -8,3 +8,31 @@ export const DEFAULT_AVATARS = [
 export const getDefaultAvatar = () =>
   DEFAULT_AVATARS[Math.floor(Math.random() * DEFAULT_AVATARS.length)] ||
   DEFAULT_AVATARS[0];
+
+export const normalizeAvatarUrl = (avatar) => {
+  if (!avatar || typeof avatar !== "string") {
+    return getDefaultAvatar();
+  }
+
+  const value = avatar.trim();
+  if (!value) {
+    return getDefaultAvatar();
+  }
+
+  if (
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("data:") ||
+    value.startsWith("blob:")
+  ) {
+    return value;
+  }
+
+  if (value.startsWith("/")) {
+    const base =
+      import.meta.env.VITE_AXIOS_HTTP_BASEURL || "http://localhost:8080";
+    return `${base}${value}`;
+  }
+
+  return value;
+};

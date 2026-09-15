@@ -7,7 +7,11 @@ import {
 } from "../data/permissionData";
 import { StorageService } from "../service/storage.service";
 import httpClient from "@/service/httpClient";
-import { DEFAULT_AVATARS, getDefaultAvatar } from "../data/defaultAvatars";
+import {
+  DEFAULT_AVATARS,
+  getDefaultAvatar,
+  normalizeAvatarUrl,
+} from "../data/defaultAvatars";
 
 const DEFAULT_AVATAR = getDefaultAvatar();
 
@@ -30,7 +34,9 @@ export const useAuthStore = defineStore("auth", () => {
 
   // 刷卡打卡狀態
   const isClockedIn = ref(StorageService.get("is_clocked_in", true));
-  const clockTime = ref("08:55 AM");
+  const clockTime = ref(StorageService.get("clock_time", "08:55 AM"));
+  const clockTimeline = ref(StorageService.get("clock_timeline", []));
+  const clockRecords = ref(StorageService.get("clock_records", []));
 
   // --- 角色映射 (後端中文職稱 <-> 前端四級 RBAC 角色) ---
   function mapRoleToSystemRole(role) {
@@ -201,7 +207,7 @@ export const useAuthStore = defineStore("auth", () => {
 
       const authenticatedUser = {
         ...user,
-        avatar: user.avatar || DEFAULT_AVATAR,
+        avatar: normalizeAvatarUrl(user.avatar || DEFAULT_AVATAR),
         role: user.role?.name || user.role,
         roleName: user.role?.description || user.role?.name || "使用者",
       };
@@ -351,7 +357,7 @@ export const useAuthStore = defineStore("auth", () => {
           name: u.name,
           username: u.username,
           email: u.email,
-          avatar: u.avatar || getDefaultAvatar(),
+          avatar: normalizeAvatarUrl(u.avatar || getDefaultAvatar()),
           role: u.role?.name || "employee",
           roleName: u.role?.description || u.role?.name || "一般員工",
           roleId: u.role?.id,
@@ -579,6 +585,125 @@ export const useAuthStore = defineStore("auth", () => {
     StorageService.set("system_users", users.value);
   }
 
+  function appendClockRecord(
+    action,
+    note = "",
+    timestamp = new Date().toISOString(),
+  ) {
+    const record = {
+      id: `clock-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+      userId: currentUser.value?.id || "system",
+      userName: currentUser.value?.name || "系統",
+      action,
+      note,
+      timestamp,
+      status: action === "上班打卡" ? "success" : "warning",
+    };
+
+    clockTimeline.value = [record, ...clockTimeline.value].slice(0, 20);
+    clockRecords.value = [record, ...clockRecords.value].slice(0, 50);
+    StorageService.set("clock_timeline", clockTimeline.value);
+    StorageService.set("clock_records", clockRecords.value);
+  }
+
+  async function fetchClockRecords(userId = currentUser.value?.id) {
+    try {
+      const params = userId ? { userId } : {};
+      const response = await httpClient.get("/api/clock/history", { params });
+      const records = Array.isArray(response?.data?.records)
+        ? response.data.records.map((item) => ({
+            id: item.id,
+            userId: item.userId,
+            userName: item.userName || currentUser.value?.name || "系統",
+            action:
+              item.label ||
+              (item.clockType === "CLOCK_IN" ? "上班打卡" : "簽退記錄"),
+            note:
+              item.label ||
+              (item.clockType === "CLOCK_IN" ? "上班打卡" : "簽退記錄"),
+            timestamp: item.clockTime,
+            status: item.clockType === "CLOCK_IN" ? "success" : "warning",
+          }))
+        : [];
+
+      clockRecords.value = records;
+      StorageService.set("clock_records", records);
+      return records;
+    } catch (error) {
+      const fallback =
+        clockTimeline.value.length > 0 ? clockTimeline.value : [];
+      clockRecords.value = fallback;
+      StorageService.set("clock_records", fallback);
+      return fallback;
+    }
+  }
+
+  async function toggleClock() {
+    if (!currentUser.value?.id) {
+      console.warn("沒有登入使用者，無法打卡。");
+      return;
+    }
+
+    const currentStatus = isClockedIn.value ? "IN" : "OUT";
+
+    try {
+      const res = await httpClient.post("/api/clock/toggle", {
+        userId: currentUser.value.id,
+        currentStatus,
+      });
+
+      const payload = res.data || {};
+      const nextState = Boolean(payload.isClockedIn);
+      const serverClockTime = payload.clockTime || new Date().toISOString();
+      const formattedTime = new Date(serverClockTime).toLocaleTimeString(
+        "en-US",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        },
+      );
+
+      isClockedIn.value = nextState;
+      clockTime.value = formattedTime;
+      StorageService.set("is_clocked_in", isClockedIn.value);
+      StorageService.set("clock_time", clockTime.value);
+
+      const action = nextState ? "上班打卡" : "簽退記錄";
+      const note = nextState
+        ? `已於 ${formattedTime} 打卡上班（後端同步）`
+        : `已於 ${formattedTime} 簽退（後端同步）`;
+
+      appendClockRecord(action, note, serverClockTime);
+      recordAuditLog(
+        action,
+        "attendance",
+        note,
+        nextState ? "success" : "warning",
+      );
+
+      return {
+        success: true,
+        message:
+          payload.message || (nextState ? "打卡上班成功！" : "簽退成功！"),
+        isClockedIn: nextState,
+        clockTime: serverClockTime,
+      };
+    } catch (error) {
+      const message = error?.response?.data || "打卡失敗，請稍後再試。";
+      recordAuditLog(
+        "打卡失敗",
+        "attendance",
+        `使用者 ${currentUser.value?.name || "未知使用者"} 觸發打卡失敗：${message}`,
+        "danger",
+      );
+      return {
+        success: false,
+        message,
+      };
+    }
+  }
+
   return {
     users,
     currentUser,
@@ -588,6 +713,8 @@ export const useAuthStore = defineStore("auth", () => {
     serverRoles,
     isClockedIn,
     clockTime,
+    clockTimeline,
+    clockRecords,
     currentRole,
     normalizedRole,
     isAdmin,
@@ -607,6 +734,7 @@ export const useAuthStore = defineStore("auth", () => {
     resetPermissionsToDefault,
     fetchUsersFromApi,
     fetchRolesFromApi,
+    fetchClockRecords,
     createUserApi,
     updateUserApi,
     toggleUserStatusApi,
@@ -616,5 +744,6 @@ export const useAuthStore = defineStore("auth", () => {
     updateUserStatus,
     toggleUserStatus,
     deleteUser,
+    toggleClock,
   };
 });

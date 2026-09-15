@@ -75,6 +75,12 @@ const routes = [
     name: "inventorylogs",
     component: () => import("@/view/InventoryLogManagement.vue"),
   },
+  {
+    path: "/attendance",
+    name: "attendance",
+    component: () => import("@/view/AttendanceRecordPage.vue"),
+    meta: { requiresAuth: true },
+  },
 
   {
     path: "/ComponentShowcase",
