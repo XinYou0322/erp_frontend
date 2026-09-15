@@ -33,5 +33,5 @@ export const getLeaveRequestById = (id) =>
 // 查我的請假單
 export const getMyLeaveRequests = (applicantId = getCurrentUserId()) =>
   httpClient
-    .get("/api/leave-requests", { params: { applicantId } })
+    .get(`/api/leave-requests/applicant/${applicantId}`)
     .then((res) => res.data);

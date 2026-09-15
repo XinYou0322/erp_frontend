@@ -49,6 +49,8 @@ async function loadWorkflows() {
 // 篩選目前先在前端做（清單量不大時足夠），資料量變大後可改成把 filters 傳給後端查詢
 const filteredWorkflows = computed(() => {
   return rawWorkflows.value.filter((w) => {
+    if (w.status === "cancelled") return false;
+
     if (filters.value.type !== "all" && w.documentType !== filters.value.type)
       return false;
     if (filters.value.status !== "all" && w.status !== filters.value.status)
@@ -68,11 +70,45 @@ const filteredWorkflows = computed(() => {
   });
 });
 
+const currentMonthWorkflows = computed(() => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  return visibleWorkflows.value.filter((w) => {
+    const date = new Date(w.createdAt);
+    return (
+      date.getFullYear() === year &&
+      date.getMonth() === month
+    );
+  });
+});
+
+const averageProcessingDays = computed(() => {
+  const completed = currentMonthWorkflows.value.filter(
+    (w) => w.status === "approved" || w.status === "rejected"
+  );
+
+  if (completed.length === 0) return "0.0";
+
+  const totalDays = completed.reduce((sum, w) => {
+    const created = new Date(w.createdAt);
+    const updated = new Date(w.updatedAt || w.createdAt); // 沒 updatedAt 時先用 createdAt
+    return sum + (updated - created) / (1000 * 60 * 60 * 24);
+  }, 0);
+
+  return (totalDays / completed.length).toFixed(1);
+});
+
+const visibleWorkflows = computed(() =>
+  rawWorkflows.value.filter((w) => w.status !== "cancelled")
+);
+
 const stats = computed(() => ({
-  pending: rawWorkflows.value.filter((w) => w.status === "pending").length,
-  approved: rawWorkflows.value.filter((w) => w.status === "approved").length,
-  rejected: rawWorkflows.value.filter((w) => w.status === "rejected").length,
-  total: rawWorkflows.value.length,
+  pending: visibleWorkflows.value.filter((w) => w.status === "pending").length,
+  approved: visibleWorkflows.value.filter((w) => w.status === "approved").length,
+  rejected: visibleWorkflows.value.filter((w) => w.status === "rejected").length,
+  total: visibleWorkflows.value.length,
 }));
 
 function handleFilterChanged(newFilters) {
@@ -100,15 +136,15 @@ onMounted(loadWorkflows);
       <!-- 以下三項需要另外的報表統計 API（3.2 節銷售統計/簽核統計），目前先保留假資料 -->
       <div class="stat">
         <span class="stat__label">本月已核准</span>
-        <span class="stat__value">42</span>
+        <span class="stat__value">{{ stats.approved }}</span>
       </div>
       <div class="stat">
         <span class="stat__label">本月已駁回</span>
-        <span class="stat__value">3</span>
+        <span class="stat__value">{{ stats.rejected }}</span>
       </div>
       <div class="stat">
         <span class="stat__label">平均處理時間</span>
-        <span class="stat__value">1.2<small>天</small></span>
+        <span class="stat__value"> {{ averageProcessingDays }}<small>天</small></span>
       </div>
     </section>
 

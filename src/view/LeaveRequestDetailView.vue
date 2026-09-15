@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import {
   getLeaveRequestById,
   cancelLeaveRequest,
-} from "../api/leaveRequestApi";
+} from "../service/leaveRequestApi";
 import StatusBadge from "../component/子元件/LeaveRequestStatusBadge.vue";
 
 const route = useRoute();

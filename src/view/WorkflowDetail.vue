@@ -59,7 +59,8 @@ async function handleApprove(remark) {
     await approveWorkflow(props.id, remark);
     await loadData();
   } catch (err) {
-    errorMessage.value = "核准失敗，請稍後再試";
+    console.error("Approve Error:", err.response?.data || err);
+    errorMessage.value = err.response?.data?.message || "核准失敗，請稍後再試";
   } finally {
     submitting.value = false;
   }
@@ -71,7 +72,8 @@ async function handleReject(remark) {
     await rejectWorkflow(props.id, remark);
     await loadData();
   } catch (err) {
-    errorMessage.value = "駁回失敗，請稍後再試";
+     console.error("Approve Error:", err.response?.data || err);
+     errorMessage.value = err.response?.data?.message || "核准失敗，請稍後再試";
   } finally {
     submitting.value = false;
   }

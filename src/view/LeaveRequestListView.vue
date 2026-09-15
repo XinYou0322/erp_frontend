@@ -7,7 +7,7 @@ import LeaveRequestCard from "../component/父元件/LeaveRequestCard.vue";
 const router = useRouter();
 
 // TODO: 之後接登入機制後改從 session/token 取得，先寫死示範用
-const applicantId = 1;
+//const applicantId = 1;
 
 const leaves = ref([]);
 const loading = ref(true);
@@ -39,6 +39,7 @@ async function loadLeaves() {
     loading.value = false;
   }
 }
+
 
 function goToDetail(id) {
   router.push({ name: "leave-detail", params: { id } });

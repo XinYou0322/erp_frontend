@@ -55,10 +55,10 @@ export const getWorkflowLogs = (id) =>
 
 export const approveWorkflow = (id, remark) =>
   httpClient
-    .post(`/api/workflows/${id}/approve`, { operator: getCurrentUserId(), remark })
+    .patch(`/api/workflows/${id}/approve`, { approverId: getCurrentUserId(), remark })
     .then((res) => res.data)
 
 export const rejectWorkflow = (id, remark) =>
   httpClient
-    .post(`/api/workflows/${id}/reject`, { operator: getCurrentUserId(), remark })
+    .patch(`/api/workflows/${id}/reject`, { approverId: getCurrentUserId(), remark })
     .then((res) => res.data)

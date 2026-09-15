@@ -7,16 +7,22 @@ import {
   submitLeaveRequest,
   getLeaveRequestById,
 } from "../service/leaveRequestApi";
+import { useAuthStore } from "@/stores/auth.store";
 
 const route = useRoute();
 const router = useRouter();
 
+const authStore = useAuthStore();
+const applicantId = computed(() => authStore.currentUser?.id);
+
 // 有 id 代表編輯既有草稿，沒有則是新建
-const leaveId = computed(() => route.params.id ?? null);
+const leaveId = computed(() =>
+  route.params.id ? Number(route.params.id) : null
+);
 const isEdit = computed(() => leaveId.value !== null);
 
 // TODO: 之後接登入機制後改從 session/token 取得
-const applicantId = 1;
+//const applicantId = 1;
 
 const form = reactive({
   leaveType: "ANNUAL",
@@ -24,6 +30,7 @@ const form = reactive({
   endDate: "",
   reason: "",
 });
+
 
 const approverId = ref("");
 const saving = ref(false);
@@ -66,16 +73,28 @@ function validate() {
 // 儲存草稿（新建或更新既有草稿）
 async function saveDraft() {
   if (!validate()) return;
+
   saving.value = true;
+
   try {
     if (isEdit.value) {
       await updateLeaveRequest(leaveId.value, form);
     } else {
-      const created = await createLeaveRequest({ ...form, applicantId });
-      router.replace({ name: "leave-edit", params: { id: created.id } });
+      const created = await createLeaveRequest({
+        leaveType: form.leaveType,
+        applicantId: applicantId.value,
+        startDate: form.startDate,
+        endDate: form.endDate,
+        reason: form.reason,
+      });
+
+      router.replace({
+        name: "leave-edit",
+        params: { id: created.id },
+      });
     }
   } catch (e) {
-    errorMessage.value = "儲存失敗，請稍後再試";
+    errorMessage.value = "儲存失敗";
   } finally {
     saving.value = false;
   }
@@ -84,23 +103,44 @@ async function saveDraft() {
 // 送出簽核：先確保草稿已存檔，再呼叫 submit
 async function submitForApproval() {
   if (!validate()) return;
+
   if (!approverId.value) {
     errorMessage.value = "請選擇簽核人";
     return;
   }
+
   submitting.value = true;
+
   try {
     let id = leaveId.value;
+
     if (isEdit.value) {
       await updateLeaveRequest(id, form);
     } else {
-      const created = await createLeaveRequest({ ...form, applicantId });
+      const created = await createLeaveRequest({
+        leaveType: form.leaveType,
+        applicantId: applicantId.value,
+        startDate: form.startDate,
+        endDate: form.endDate,
+        reason: form.reason,
+      });
+
       id = created.id;
+
+      router.replace({
+        name: "leave-edit",
+        params: { id },
+      });
     }
-    await submitLeaveRequest(id, approverId.value);
-    router.push({ name: "leave-detail", params: { id } });
+
+    await submitLeaveRequest(id, Number(approverId.value));
+
+    router.push({
+      name: "leave-detail",
+      params: { id },
+    });
   } catch (e) {
-    errorMessage.value = "送出簽核失敗，請稍後再試";
+    errorMessage.value = "送出失敗";
   } finally {
     submitting.value = false;
   }
