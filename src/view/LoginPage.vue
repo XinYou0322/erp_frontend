@@ -7,6 +7,9 @@ import { UserProfile, UserRole } from "../types";
 import BaseBadge from "../component/子元件/BaseBadge.vue";
 import BaseModal from "../component/子元件/BaseModal.vue";
 import { useNotificationStore } from "../stores/notification.store";
+import { getDefaultAvatar } from "../data/defaultAvatars";
+
+const defaultAvatar = getDefaultAvatar();
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -666,10 +669,7 @@ const handleRegisterSubmit = () => {
           >
           <div class="flex items-center gap-3">
             <img
-              :src="
-                registerForm.avatar ||
-                'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80'
-              "
+              :src="registerForm.avatar || defaultAvatar"
               class="w-14 h-14 rounded-xl object-cover border border-slate-700"
             />
             <label

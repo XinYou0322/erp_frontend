@@ -7,9 +7,9 @@ import {
 } from "../data/permissionData";
 import { StorageService } from "../service/storage.service";
 import httpClient from "@/service/httpClient";
+import { DEFAULT_AVATARS, getDefaultAvatar } from "../data/defaultAvatars";
 
-const DEFAULT_AVATAR =
-  "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80";
+const DEFAULT_AVATAR = getDefaultAvatar();
 
 export const useAuthStore = defineStore("auth", () => {
   // --- State ---
@@ -351,9 +351,7 @@ export const useAuthStore = defineStore("auth", () => {
           name: u.name,
           username: u.username,
           email: u.email,
-          avatar:
-            u.avatar ||
-            "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
+          avatar: u.avatar || getDefaultAvatar(),
           role: u.role?.name || "employee",
           roleName: u.role?.description || u.role?.name || "一般員工",
           roleId: u.role?.id,

@@ -4,6 +4,7 @@ import { useAuthStore } from "../stores/auth.store";
 import { useUIStore } from "../stores/ui.store";
 import { UserProfile, UserRole, PermissionKey } from "../types";
 import { PERMISSION_MODULES } from "../data/permissionData";
+import { DEFAULT_AVATARS } from "../data/defaultAvatars";
 import BaseCard from "../component/子元件/BaseCard.vue";
 import BaseBadge from "../component/子元件/BaseBadge.vue";
 import BaseModal from "../component/子元件/BaseModal.vue";
@@ -210,12 +211,7 @@ const userForm = ref<{
   avatar: "",
 });
 
-const defaultAvatars = [
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuD-YzW0n-kW7Jp0sqt1EFEZfAo-iYKA7Z7HI32vcbhOevRNgGuidWgTpPt8RC7YcCWAgedfowVIjtEQ3z7zsOpoFuXqXb5V-qxLZbY8RyQiWpMh9J-mIH6VtXpK7HM7f1PwgGCyiW6lI0_zAunLz59q9dDV5r06WNzGK8L3BCKxee2MCrLK4Yzz2H8LT64kb1v7DCQ_UM1ncnls00fPcx5Kt7tYJTzu6fufu3_fjHz5Ze7icOAJ0Q",
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuBoxnhfXr9EK0AufrkNkqOJ9ftN5hC4UHO6TsyiQtskBb1ci5MhMkJt57C0DiN0xEcNjwCgXrXqRz06MxoC1V1cOOpf8ujJHhFNWIMQ5oviZUnJZMhoY7nczJJvmNu1ZDsUbg00Mu8ia-fbhLRxHEUZsyQ9xQr2Cj-31w6ZGnVsUUfG8cMhtVRu--_dUGr7yNBjhOD1gwgDQhymS8uQqiiCZixEhW3uSBcuv-wKdlnGHRVPkRxAPQ",
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuDOS_omgOzqObIL2YMC5ZVlxsuevTRI_ZUuOMJH0op7wlqS9g_dzF72SeX3rjhw2v_PrCy6ZPFOM6rfy5aqri8Uf9cqjTdDXZjnqp8JXH-y_llaolNjgGBlm-1eT4JULt7wQ4ofMO_L3-7cduHivskEaSNEdAGXH1haef803_syVgDoXn5ZlCHzdVEDTGwA0VuRc3loQ4jRCI1TSvUQ7xPGutW7vAf_NiW-UYu_ufgfh3fivP9cmA",
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuAPSzRjOVgMOfqYtdalxwMql8EMJ5XUl4edCD4WRoM0JOH6kNYGykoTj68TsWZ7S0coZa5mqtzzAvk-7KVvWxKipQaIrVt8DIHhs-ovm13kLY-T31xn95nORxIK-gfKUnb5XCGJTqc8REKUyctrzoJAn44wI9rxRT9WDSbRg65dRCBa20ep0CMwI7nFESqsh-lH0fWBuxag5aWaj2ihOCAjCsGHmFF4ED8H-2aOubZVrC-mIkdWPA",
-];
+const defaultAvatars = DEFAULT_AVATARS;
 
 const handleAvatarFileChange = async (event: Event) => {
   const target = event.target as HTMLInputElement;
@@ -854,10 +850,7 @@ const handleResetDefaultPermissions = () => {
                 <td class="py-3 px-3">
                   <div class="flex items-center gap-2.5">
                     <img
-                      :src="
-                        user.avatar ||
-                        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80'
-                      "
+                      :src="user.avatar || defaultAvatars[0]"
                       :alt="user.name"
                       class="w-9 h-9 rounded-xl object-cover border border-slate-700"
                     />
@@ -1004,10 +997,7 @@ const handleResetDefaultPermissions = () => {
                 <td class="py-3 px-3">
                   <div class="flex items-center gap-2.5">
                     <img
-                      :src="
-                        user.avatar ||
-                        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80'
-                      "
+                      :src="user.avatar || defaultAvatars[0]"
                       :alt="user.name"
                       class="w-8 h-8 rounded-xl object-cover border border-slate-700 shrink-0"
                     />

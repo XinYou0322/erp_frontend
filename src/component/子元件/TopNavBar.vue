@@ -6,6 +6,9 @@ import { useInventoryStore } from "../../stores/inventory.store";
 import { useNotificationStore } from "../../stores/notification.store";
 import { useUIStore } from "../../stores/ui.store";
 import { UserProfile } from "../../types";
+import { getDefaultAvatar } from "../../data/defaultAvatars";
+
+const defaultAvatar = getDefaultAvatar();
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -150,10 +153,7 @@ const handleLogout = async () => {
             </span>
           </div>
           <img
-            :src="
-              authStore.currentUser?.avatar ||
-              'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80'
-            "
+            :src="authStore.currentUser?.avatar || defaultAvatar"
             :alt="authStore.currentUser.name"
             class="w-8 h-8 rounded-xl object-cover border border-emerald-500/40"
           />
@@ -192,10 +192,7 @@ const handleLogout = async () => {
               "
             >
               <img
-                :src="
-                  u.avatar ||
-                  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80'
-                "
+                :src="u.avatar || defaultAvatar"
                 class="w-5 h-5 rounded-md object-cover"
               />
               <div class="truncate">
