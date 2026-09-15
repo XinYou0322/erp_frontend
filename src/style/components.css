@@ -259,6 +259,23 @@
   outline: none;
 }
 
+
+.input-half {
+  width: 50%;
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.75rem;
+
+  background-color: var(--surface-container-low);
+  border: 1px solid var(--outline);
+
+  color: var(--on-surface);
+
+  font-size: 0.8125rem;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+
 .input-field::placeholder {
   color: var(--on-surface-variant);
 }
