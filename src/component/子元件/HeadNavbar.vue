@@ -1,24 +1,24 @@
 <template>
 
 
-  <nav class="erp-category-nav erp-category-nav--pills">
-    <button class="erp-category-nav__item " 
-            :class="{ active: activeTab === 'overview' }"
+  <nav class="supplier-tabs">
+    <button class="supplier-tabs__item" 
+            :class="{ 'is-active': activeTab === 'overview' }"
              @click="changeTab('overview')">
        {{ title }}
-      <span class="erp-category-nav__count"> {{ total }}</span>
+      <span class="supplier-tabs__count"> {{ total }}</span>
     </button>
     
-    <button class="erp-category-nav__item" 
-            :class="{ active: activeTab === 'add' }"
+    <button class="supplier-tabs__item" 
+            :class="{ 'is-active': activeTab === 'add' }"
             @click="changeTab('add')">
        {{ title2 }}  
-      <span class="erp-category-nav__count">{{ total2 }}</span>
+      <span class="supplier-tabs__count">{{ total2 }}</span>
     </button>
     
-    <button class="erp-category-nav__item" :class="{ active: activeTab === 'search' }">
+    <button class="supplier-tabs__item" :class="{ 'is-active': activeTab === 'search' }">
       查詢
-      <span class="erp-category-nav__count">8</span>
+      <span class="supplier-tabs__count">8</span>
     </button>
 </nav>
 

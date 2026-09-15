@@ -63,7 +63,7 @@
       <article
         v-for="(supplier, index) in suppliers"
         :key="supplier.localId"
-        class="erp-supplier-entry rounded-2xl border bg-[var(--surface-container)] p-5 shadow-level-1 transition"
+        class="supplier-entry rounded-2xl border bg-[var(--surface-container)] p-5 shadow-level-1 transition"
         :class="{
           'border-[var(--primary)]/60': supplier.selected && !supplier.invalid,
           'border-[var(--outline)]': !supplier.selected && !supplier.invalid,
@@ -313,6 +313,8 @@ import axios from 'axios'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
+  //AddSupplier.vue 接收兩個 props：initialCount 
+  //type: Number -> 接收 Number
   initialCount: {
     type: Number,
     default: 3,
@@ -320,6 +322,8 @@ const props = defineProps({
       return Number.isInteger(value) && value > 0
     }
   },
+  //和 loginUserId
+  //type: [Number, String], -> Number/String都可
   loginUserId: {
     type: [Number, String],
     required: true
@@ -555,7 +559,7 @@ async function saveSelectedSuppliers() {
     await nextTick()
 
     if (pageRoot.value) {
-      const firstInvalidCard = pageRoot.value.querySelector('.erp-supplier-entry.is-invalid')
+      const firstInvalidCard = pageRoot.value.querySelector('.supplier-entry.is-invalid')
 
       if (firstInvalidCard) {
         firstInvalidCard.scrollIntoView({ behavior: 'smooth', block: 'center' })

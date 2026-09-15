@@ -1,5 +1,5 @@
 <template>
-  <div class="erp-page">
+  <div class="supplier-page">
     <HeadNavBar
       title="總覽"
       :total="supplierList.length"
@@ -10,10 +10,10 @@
     />
     <section
       v-if="activeTab === 'overview'"
-      class="erp-card erp-card--flat"
+      class="supplier-overview bento-card"
     >
-      <div class="erp-table-wrap">
-        <table class="erp-table">
+      <div class="supplier-table-wrap">
+        <table class="supplier-table">
           <thead>
             <tr>
               <th>ID</th>

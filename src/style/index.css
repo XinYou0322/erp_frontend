@@ -131,9 +131,593 @@
   box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
 }
 
+
+
 /* =====================================================================
- * 4. 客製化暗色系視窗捲軸 (Dark Mode Custom Scrollbar)
- * 避免原生白色捲軸破壞暗黑科技介面的沉浸感
+ * 4. 供應商模組共用元件 (Supplier Module)
+ * 延續 index.css 的暗黑科技 / Bento 設計語彙。
+ * ===================================================================== */
+.supplier-page {
+  width: 100%;
+  min-height: 100%;
+  padding: 1.5rem;
+  color: var(--on-surface);
+}
+
+/* ---------- 頂部分頁導覽 ---------- */
+.supplier-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-bottom: 1.25rem;
+  padding: 0.5rem;
+  overflow-x: auto;
+  border: 1px solid rgba(51, 65, 85, 0.65);
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.65);
+}
+
+.supplier-tabs__item {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.625rem 0.9rem;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  color: var(--on-surface-variant);
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease,
+    box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.supplier-tabs__item:hover {
+  color: var(--on-surface);
+  border-color: rgba(6, 182, 212, 0.25);
+  background: rgba(30, 41, 59, 0.72);
+}
+
+.supplier-tabs__item.is-active {
+  color: var(--on-primary);
+  border-color: rgba(16, 185, 129, 0.5);
+  background: linear-gradient(135deg, var(--primary), var(--primary-container));
+  box-shadow: 0 8px 22px -8px rgba(16, 185, 129, 0.7);
+}
+
+.supplier-tabs__count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.45rem;
+  height: 1.45rem;
+  padding-inline: 0.4rem;
+  border-radius: 9999px;
+  color: inherit;
+  background: rgba(148, 163, 184, 0.14);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.supplier-tabs__item.is-active .supplier-tabs__count {
+  background: rgba(2, 6, 23, 0.16);
+}
+
+/* ---------- 供應商總覽表格 ---------- */
+.supplier-overview {
+  padding: 0;
+  overflow: hidden;
+}
+
+.supplier-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.supplier-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+  color: var(--on-surface);
+}
+
+.supplier-table th,
+.supplier-table td {
+  padding: 0.95rem 1rem;
+  border-bottom: 1px solid var(--outline-variant);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.supplier-table th {
+  color: var(--on-surface-variant);
+  background: rgba(9, 13, 22, 0.92);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.supplier-table td {
+  font-size: 0.875rem;
+}
+
+.supplier-table tbody tr {
+  transition: background-color 0.18s ease;
+}
+
+.supplier-table tbody tr:hover td {
+  background: rgba(30, 41, 59, 0.46);
+}
+
+.supplier-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* ---------- 新增供應商卡片 ---------- */
+.supplier-entry {
+  position: relative;
+}
+
+.supplier-entry.is-invalid {
+  box-shadow: 0 0 0 1px rgba(244, 63, 94, 0.28), 0 8px 24px -10px rgba(244, 63, 94, 0.24);
+}
+
+/* ---------- 詳細資料 Modal ---------- */
+.supplier-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(2, 6, 23, 0.78);
+  backdrop-filter: blur(8px);
+}
+
+.supplier-modal {
+  width: min(760px, 100%);
+  max-height: min(88vh, 860px);
+  padding: 0;
+  overflow: hidden;
+  color: var(--on-surface);
+  border-color: rgba(51, 65, 85, 0.85);
+  background: rgba(15, 23, 42, 0.96);
+}
+
+.supplier-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.4rem 1.5rem 1.15rem;
+  border-bottom: 1px solid var(--outline-variant);
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.66), rgba(15, 23, 42, 0));
+}
+
+.supplier-modal__eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--secondary);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.supplier-modal__title {
+  margin: 0;
+  color: var(--on-surface);
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.supplier-icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 2.5rem;
+  border: 1px solid var(--outline);
+  border-radius: 0.75rem;
+  color: var(--on-surface-variant);
+  background: var(--surface-container-low);
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease, background-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.supplier-icon-button:hover {
+  color: var(--secondary);
+  border-color: rgba(6, 182, 212, 0.5);
+  background: var(--surface-container-high);
+  transform: translateY(-1px);
+}
+
+.supplier-modal__close {
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.supplier-modal__body {
+  display: grid;
+  gap: 1rem;
+  max-height: calc(88vh - 155px);
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+}
+
+.supplier-detail-section {
+  overflow: hidden;
+  border: 1px solid var(--outline-variant);
+  border-radius: 1rem;
+  background: rgba(9, 13, 22, 0.62);
+}
+
+.supplier-detail-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  color: var(--on-surface);
+  border-bottom: 1px solid var(--outline-variant);
+  background: rgba(30, 41, 59, 0.42);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.supplier-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  padding: 1rem;
+}
+
+.supplier-detail-item {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.85rem;
+  border: 1px solid var(--outline-variant);
+  border-radius: 0.8rem;
+  background: rgba(15, 23, 42, 0.62);
+}
+
+.supplier-detail-item--full {
+  grid-column: 1 / -1;
+}
+
+.supplier-detail-item__label {
+  color: var(--on-surface-variant);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.supplier-detail-item__value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--on-surface);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.supplier-status,
+.supplier-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.75rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--outline);
+  border-radius: 9999px;
+  color: var(--on-surface-variant);
+  background: rgba(51, 65, 85, 0.3);
+  font-size: 0.7rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.supplier-status--active {
+  color: #6ee7b7;
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.supplier-status--pending {
+  color: #fcd34d;
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.supplier-status--inactive {
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.3);
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.supplier-status--suspended {
+  color: #fb923c;
+  border-color: rgba(249, 115, 22, 0.35);
+  background: rgba(249, 115, 22, 0.1);
+}
+
+.supplier-status--blacklisted {
+  color: #fb7185;
+  border-color: rgba(244, 63, 94, 0.4);
+  background: rgba(244, 63, 94, 0.12);
+}
+
+.supplier-count-badge {
+  color: var(--secondary);
+  border-color: rgba(6, 182, 212, 0.28);
+  background: rgba(6, 182, 212, 0.08);
+}
+
+.supplier-note-list {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.supplier-note-card {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--outline-variant);
+  border-radius: 0.85rem;
+  background: rgba(15, 23, 42, 0.66);
+  box-shadow: 0 8px 22px -16px rgba(0, 0, 0, 0.8);
+}
+
+.supplier-note-card__header,
+.supplier-note-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.supplier-note-card__number {
+  color: var(--secondary);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.supplier-note-card__time,
+.supplier-note-card__label {
+  color: var(--on-surface-variant);
+  font-size: 0.7rem;
+  font-weight: 650;
+}
+
+.supplier-note-card__content {
+  margin: 0.75rem 0;
+  color: var(--on-surface);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.supplier-note-card__footer {
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--outline-variant);
+  color: var(--on-surface-variant);
+  font-size: 0.75rem;
+}
+
+.supplier-empty-state {
+  margin: 1rem;
+  padding: 1.5rem 1rem;
+  border: 1px dashed var(--outline);
+  border-radius: 0.9rem;
+  color: var(--on-surface-variant);
+  background: rgba(2, 6, 23, 0.3);
+  text-align: center;
+  font-size: 0.82rem;
+}
+
+.supplier-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem 1.5rem 1.35rem;
+  border-top: 1px solid var(--outline-variant);
+}
+
+.supplier-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 2.5rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.supplier-btn:hover {
+  transform: translateY(-1px);
+}
+
+.supplier-btn--primary {
+  color: var(--on-primary);
+  border-color: rgba(16, 185, 129, 0.45);
+  background: linear-gradient(135deg, var(--primary), var(--primary-container));
+  box-shadow: 0 8px 22px -8px rgba(16, 185, 129, 0.65);
+}
+
+@media (max-width: 720px) {
+  .supplier-page {
+    padding: 1rem;
+  }
+
+  .supplier-tabs {
+    margin-bottom: 1rem;
+  }
+
+  .supplier-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .supplier-detail-item--full {
+    grid-column: auto;
+  }
+
+  .supplier-modal-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .supplier-modal {
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 1.25rem 1.25rem 0 0;
+  }
+
+  .supplier-modal__header,
+  .supplier-modal__body,
+  .supplier-modal__footer {
+    padding-inline: 1rem;
+  }
+}
+
+
+
+/* =====================================================================
+ * Supplier Update Form
+ * UpdateSupplier.vue 專用表單元件；沿用 Supplier Modal / Bento 深色科技風。
+ * ===================================================================== */
+.supplier-modal--form {
+  width: min(760px, 100%);
+}
+
+.supplier-form-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.supplier-field {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.supplier-field--half {
+  grid-column: span 3;
+}
+
+.supplier-field--narrow {
+  grid-column: span 1;
+}
+
+.supplier-field--wide {
+  grid-column: span 4;
+}
+
+.supplier-field--full {
+  grid-column: 1 / -1;
+}
+
+.supplier-field__label {
+  color: var(--on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+}
+
+.supplier-input,
+.supplier-select {
+  width: 100%;
+  min-height: 2.7rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--outline);
+  border-radius: 0.75rem;
+  outline: none;
+  color: var(--on-surface);
+  background: rgba(2, 6, 23, 0.52);
+  font: inherit;
+  transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.supplier-input::placeholder {
+  color: #64748b;
+}
+
+.supplier-input:hover:not(:disabled),
+.supplier-select:hover:not(:disabled) {
+  border-color: rgba(6, 182, 212, 0.46);
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.supplier-input:focus,
+.supplier-select:focus {
+  border-color: var(--primary);
+  background: rgba(15, 23, 42, 0.88);
+}
+
+.supplier-input:disabled,
+.supplier-select:disabled {
+  color: #64748b;
+  border-color: var(--outline-variant);
+  background: rgba(2, 6, 23, 0.32);
+  cursor: not-allowed;
+}
+
+.supplier-select {
+  color-scheme: dark;
+  cursor: pointer;
+}
+
+.supplier-select option {
+  color: var(--on-surface);
+  background: var(--surface-container);
+}
+
+.supplier-modal__footer--form {
+  gap: 0.75rem;
+}
+
+.supplier-btn--secondary {
+  color: var(--on-surface);
+  border-color: var(--outline);
+  background: rgba(30, 41, 59, 0.72);
+  box-shadow: 0 8px 18px -12px rgba(0, 0, 0, 0.85);
+}
+
+.supplier-btn--secondary:hover {
+  border-color: rgba(6, 182, 212, 0.45);
+  background: rgba(51, 65, 85, 0.78);
+}
+
+@media (max-width: 720px) {
+  .supplier-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .supplier-field--half,
+  .supplier-field--narrow,
+  .supplier-field--wide,
+  .supplier-field--full {
+    grid-column: auto;
+  }
+
+  .supplier-modal__footer--form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* =====================================================================
+ * 5. 客製化暗色系視窗捲軸 (Dark Mode Custom Scrollbar)
  * ===================================================================== */
 ::-webkit-scrollbar {
   width: 6px;  /* 寬度收窄至 6px，維持介面俐落 */
