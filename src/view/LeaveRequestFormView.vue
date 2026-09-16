@@ -17,7 +17,7 @@ const applicantId = computed(() => authStore.currentUser?.id);
 
 // 有 id 代表編輯既有草稿，沒有則是新建
 const leaveId = computed(() =>
-  route.params.id ? Number(route.params.id) : null
+  route.params.id ? Number(route.params.id) : null,
 );
 const isEdit = computed(() => leaveId.value !== null);
 
@@ -31,11 +31,11 @@ const form = reactive({
   reason: "",
 });
 
-
 const approverId = ref("");
 const saving = ref(false);
 const submitting = ref(false);
 const errorMessage = ref("");
+const successMessage = ref("");
 
 const leaveTypes = [
   { value: "ANNUAL", label: "特休" },
@@ -70,9 +70,25 @@ function validate() {
   return true;
 }
 
+// [新增] 返回功能
+function goBack() {
+  // 如果瀏覽器有歷史紀錄就返回上一頁，否則預設回到請假單列表 (假設路由名稱為 leave-list)
+  if (window.history.length > 1) {
+    router.back();
+  } else {
+    router.push({ name: "leave-list" });
+  }
+}
+
 // 儲存草稿（新建或更新既有草稿）
 async function saveDraft() {
   if (!validate()) return;
+
+  // 防呆：確保登入狀態已載入
+  if (!applicantId.value) {
+    errorMessage.value = "登入狀態異常，請重新整理頁面";
+    return;
+  }
 
   saving.value = true;
 
@@ -93,8 +109,12 @@ async function saveDraft() {
         params: { id: created.id },
       });
     }
+    successMessage.value = "草稿儲存成功！";
+    setTimeout(() => {
+      successMessage.value = "";
+    }, 3000);
   } catch (e) {
-    errorMessage.value = "儲存失敗";
+    errorMessage.value = e.response?.data?.message || e.message || "儲存失敗";
   } finally {
     saving.value = false;
   }
@@ -104,8 +124,14 @@ async function saveDraft() {
 async function submitForApproval() {
   if (!validate()) return;
 
-  if (!approverId.value) {
-    errorMessage.value = "請選擇簽核人";
+  const approverNum = Number(approverId.value);
+  if (!approverId.value || isNaN(approverNum) || approverNum <= 0) {
+    errorMessage.value = "請輸入有效的簽核人 ID";
+    return;
+  }
+
+  if (!applicantId.value) {
+    errorMessage.value = "登入狀態異常，請重新整理頁面";
     return;
   }
 
@@ -127,20 +153,20 @@ async function submitForApproval() {
 
       id = created.id;
 
-      router.replace({
-        name: "leave-edit",
-        params: { id },
-      });
+      // router.replace({
+      //   name: "leave-edit",
+      //   params: { id },
+      // });
     }
 
-    await submitLeaveRequest(id, Number(approverId.value));
+    await submitLeaveRequest(id, approverNum);
 
     router.push({
       name: "leave-detail",
       params: { id },
     });
   } catch (e) {
-    errorMessage.value = "送出失敗";
+    errorMessage.value = e.response?.data?.message || e.message || "送出失敗";
   } finally {
     submitting.value = false;
   }
@@ -152,6 +178,11 @@ onMounted(loadExisting);
 <template>
   <div class="leave-form">
     <header class="leave-form__header">
+      <button class="btn-back" @click="goBack">
+        <span class="material-symbols-outlined">arrow_back</span>
+        返回
+      </button>
+
       <h1>{{ isEdit ? "編輯請假單" : "新增請假單" }}</h1>
       <p class="subtitle">填寫完成後可先儲存草稿，或直接送出簽核</p>
     </header>
@@ -205,6 +236,7 @@ onMounted(loadExisting);
         />
       </div>
 
+      <p v-if="successMessage" class="success-text">{{ successMessage }}</p>
       <p v-if="errorMessage" class="error-text">{{ errorMessage }}</p>
 
       <div class="actions">
@@ -342,6 +374,36 @@ textarea {
 .btn-outline:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  color: var(--on-surface-variant);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  transition: color 0.2s;
+}
+
+.btn-back:hover {
+  color: var(--primary);
+}
+
+.success-text {
+  color: #2e7d32;
+  background-color: #e8f5e9;
+  border: 1px solid #a5d6a7;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.6rem;
+  text-align: center;
 }
 
 .material-symbols-outlined {

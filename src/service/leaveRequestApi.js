@@ -35,3 +35,9 @@ export const getMyLeaveRequests = (applicantId = getCurrentUserId()) =>
   httpClient
     .get(`/api/leave-requests/applicant/${applicantId}`)
     .then((res) => res.data);
+
+  //刪除草稿
+  // export const deleteLeaveRequest = (id) => {
+  //   // 假設你的 API 基礎路徑是 /api/leave-requests
+  //   return api.delete(`/leave-requests/${id}`); 
+  // };
