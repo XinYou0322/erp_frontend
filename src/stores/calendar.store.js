@@ -13,7 +13,7 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import httpClient from "../service/httpClient";
-import { StorageService } from "../services/storage.service";
+import { StorageService } from "../service/storage.service";
 import { useNotificationStore } from "./notification.store";
 import { useAuthStore } from "./auth.store";
 
@@ -199,10 +199,22 @@ export const useCalendarStore = defineStore("calendar", () => {
     StorageService.get("calendar_events_v2", INITIAL_CALENDAR_EVENTS),
   );
 
-  // 當前瀏覽焦點日期 (預設 2026 年 9 月 6 日)
-  const currentYear = ref(2026);
-  const currentMonth = ref(8); // 0-indexed, 8 = 9月
-  const currentDay = ref(6);
+  const getTodayInfo = () => {
+    const today = new Date();
+    return {
+      year: today.getFullYear(),
+      month: today.getMonth(),
+      day: today.getDate(),
+      dateStr: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`,
+    };
+  };
+
+  const initialToday = getTodayInfo();
+
+  // 當前瀏覽焦點日期 (預設為當天日期)
+  const currentYear = ref(initialToday.year);
+  const currentMonth = ref(initialToday.month);
+  const currentDay = ref(initialToday.day);
 
   // 當前視圖模式：'month' | 'week' | 'day' | 'agenda'
   const currentView = ref("month");
@@ -220,7 +232,7 @@ export const useCalendarStore = defineStore("calendar", () => {
   const searchQuery = ref("");
 
   // 當前選中的日期字串 (YYYY-MM-DD)，用於彈窗或日檢視
-  const selectedDate = ref("2026-09-06");
+  const selectedDate = ref(initialToday.dateStr);
 
   // 事件編輯彈窗控制狀態
   const isEventModalOpen = ref(false);
@@ -490,7 +502,7 @@ export const useCalendarStore = defineStore("calendar", () => {
     const daysInPrevMonth = new Date(year, month, 0).getDate();
 
     const grid = [];
-    const todayStr = "2026-09-06"; // 系統模擬基準日期
+    const todayStr = getTodayInfo().dateStr;
 
     // 1. 填補上個月尾數
     for (let i = firstDayIndex - 1; i >= 0; i--) {
@@ -554,7 +566,7 @@ export const useCalendarStore = defineStore("calendar", () => {
     sunday.setDate(baseDate.getDate() - dayOfWeek);
 
     const days = [];
-    const todayStr = "2026-09-06";
+    const todayStr = getTodayInfo().dateStr;
 
     for (let i = 0; i < 7; i++) {
       const d = new Date(sunday);
@@ -585,7 +597,7 @@ export const useCalendarStore = defineStore("calendar", () => {
 
   /** 未來即將到來的事件清單 (依日期升冪，最多 5 筆) */
   const upcomingEvents = computed(() => {
-    const todayStr = "2026-09-06";
+    const todayStr = getTodayInfo().dateStr;
     return filteredEvents.value
       .filter(
         (e) =>
@@ -658,10 +670,11 @@ export const useCalendarStore = defineStore("calendar", () => {
 
   /** 返回今天 */
   const goToToday = () => {
-    currentYear.value = 2026;
-    currentMonth.value = 8; // 9月
-    currentDay.value = 6;
-    selectedDate.value = "2026-09-06";
+    const today = getTodayInfo();
+    currentYear.value = today.year;
+    currentMonth.value = today.month;
+    currentDay.value = today.day;
+    selectedDate.value = today.dateStr;
   };
 
   /** 選擇特定日期 */

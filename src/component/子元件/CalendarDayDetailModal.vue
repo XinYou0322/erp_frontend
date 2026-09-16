@@ -16,7 +16,19 @@ const dayEvents = computed(() => {
   return calendarStore.selectedDateEvents;
 });
 
+const getCategoryMeta = (category?: string) => {
+  const categoryMap = (calendarStore.CATEGORY_MAP ?? {}) as Record<string, any>;
+  return (
+    categoryMap[category ?? ""] ?? {
+      badgeClass: "bg-slate-800 text-slate-300 border-slate-700",
+      label: "未分類",
+      icon: "help",
+    }
+  );
+};
+
 const handleQuickAdd = () => {
+  calendarStore.isDayDetailModalOpen = false;
   calendarStore.openCreateModal(calendarStore.selectedDate);
 };
 
@@ -109,12 +121,12 @@ const closeModal = () => {
               </span>
               <span
                 class="px-2 py-0.5 rounded-lg border text-[11px] font-semibold flex items-center gap-1"
-                :class="calendarStore.CATEGORY_MAP[evt.category]?.badgeClass"
+                :class="getCategoryMeta(evt.category).badgeClass"
               >
                 <span class="material-symbols-outlined text-[13px]">
-                  {{ calendarStore.CATEGORY_MAP[evt.category]?.icon }}
+                  {{ getCategoryMeta(evt.category).icon }}
                 </span>
-                {{ calendarStore.CATEGORY_MAP[evt.category]?.label }}
+                {{ getCategoryMeta(evt.category).label }}
               </span>
               <span
                 v-if="evt.priority === 'high'"

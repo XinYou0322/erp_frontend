@@ -227,7 +227,7 @@ const handleLogout = async () => {
               <span>管理員專屬頁面</span>
             </button>
             <button
-              v-if="authStore.hasPermission('permissions.view')"
+              v-if="authStore.isAdmin"
               @click="
                 router.push('/permissions');
                 isUserMenuOpen = false;

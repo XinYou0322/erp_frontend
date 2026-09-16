@@ -60,11 +60,11 @@ const currentRoleKey = computed(() => {
 });
 
 const canManageAllRoles = computed(() => {
-  return authStore.isAdmin || authStore.hasPermission("permissions.manage");
+  return authStore.isAdmin;
 });
 
 const canViewApprovalPage = computed(() => {
-  return authStore.isAdmin || authStore.hasPermission("users.manage");
+  return authStore.isAdmin;
 });
 
 const isPermissionMatrixEditable = computed(() => canManageAllRoles.value);

@@ -81,6 +81,12 @@ const routes = [
     component: () => import("@/view/AttendanceRecordPage.vue"),
     meta: { requiresAuth: true },
   },
+  {
+    path: "/calendar",
+    name: "calendar",
+    component: () => import("@/view/CalendarPage.vue"),
+    meta: { requiresAuth: true },
+  },
 
   {
     path: "/ComponentShowcase",

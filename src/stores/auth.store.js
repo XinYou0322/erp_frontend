@@ -309,6 +309,10 @@ export const useAuthStore = defineStore("auth", () => {
 
   // --- Permission Matrix Operations ---
   function toggleRolePermission(role, key) {
+    if (!isAdmin.value) {
+      return;
+    }
+
     const currentList = rolePermissions.value[role] || [];
     const exists = currentList.includes(key);
 
@@ -328,6 +332,10 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   function resetPermissionsToDefault() {
+    if (!isAdmin.value) {
+      return;
+    }
+
     rolePermissions.value = JSON.parse(
       JSON.stringify(DEFAULT_ROLE_PERMISSIONS),
     );

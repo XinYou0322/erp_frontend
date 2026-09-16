@@ -195,7 +195,7 @@
 
           <ul class="space-y-1.5">
             <li
-              v-for="record in authStore.clockTimeline.slice(0, 3)"
+              v-for="record in latestClockRecords"
               :key="record.id"
               class="flex items-start gap-2 text-[10px] text-slate-300"
             >
@@ -230,7 +230,7 @@
   </aside>
 </template>
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 import { useRoute, useRouter } from "vue-router";
 
@@ -256,6 +256,16 @@ const route = useRoute();
 const router = useRouter();
 
 const authStore = useAuthStore();
+
+const latestClockRecords = computed(() => {
+  return [...(authStore.clockTimeline ?? [])]
+    .sort(
+      (first, second) =>
+        new Date(second.timestamp).getTime() -
+        new Date(first.timestamp).getTime(),
+    )
+    .slice(0, 2);
+});
 
 const emit = defineEmits<{
   (e: "openReport"): void;
