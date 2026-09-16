@@ -193,18 +193,24 @@
     </div>
 
   </Teleport>
-
+<ConfirmCloseModal
+  :is-open="closeConfirmOpen" 
+  @cancel="cancelCloseModal"
+  @confirm="confirmCloseModal"
+/>
 </template>
 
 
 <script setup >
 
-import { computed } from 'vue'
 
+
+import { computed, ref } from 'vue'
 
 
 import { X } from 'lucide-vue-next'
 
+import ConfirmCloseModal from './ConfirmCloseModal.vue'
 
 const props = defineProps({
 
@@ -260,7 +266,7 @@ const emit = defineEmits([
   'close',
 
 ])
-
+const closeConfirmOpen = ref(false)
 
 const maxWidthClass = computed(() => {
 
@@ -299,21 +305,20 @@ const maxWidthClass = computed(() => {
 const requestClose = () => {
 
   if (props.confirmClose) {
-
-    const confirmed = window.confirm(
-      props.confirmCloseMessage
-    )
-
-    if (!confirmed) {
-      return
-    }
-
+    closeConfirmOpen.value = true
+    return
   }
 
   emit('close')
-
+}
+const confirmCloseModal = () => {
+  closeConfirmOpen.value = false
+  emit('close')
 }
 
+const cancelCloseModal = () => {
+  closeConfirmOpen.value = false
+}
 
 // ====================================
 // 點背景關閉

@@ -273,7 +273,7 @@
 
             <!-- 編輯 -->
             <button
-              v-if="editingMaterialId !== material.id"
+            
               type="button"
               @click="startEditMaterial(material)"
               class="
@@ -308,7 +308,7 @@
 
           <!-- 一般顯示模式 -->
           <div
-            v-if="editingMaterialId !== material.id"
+         
             class="
               mt-4
               p-4
@@ -418,198 +418,6 @@
           <!-- =========================
                編輯模式
                ========================= -->
-          <div
-            v-else
-            class="
-              mt-4
-              p-4
-              rounded-xl
-              bg-[var(--surface-container-high)]
-              border
-              border-[var(--outline)]
-              space-y-3
-            "
-          >
-
-            <!-- 名稱 -->
-            <div>
-
-              <label
-                class="
-                  block
-                  text-[length:var(--font-body)]
-                  font-bold
-                  text-[var(--on-surface)]
-                  mb-1
-                "
-              >
-                原物料名稱
-              </label>
-
-              <input
-                v-model="editForm.name"
-                type="text"
-                class="
-                  input-field
-                  text-[length:var(--font-body)]
-                "
-              />
-
-            </div>
-
-
-            <!-- 代碼 -->
-            <div>
-
-              <label
-                class="
-                  block
-                  text-[length:var(--font-body)]
-                  font-bold
-                  text-[var(--on-surface)]
-                  mb-1
-                "
-              >
-                物料代碼
-              </label>
-
-              <input
-                v-model="editForm.code"
-                type="text"
-                class="
-                  input-field
-                  font-data-mono
-                  text-[length:var(--font-body)]
-                "
-              />
-
-            </div>
-
-
-            <!-- 單位 / 成本 / 安全庫存 -->
-            <div class="grid grid-cols-3 gap-3">
-
-              <div>
-
-                <label
-                  class="
-                    block
-                    text-[length:var(--font-body)]
-                    font-bold
-                    text-[var(--on-surface)]
-                    mb-1
-                  "
-                >
-                  單位
-                </label>
-
-                <select
-                  v-model="editForm.unit"
-                  class="
-                    input-field
-                    text-[length:var(--font-body)]
-                  "
-                >
-                  <option value="kg">公斤 (kg)</option>
-                  <option value="g">公克 (g)</option>
-                  <option value="L">公升 (L)</option>
-                  <option value="ml">毫升 (ml)</option>
-                  <option value="個">個</option>
-                  <option value="箱">箱</option>
-                </select>
-
-              </div>
-
-
-              <div>
-
-                <label
-                  class="
-                    block
-                    text-[length:var(--font-body)]
-                    font-bold
-                    text-[var(--on-surface)]
-                    mb-1
-                  "
-                >
-                  成本
-                </label>
-
-                <input
-                  v-model.number="editForm.cost"
-                  type="number"
-                  min="0"
-                  step="any"
-                  class="
-                    input-field
-                    no-number-spinner
-                    text-[length:var(--font-body)]
-                  "
-                />
-
-              </div>
-
-
-              <div>
-
-                <label
-                  class="
-                    block
-                    text-[length:var(--font-body)]
-                    font-bold
-                    text-[var(--on-surface)]
-                    mb-1
-                  "
-                >
-                  安全庫存
-                </label>
-
-                <input
-                  v-model.number="editForm.safetyStock"
-                  type="number"
-                  min="0"
-                  step="any"
-                  class="
-                    input-field
-                    no-number-spinner
-                    text-[length:var(--font-body)]
-                  "
-                />
-
-              </div>
-
-            </div>
-
-
-            <!-- 操作按鈕 -->
-            <div class="flex justify-end gap-2 pt-2">
-
-              <button
-                type="button"
-                @click="cancelEditMaterial"
-                class="
-                  btn-secondary
-                  text-[length:var(--font-body)]
-                "
-              >
-                取消
-              </button>
-
-
-              <button
-                type="button"
-                @click="saveEditMaterial"
-                class="
-                  btn-primary
-                  text-[length:var(--font-body)]
-                "
-              >
-                儲存修改
-              </button>
-
-            </div>
-
-          </div>
 
         </div>
       </div>
@@ -625,7 +433,12 @@
       @change-page="goToPage"
     />
 
-
+          <EditMaterialModal
+  :is-open="editMaterialModalOpen"
+  :material="selectedMaterial"
+  @close="handleCloseEditMaterial"
+  @success="handleEditSuccess"
+/>
     <!-- =========================
          Add Material Modal
          ========================= -->
@@ -653,6 +466,7 @@ import MetricCard from "@/component/子元件/MetricCard.vue";
 import AddMaterialModal from "@/component/父元件/AddMaterialModal.vue";
 import Pagination from "@/component/子元件/Pagination.vue";
 import httpClient from "@/service/httpClient";
+import EditMaterialModal from "@/component/父元件/EditMaterialModal.vue";
 
 // ==============================
 // 原物料資料
@@ -696,26 +510,14 @@ const errorMessage = ref("");
 const addMaterialModalOpen = ref(false);
 
 
-const editingMaterialId = ref(null)
-
-
-// 編輯中的暫存資料
-const editForm = ref({
-  id: null,
-  code: '',
-  name: '',
-  unit: '',
-  cost: 0,
-  safetyStock: 0
-})
+const editMaterialModalOpen = ref(false)
+const selectedMaterial = ref(null)
 
 
 // ==============================
 // 父元件事件
 // 目前只有「編輯」先通知外層
 // ==============================
-
-const emit = defineEmits(["openEditMaterial"]);
 
 // ==============================
 // 打開新增原物料 Modal
@@ -747,15 +549,6 @@ const handleMaterialSuccess = () => {
   loadMaterialSummary();
 };
 
-// ==============================
-// 編輯原物料
-// ==============================
-
-const handleEditMaterial = (material) => {
-  console.log("準備編輯原物料：", material);
-
-  emit("openEditMaterial", material);
-};
 
 // ==============================
 // 取得所有原物料
@@ -839,53 +632,6 @@ const loadMaterialSummary = () => {
     })
 }
 // ==============================
-// 編輯後儲存
-// ==============================
-
-const saveEditMaterial = () => {
-
-  const id = editForm.value.id
-
-  const data = {
-    code: editForm.value.code.trim(),
-    name: editForm.value.name.trim(),
-    unit: editForm.value.unit,
-    cost: Number(editForm.value.cost),
-    safetyStock: Number(editForm.value.safetyStock)
-  }
-
-  console.log('準備修改原物料：', data)
-
-  httpClient
-    .put(`/api/materialupdate/${id}`, data)
-
-    .then((response) => {
-
-      console.log(
-        '修改原物料成功：',
-        response.data
-      )
-
-      // 退出編輯模式
-      editingMaterialId.value = null
-
-      // 重新取得目前頁面的資料
-      loadMaterials()
-
-      // KPI 也可能因成本、安全庫存、單位改變
-      loadMaterialSummary()
-
-    })
-
-    .catch((error) => {
-
-      console.error(
-        '修改原物料失敗：',
-        error
-      )
-
-    })
-}
 
 // ==============================
 // 已設定安全庫存數量
@@ -894,27 +640,25 @@ const saveEditMaterial = () => {
 
 
 const startEditMaterial = (material) => {
-
-  editingMaterialId.value = material.id
-
-  editForm.value = {
-    id: material.id,
-    code: material.code,
-    name: material.name,
-    unit: material.unit,
-    cost: Number(material.cost),
-    safetyStock: Number(material.safetyStock)
-  }
-
+  selectedMaterial.value = material
+  editMaterialModalOpen.value = true
 }
 
+const handleEditSuccess = () => {
 
-const cancelEditMaterial = () => {
+  editMaterialModalOpen.value = false
+  selectedMaterial.value = null
 
-  editingMaterialId.value = null
+  loadMaterials();
 
+  loadMaterialSummary();
+};
+
+
+const handleCloseEditMaterial = () => {
+  editMaterialModalOpen.value = false
+  selectedMaterial.value = null
 }
-
 
 
 

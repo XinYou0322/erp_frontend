@@ -98,27 +98,7 @@
           <RefreshCw class="w-3.5 h-3.5" />
           <span>重新整理</span>
         </button>
-
-
-        <button
-          type="button"
-          @click="emit('openReport')"
-          class="
-            btn-secondary
-            text-[length:var(--font-body)]
-            px-3
-            py-1.5
-            flex
-            items-center
-            space-x-1.5
-          "
-        >
-          <FileSpreadsheet class="w-3.5 h-3.5" />
-          <span>盤點報表</span>
-        </button>
-
-
-        <button
+             <button
           type="button"
           @click="inventoryIntakeModalOpen = true"
           class="

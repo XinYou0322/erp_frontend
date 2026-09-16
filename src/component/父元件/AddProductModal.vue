@@ -217,11 +217,11 @@
     </form>
 
 
-    <template #footer>
+<template #footer="{ close }">
 
       <button
         type="button"
-        @click="emit('close')"
+        @click="close"
         class="btn-secondary text-xs"
       >
         取消

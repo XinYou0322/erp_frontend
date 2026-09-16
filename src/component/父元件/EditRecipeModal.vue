@@ -464,11 +464,11 @@
     </div>
 
     <!-- Footer -->
-    <template #footer>
+   <template #footer="{ close }">
       <button
         type="button"
         class="btn-secondary text-xs"
-        @click="emit('close')"
+            @click="close"
       >
         取消
       </button>
