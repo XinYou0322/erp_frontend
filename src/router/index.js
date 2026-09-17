@@ -29,11 +29,11 @@ const routes = [
     redirect: "/permissions",
   },
 
-   {
-     path: '/product',
+  {
+    path: '/product',
     name: 'product',
-     component: ()=> import("@/view/ProductBomManagement.vue")
-   },
+    component: () => import("@/view/ProductBomManagement.vue")
+  },
   {
     path: "/material",
     name: "material",
@@ -55,29 +55,29 @@ const routes = [
   {
     path: '/inventory',
     name: 'inventory',
-    component: ()=> import("@/view/InventoryManagement.vue")
+    component: () => import("@/view/InventoryManagement.vue")
   },
   {
     path: '/material',
     name: 'material',
-    component: ()=> import("@/view/MaterialManagement.vue")
+    component: () => import("@/view/MaterialManagement.vue")
   },
- {
+  {
     path: '/inventory/logs',
     name: 'inventorylogs',
-    component: ()=> import("@/view/InventoryLogManagement.vue")
+    component: () => import("@/view/InventoryLogManagement.vue")
   },
 
-   {
+  {
     path: '/ComponentShowcase',
     name: 'ComponentShowcase',
-    component: ()=> import("@/view/ComponentShowcase.vue")
+    component: () => import("@/view/ComponentShowcase.vue")
   },
 
-     {
+  {
     path: '/Supplier',
     name: 'Supplier',
-    component: ()=> import("@/view/Supplier.vue")
+    component: () => import("@/view/Supplier.vue")
   },
   {
     path: '/leave-requests',

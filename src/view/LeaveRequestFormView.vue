@@ -6,6 +6,7 @@ import {
   updateLeaveRequest,
   submitLeaveRequest,
   getLeaveRequestById,
+  deleteLeaveRequest,
 } from "../service/leaveRequestApi";
 import { useAuthStore } from "@/stores/auth.store";
 
@@ -34,6 +35,7 @@ const form = reactive({
 const approverId = ref("");
 const saving = ref(false);
 const submitting = ref(false);
+const deleting = ref(false);
 const errorMessage = ref("");
 const successMessage = ref("");
 
@@ -172,6 +174,30 @@ async function submitForApproval() {
   }
 }
 
+// 刪除草稿
+async function deleteDraft() {
+  // 防呆：只有編輯既有草稿時才能刪除
+  if (!isEdit.value) return; 
+
+  const isConfirmed = window.confirm("確定要刪除此請假草稿嗎？此動作無法復原。");
+  if (!isConfirmed) return;
+
+  deleting.value = true;
+  try {
+    await deleteLeaveRequest(leaveId.value);
+    successMessage.value = "草稿已成功刪除！即將返回列表...";
+    
+    // 稍微延遲 1.5 秒讓使用者看到成功訊息，然後跳轉回列表
+    setTimeout(() => {
+      router.push({ name: "leave-list" }); 
+    }, 1000);
+  } catch (e) {
+    errorMessage.value = e.response?.data?.message || e.message || "刪除失敗";
+  } finally {
+    deleting.value = false;
+  }
+}
+
 onMounted(loadExisting);
 </script>
 
@@ -240,13 +266,23 @@ onMounted(loadExisting);
       <p v-if="errorMessage" class="error-text">{{ errorMessage }}</p>
 
       <div class="actions">
+        <button 
+            v-if="isEdit" 
+            class="btn-danger-outline" 
+            style="margin-right: auto;" 
+            :disabled="deleting || saving || submitting" 
+            @click="deleteDraft"
+          >
+            <span class="material-symbols-outlined">delete</span>
+            {{ deleting ? "刪除中..." : "刪除草稿" }}
+        </button>
         <button class="btn-outline" :disabled="saving" @click="saveDraft">
           <span class="material-symbols-outlined">save</span>
           {{ saving ? "儲存中..." : "儲存草稿" }}
         </button>
         <button
           class="btn-primary"
-          :disabled="submitting"
+          :disabled="submitting || deleting"
           @click="submitForApproval"
         >
           <span class="material-symbols-outlined">send</span>
@@ -408,5 +444,27 @@ textarea {
 
 .material-symbols-outlined {
   font-size: 18px;
+}
+
+.btn-danger-outline {
+  background-color: transparent;
+  border: 1px solid #ef4444; /* 紅色邊框 */
+  color: #ef4444;            /* 紅色文字 */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-danger-outline:hover:not(:disabled) {
+  background-color: #fef2f2; /* 淺紅色背景 */
+}
+
+.btn-danger-outline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

@@ -42,7 +42,23 @@ async function loadLeaves() {
 
 
 function goToDetail(id) {
-  router.push({ name: "leave-detail", params: { id } });
+    // 1. 從 leaves 陣列中，找出 id 符合的那一筆請假單
+  const leave = leaves.value.find((l) => l.id === id);
+
+  // 防呆：如果找不到這筆資料，就不執行後續動作
+  if (!leave) {
+    console.error("找不到對應的請假單, id:", id);
+    return;
+  }
+
+  // 2. 根據「該筆請假單 (leave)」的狀態來決定跳轉路由
+  if (leave.status === "DRAFT") {
+    // 如果是草稿，直接進編輯頁
+    router.push({ name: "leave-edit", params: { id: leave.id } });
+  } else {
+    // 如果是已送出/審核中/已核准等狀態，進詳情頁
+    router.push({ name: "leave-detail", params: { id: leave.id } });
+  }
 }
 
 function goToCreate() {
