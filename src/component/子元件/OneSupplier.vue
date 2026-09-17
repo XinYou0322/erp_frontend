@@ -19,11 +19,7 @@
           class="erp-btn erp-btn--soft"
           @click="showUpdate"
         >修改</button>
-        <!-- 刪除
-        <button
-          class="erp-btn erp-btn--danger"
-          @click="deleteSupplier"
-          >刪除</button> -->
+  
       </div>
     </td>
   </tr>

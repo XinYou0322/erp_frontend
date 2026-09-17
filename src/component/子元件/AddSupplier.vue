@@ -287,7 +287,7 @@
             </label>
             <textarea
               :id="`supplier-note-input-${supplier.localId}`"
-              v-model="supplier.supplierNotes.content"
+              v-model="supplier.supplierNotes.remark"
               class="w-full resize-y rounded-xl border border-[var(--outline)] bg-[var(--surface-container-low)] px-3 py-2.5 text-sm text-[var(--on-surface)] outline-none transition placeholder:text-[var(--on-surface-variant)]/60 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20"
               rows="3"
               placeholder="輸入合作條件、聯絡偏好或其他備註"
@@ -372,7 +372,7 @@ function createEmptySupplier(selected, expanded) {
     email: '',
     status: 'PENDING',
     supplierNotes: {
-      content: ''
+      remark: ''
     }
   }
 }
@@ -614,6 +614,9 @@ async function saveSelectedSuppliers() {
     emit('saved', savedSuppliers)
   } catch (error) {
     console.error('新增供應商失敗：', error)
+    console.error("後端錯誤內容：", error.response?.data)
+    console.error("HTTP 狀態碼：", error.response?.status)
+    // console.error("送出的資料：", supplierData)
     apiError.value = '新增錯誤'
   } finally {
     isSaving.value = false
