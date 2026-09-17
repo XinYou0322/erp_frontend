@@ -242,7 +242,7 @@
         <!-- POS -->
         <button
           type="button"
-          @click="emit('openPos')"
+          @click="router.push('/pos')"
           class="
             w-full
             py-2.5
@@ -430,7 +430,7 @@ const router = useRouter();
 const emit = defineEmits<{
   (e: "openReport"): void;
   (e: "openProfile"): void;
-  (e: "openPos"): void;
+  //(e: "openPos"): void;
 }>();
 
 const inventoryMenuOpen = ref(route.path.startsWith("/inventory"));
@@ -520,9 +520,12 @@ const navItems = [
     label: "供應商管理",
     icon: Sliders,
     path: "/Supplier",
-
-
-
+},
+{
+ id: "PurchaseOrder",
+    label: "採購單管理",
+    icon: Sliders,
+    path: "/PurchaseOrder",
 },
 {
  id: "testings15313",
