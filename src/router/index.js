@@ -52,11 +52,12 @@ const routes = [
     component: () => import('@/view/WorkflowDetail.vue'),
     props: true
   },
-  {
-    path: '/inventory',
-    name: 'inventory',
-    component: ()=> import("@/view/InventoryManagement.vue")
-  },
+{
+  path: "/inventory",
+  name: "inventory",
+  component: () =>
+    import("@/view/InventoryPage.vue"),
+},
   {
     path: '/material',
     name: 'material',
