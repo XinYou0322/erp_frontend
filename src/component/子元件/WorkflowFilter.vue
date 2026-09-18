@@ -106,7 +106,7 @@ function handleReset() {
   color: var(--wf-ink-soft);
 }
 
-.filter-select,
+/* .filter-select,
 .filter-input {
   font-family: var(--wf-font);
   font-size: 13px;
@@ -117,6 +117,20 @@ function handleReset() {
   background: var(--wf-paper-raised);
   outline: none;
   box-sizing: border-box;
+} */
+
+.filter-select,
+.filter-input {
+  font-family: var(--wf-font);
+  font-size: 13px;
+  color: var(--wf-ink);
+  border: 1px solid var(--wf-line-strong);
+  border-radius: var(--wf-radius-sm);
+  padding: 7px 10px;
+  background: #1e293b; /* 比原本亮一階 */
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
 }
 
 .filter-select:focus,
@@ -153,5 +167,11 @@ function handleReset() {
 .filter-reset:hover {
   border-color: var(--wf-ink-soft);
   color: var(--wf-ink);
+}
+
+/* Chrome / Edge 日曆圖示 */
+.filter-input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.3);
+  cursor: pointer;
 }
 </style>

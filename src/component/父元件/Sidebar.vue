@@ -16,7 +16,6 @@
       <!-- Logo -->
       <!-- ============================== -->
       <div class="flex items-center space-x-3 px-2 pt-2">
-
         <div
           class="
             w-10 h-10
@@ -34,34 +33,20 @@
 
         <div>
           <h1
-            class="
-              font-black
-              text-base
-              tracking-tight
-              text-[var(--on-surface)]
-              leading-none
-            "
+            class="font-black text-base tracking-tight text-[var(--on-surface)] leading-none"
           >
             深淵之流
           </h1>
 
           <p
-            class="
-              text-[10px]
-              font-semibold
-              text-[var(--primary)]
-              tracking-widest
-              mt-1
-            "
+            class="text-[10px] font-semibold text-[var(--primary)] tracking-widest mt-1"
           >
             BEVERAGE CONTROL
           </p>
         </div>
-
       </div>
 
 
-      <!-- ============================== -->
       <!-- 主選單 -->
       <!-- ============================== -->
       <nav
@@ -149,7 +134,6 @@
       <!-- 快捷功能 -->
       <!-- ============================== -->
       <div class="px-2 pt-2 space-y-2">
-
         <!-- POS -->
         <button
           type="button"
@@ -174,11 +158,8 @@
         >
           <CupSoda class="w-4 h-4" />
 
-          <span>
-            門市點餐開單 (POS)
-          </span>
+          <span> 門市點餐開單 (POS) </span>
         </button>
-
 
         <!-- 報表 -->
         <button
@@ -209,9 +190,7 @@
             門市營運結報中心
           </span>
         </button>
-
       </div>
-
     </div>
 
 
@@ -234,7 +213,6 @@
         group
       "
     >
-
       <!-- Avatar -->
       <div
         class="
@@ -254,35 +232,18 @@
         陳
       </div>
 
-
       <!-- User Info -->
       <div class="min-w-0 flex-1">
-
         <p
-          class="
-            text-xs
-            font-bold
-            text-[var(--on-surface)]
-            truncate
-            group-hover:text-[var(--primary)]
-            transition-colors
-          "
+          class="text-xs font-bold text-[var(--on-surface)] truncate group-hover:text-[var(--primary)] transition-colors"
         >
           陳思妤 (店長)
         </p>
 
-        <p
-          class="
-            text-[10px]
-            text-[var(--on-surface-variant)]
-            truncate
-          "
-        >
+        <p class="text-[10px] text-[var(--on-surface-variant)] truncate">
           信義旗艦店 • 執勤中
         </p>
-
       </div>
-
 
       <ChevronRight
         class="
@@ -293,9 +254,7 @@
           shrink-0
         "
       />
-
     </div>
-
   </aside>
 </template>
 
@@ -475,7 +434,12 @@ const navItems = [
     icon: Sliders,
     path: "/workflows",
   },
-
+  {
+    id: "leave",
+    label: "請假系統",
+    icon: Sliders,
+    path: "/leave-requests",
+  },
 ];
 
 </script>
