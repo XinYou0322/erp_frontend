@@ -34,18 +34,19 @@
         <div>
           <h1
             class="font-black text-base tracking-tight text-[var(--on-surface)] leading-none"
+            class="font-black text-base tracking-tight text-[var(--on-surface)] leading-none"
           >
             深淵之流
           </h1>
 
           <p
             class="text-[10px] font-semibold text-[var(--primary)] tracking-widest mt-1"
+            class="text-[10px] font-semibold text-[var(--primary)] tracking-widest mt-1"
           >
             BEVERAGE CONTROL
           </p>
         </div>
       </div>
-
 
       <!-- 主選單 -->
       <!-- ============================== -->
@@ -158,6 +159,7 @@
         >
           <CupSoda class="w-4 h-4" />
 
+          <span> 門市點餐開單 (POS) </span>
           <span> 門市點餐開單 (POS) </span>
         </button>
 

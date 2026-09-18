@@ -7,6 +7,13 @@ import {
 } from "../data/permissionData";
 import { StorageService } from "../service/storage.service";
 import httpClient from "@/service/httpClient";
+import {
+  DEFAULT_AVATARS,
+  getDefaultAvatar,
+  normalizeAvatarUrl,
+} from "../data/defaultAvatars";
+
+const DEFAULT_AVATAR = getDefaultAvatar();
 
 export const useAuthStore = defineStore("auth", () => {
   // --- State ---
@@ -27,7 +34,9 @@ export const useAuthStore = defineStore("auth", () => {
 
   // 刷卡打卡狀態
   const isClockedIn = ref(StorageService.get("is_clocked_in", true));
-  const clockTime = ref("08:55 AM");
+  const clockTime = ref(StorageService.get("clock_time", "08:55 AM"));
+  const clockTimeline = ref(StorageService.get("clock_timeline", []));
+  const clockRecords = ref(StorageService.get("clock_records", []));
 
   // --- 角色映射 (後端中文職稱 <-> 前端四級 RBAC 角色) ---
   function mapRoleToSystemRole(role) {
@@ -107,11 +116,55 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   // --- Core Actions ---
+  function normalizeUserStatus(status) {
+    const value = String(status || "active").toLowerCase();
+    if (
+      [
+        "pending",
+        "approved",
+        "rejected",
+        "active",
+        "inactive",
+        "locked",
+      ].includes(value)
+    ) {
+      return value;
+    }
+    return "active";
+  }
+
+  function canUserLogin(status) {
+    const normalized = normalizeUserStatus(status);
+    return normalized === "approved" || normalized === "active";
+  }
+
   function login(user) {
+    const status = normalizeUserStatus(user?.status);
+
+    if (status === "pending") {
+      return {
+        success: false,
+        message: "此帳號尚待管理員審核，請等待審核結果後再登入。",
+      };
+    }
+
+    if (status === "rejected") {
+      return {
+        success: false,
+        message: "此帳號申請已被駁回，請重新提出申請或聯絡管理員。",
+      };
+    }
+
+    if (status === "inactive" || status === "locked") {
+      return {
+        success: false,
+        message: "該帳號已被停用或鎖定，無法登入。",
+      };
+    }
+
     currentUser.value = user;
     isAuthenticated.value = true;
 
-    // 更新本地與持久化狀態中的最後登入時間
     const idx = users.value.findIndex((u) => u.id === user.id);
     if (idx !== -1) {
       users.value[idx].lastLogin = new Date()
@@ -130,6 +183,12 @@ export const useAuthStore = defineStore("auth", () => {
       `使用者「${user.name}」登入系統成功 (${user.roleName || user.role})。`,
       "success",
     );
+
+    return {
+      success: true,
+      message: `歡迎回來，${user.name}！`,
+      user,
+    };
   }
 
   /**
@@ -148,15 +207,19 @@ export const useAuthStore = defineStore("auth", () => {
 
       const authenticatedUser = {
         ...user,
+        avatar: normalizeAvatarUrl(user.avatar || DEFAULT_AVATAR),
         role: user.role?.name || user.role,
         roleName: user.role?.description || user.role?.name || "使用者",
       };
 
-      login(authenticatedUser);
+      const loginResult = login(authenticatedUser);
+      if (!loginResult.success) {
+        return loginResult;
+      }
 
       return {
         success: true,
-        message: message || `歡迎回來，${authenticatedUser.name}！`,
+        message: message || loginResult.message,
         user: authenticatedUser,
       };
     } catch (error) {
@@ -168,17 +231,33 @@ export const useAuthStore = defineStore("auth", () => {
       );
 
       if (matched) {
-        if (matched.status === "inactive" || matched.status === "INACTIVE") {
+        const matchedStatus = String(matched.status || "active").toLowerCase();
+        if (matchedStatus === "pending") {
+          return {
+            success: false,
+            message: "此帳號尚待管理員審核，請等待審核結果後再登入。",
+          };
+        }
+        if (matchedStatus === "rejected") {
+          return {
+            success: false,
+            message: "此帳號申請已被駁回，請重新提出申請或聯絡管理員。",
+          };
+        }
+        if (matchedStatus === "inactive" || matchedStatus === "INACTIVE") {
           return {
             success: false,
             message: "該帳號已被系統管理員停用，無法登入。",
           };
         }
         if (password && matched.password && matched.password === password) {
-          login(matched);
+          const loginResult = login(matched);
+          if (!loginResult.success) {
+            return loginResult;
+          }
           return {
             success: true,
-            message: `[本地認證] 歡迎回來，${matched.name}！`,
+            message: `[本地認證] ${loginResult.message}`,
             user: matched,
           };
         }
@@ -230,6 +309,10 @@ export const useAuthStore = defineStore("auth", () => {
 
   // --- Permission Matrix Operations ---
   function toggleRolePermission(role, key) {
+    if (!isAdmin.value) {
+      return;
+    }
+
     const currentList = rolePermissions.value[role] || [];
     const exists = currentList.includes(key);
 
@@ -249,6 +332,10 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   function resetPermissionsToDefault() {
+    if (!isAdmin.value) {
+      return;
+    }
+
     rolePermissions.value = JSON.parse(
       JSON.stringify(DEFAULT_ROLE_PERMISSIONS),
     );
@@ -278,11 +365,12 @@ export const useAuthStore = defineStore("auth", () => {
           name: u.name,
           username: u.username,
           email: u.email,
+          avatar: normalizeAvatarUrl(u.avatar || getDefaultAvatar()),
           role: u.role?.name || "employee",
           roleName: u.role?.description || u.role?.name || "一般員工",
           roleId: u.role?.id,
           department: u.department?.name || "門市營運部",
-          status: (u.status || "ACTIVE").toLowerCase(),
+          status: normalizeUserStatus(u.status || "ACTIVE"),
           createdAt: u.createdAt
             ? u.createdAt.slice(0, 10)
             : new Date().toISOString().slice(0, 10),
@@ -320,6 +408,7 @@ export const useAuthStore = defineStore("auth", () => {
         name: userDto.name,
         email: userDto.email,
         roleId: Number(userDto.roleId) || 1,
+        avatar: userDto.avatar || "",
       });
       await fetchUsersFromApi();
       recordAuditLog(
@@ -343,6 +432,7 @@ export const useAuthStore = defineStore("auth", () => {
         email: userDto.email,
         roleId: Number(userDto.roleId) || 1,
         status: statusUpper === "INACTIVE" ? "INACTIVE" : "ACTIVE",
+        avatar: userDto.avatar || "",
       });
       await fetchUsersFromApi();
       recordAuditLog(
@@ -396,6 +486,23 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   // --- Local Fallback CRUD ---
+  function normalizeUserStatus(status) {
+    const value = String(status || "active").toLowerCase();
+    if (
+      [
+        "pending",
+        "approved",
+        "rejected",
+        "active",
+        "inactive",
+        "locked",
+      ].includes(value)
+    ) {
+      return value;
+    }
+    return "active";
+  }
+
   function addUser(user) {
     const roleNames = {
       admin: "系統管理員",
@@ -412,9 +519,10 @@ export const useAuthStore = defineStore("auth", () => {
       role: user.role,
       roleName: roleNames[user.role] || user.role || "使用者",
       department: user.department || "門市部",
-      avatar: user.avatar || "https://unsplash.com",
+      avatar: user.avatar || DEFAULT_AVATAR,
       phone: user.phone || "+886 900-000-000",
-      status: "active",
+      status: normalizeUserStatus(user.status || "pending"),
+      reason: user.reason || "",
       createdAt: new Date().toISOString().slice(0, 10),
       lastLogin: "尚未登入",
     };
@@ -433,6 +541,36 @@ export const useAuthStore = defineStore("auth", () => {
         StorageService.set("current_user", currentUser.value);
       }
       StorageService.set("system_users", users.value);
+    }
+  }
+
+  function updateUserStatus(id, status) {
+    const idx = users.value.findIndex((u) => u.id === id);
+    if (idx === -1) return;
+
+    const nextStatus = normalizeUserStatus(status);
+    const currentName = users.value[idx].name || "";
+
+    users.value[idx].status = nextStatus;
+    if (nextStatus === "approved") {
+      users.value[idx].name = currentName.replace(/\s*\(待核准\)$/, "");
+    }
+    StorageService.set("system_users", users.value);
+
+    if (nextStatus === "rejected") {
+      recordAuditLog(
+        "帳號申請駁回",
+        "permissions",
+        `已拒絕使用者「${users.value[idx].name}」的帳號申請。`,
+        "danger",
+      );
+    } else if (nextStatus === "approved") {
+      recordAuditLog(
+        "帳號申請核准",
+        "permissions",
+        `已核准使用者「${users.value[idx].name}」的帳號申請。`,
+        "success",
+      );
     }
   }
 
@@ -460,6 +598,125 @@ export const useAuthStore = defineStore("auth", () => {
     StorageService.set("system_users", users.value);
   }
 
+  function appendClockRecord(
+    action,
+    note = "",
+    timestamp = new Date().toISOString(),
+  ) {
+    const record = {
+      id: `clock-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+      userId: currentUser.value?.id || "system",
+      userName: currentUser.value?.name || "系統",
+      action,
+      note,
+      timestamp,
+      status: action === "上班打卡" ? "success" : "warning",
+    };
+
+    clockTimeline.value = [record, ...clockTimeline.value].slice(0, 20);
+    clockRecords.value = [record, ...clockRecords.value].slice(0, 50);
+    StorageService.set("clock_timeline", clockTimeline.value);
+    StorageService.set("clock_records", clockRecords.value);
+  }
+
+  async function fetchClockRecords(userId = currentUser.value?.id) {
+    try {
+      const params = userId ? { userId } : {};
+      const response = await httpClient.get("/api/clock/history", { params });
+      const records = Array.isArray(response?.data?.records)
+        ? response.data.records.map((item) => ({
+            id: item.id,
+            userId: item.userId,
+            userName: item.userName || currentUser.value?.name || "系統",
+            action:
+              item.label ||
+              (item.clockType === "CLOCK_IN" ? "上班打卡" : "簽退記錄"),
+            note:
+              item.label ||
+              (item.clockType === "CLOCK_IN" ? "上班打卡" : "簽退記錄"),
+            timestamp: item.clockTime,
+            status: item.clockType === "CLOCK_IN" ? "success" : "warning",
+          }))
+        : [];
+
+      clockRecords.value = records;
+      StorageService.set("clock_records", records);
+      return records;
+    } catch (error) {
+      const fallback =
+        clockTimeline.value.length > 0 ? clockTimeline.value : [];
+      clockRecords.value = fallback;
+      StorageService.set("clock_records", fallback);
+      return fallback;
+    }
+  }
+
+  async function toggleClock() {
+    if (!currentUser.value?.id) {
+      console.warn("沒有登入使用者，無法打卡。");
+      return;
+    }
+
+    const currentStatus = isClockedIn.value ? "IN" : "OUT";
+
+    try {
+      const res = await httpClient.post("/api/clock/toggle", {
+        userId: currentUser.value.id,
+        currentStatus,
+      });
+
+      const payload = res.data || {};
+      const nextState = Boolean(payload.isClockedIn);
+      const serverClockTime = payload.clockTime || new Date().toISOString();
+      const formattedTime = new Date(serverClockTime).toLocaleTimeString(
+        "en-US",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        },
+      );
+
+      isClockedIn.value = nextState;
+      clockTime.value = formattedTime;
+      StorageService.set("is_clocked_in", isClockedIn.value);
+      StorageService.set("clock_time", clockTime.value);
+
+      const action = nextState ? "上班打卡" : "簽退記錄";
+      const note = nextState
+        ? `已於 ${formattedTime} 打卡上班（後端同步）`
+        : `已於 ${formattedTime} 簽退（後端同步）`;
+
+      appendClockRecord(action, note, serverClockTime);
+      recordAuditLog(
+        action,
+        "attendance",
+        note,
+        nextState ? "success" : "warning",
+      );
+
+      return {
+        success: true,
+        message:
+          payload.message || (nextState ? "打卡上班成功！" : "簽退成功！"),
+        isClockedIn: nextState,
+        clockTime: serverClockTime,
+      };
+    } catch (error) {
+      const message = error?.response?.data || "打卡失敗，請稍後再試。";
+      recordAuditLog(
+        "打卡失敗",
+        "attendance",
+        `使用者 ${currentUser.value?.name || "未知使用者"} 觸發打卡失敗：${message}`,
+        "danger",
+      );
+      return {
+        success: false,
+        message,
+      };
+    }
+  }
+
   return {
     users,
     currentUser,
@@ -469,6 +726,8 @@ export const useAuthStore = defineStore("auth", () => {
     serverRoles,
     isClockedIn,
     clockTime,
+    clockTimeline,
+    clockRecords,
     currentRole,
     normalizedRole,
     isAdmin,
@@ -488,13 +747,16 @@ export const useAuthStore = defineStore("auth", () => {
     resetPermissionsToDefault,
     fetchUsersFromApi,
     fetchRolesFromApi,
+    fetchClockRecords,
     createUserApi,
     updateUserApi,
     toggleUserStatusApi,
     deleteUserApi,
     addUser,
     updateUser,
+    updateUserStatus,
     toggleUserStatus,
     deleteUser,
+    toggleClock,
   };
 });

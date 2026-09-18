@@ -168,6 +168,26 @@ export const PERMISSION_MODULES = [
     ],
   },
   {
+    id: "calendar",
+    name: "行事曆與排程 (Calendar & Scheduling)",
+    icon: "calendar_month",
+    description: "企業營運活動、採購到貨日、員工輪班差假與設備保養時程規劃",
+    permissions: [
+      {
+        key: "calendar.view",
+        label: "查看行事曆排程",
+        description: "允許檢視月/週/日檢視與各類別活動排程",
+        module: "calendar",
+      },
+      {
+        key: "calendar.edit",
+        label: "新增與編輯排程活動",
+        description: "允許新增、修改、刪除事件與匯出 ICS 檔案",
+        module: "calendar",
+      },
+    ],
+  },
+  {
     id: "permissions",
     name: "權限與使用者管理 (RBAC & Users)",
     icon: "admin_panel_settings",
@@ -211,6 +231,8 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     "workflows.approve",
     "analytics.view",
     "analytics.export",
+    "calendar.view",
+    "calendar.edit",
     "permissions.view",
     "permissions.manage",
   ],
@@ -232,6 +254,7 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     "workflows.approve",
     "analytics.view",
     "analytics.export",
+    "calendar.view",
     "permissions.view",
   ],
   employee: [
@@ -240,8 +263,9 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     "pos.checkout",
     "workflows.view",
     "workflows.submit",
+    "calendar.view",
   ],
-  guest: ["overview.view", "analytics.view"],
+  guest: ["overview.view", "analytics.view", "calendar.view"],
 };
 export const INITIAL_SECURITY_AUDIT_LOGS = [
   {
