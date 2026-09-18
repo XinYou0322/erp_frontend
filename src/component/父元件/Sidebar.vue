@@ -34,14 +34,12 @@
         <div>
           <h1
             class="font-black text-base tracking-tight text-[var(--on-surface)] leading-none"
-            class="font-black text-base tracking-tight text-[var(--on-surface)] leading-none"
           >
             深淵之流
           </h1>
 
           <p
-            class="text-[10px] font-semibold text-[var(--primary)] tracking-widest mt-1"
-            class="text-[10px] font-semibold text-[var(--primary)] tracking-widest mt-1"
+            class="text-[10px] font-semibold text-[var(--primary)] tracking-widest mt-1"          
           >
             BEVERAGE CONTROL
           </p>
@@ -159,7 +157,6 @@
         >
           <CupSoda class="w-4 h-4" />
 
-          <span> 門市點餐開單 (POS) </span>
           <span> 門市點餐開單 (POS) </span>
         </button>
 
@@ -356,15 +353,6 @@ const navItems = [
     icon: LayoutDashboard,
     path: "/dashboard",
   },
-
-  {
-    id: "products-menu",
-    label: "飲品品項菜單",
-    icon: Layers,
-    badge: "8款",
-    path: "/product2",
-  },
-
   {
     id: "bom",
     label: "原料配方 BOM 管理",
@@ -396,14 +384,6 @@ const navItems = [
     badge: "出單",
     path: "/orders",
   },
-
-  {
-    id: "settings",
-    label: "門市系統參數設定",
-    icon: Sliders,
-    path: "/settings",
-  },
-
   {
     id: "permission",
     label: "權限與用戶管理",
@@ -423,13 +403,6 @@ const navItems = [
     icon: Sliders,
     path: "/PurchaseOrder",
 },
-{
- id: "testings15313",
-    label: "展示用",
-    icon: Sliders,
-    path: "/ComponentShowcase",
-  },
-
   {
     id: "workflow",
     label: "簽核系統",

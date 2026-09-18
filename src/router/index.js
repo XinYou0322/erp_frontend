@@ -119,7 +119,7 @@ const routes = [
     path: '/leave-requests/:id',
     name: 'leave-detail',
     component: () => import('../view/LeaveRequestDetailView.vue')
-  }
+  },
     {
     path: '/pos',
     name: 'pos',
