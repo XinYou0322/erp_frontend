@@ -160,110 +160,115 @@
           <span> 門市點餐開單 (POS) </span>
         </button>
 
-        <!-- 報表 -->
+       
+      </div>
+    </div>
+ <!-- Bottom Widget: Punch Clock & Settings -->
+    <div class="space-y-3 pt-4 border-t border-slate-800/80">
+      <!-- Punch Clock Badge Widget -->
+      <div
+        class="p-3 bg-slate-950/60 rounded-2xl border border-slate-800/80 text-xs"
+      >
+        <div class="flex items-center justify-between mb-1.5">
+          <span
+            class="text-[10px] text-slate-400 font-semibold tracking-wider uppercase"
+          >
+            出勤打卡鐘
+          </span>
+          <span
+            class="size-2 rounded-full"
+            :class="
+              authStore.isClockedIn
+                ? 'bg-emerald-400 animate-ping'
+                : 'bg-slate-600'
+            "
+          />
+        </div>
+        <div class="font-data-mono text-white text-sm font-bold mb-2">
+          {{ authStore.clockTime }}
+        </div>
         <button
-          type="button"
-          @click="emit('openReport')"
-          class="
-            w-full
-            py-2 px-3
-            rounded-xl
-            bg-[var(--surface-container)]
-            hover:bg-[var(--surface-container-high)]
-            border
-            border-[var(--outline)]
-            text-[var(--on-surface)]
-            text-xs
-            font-bold
-            flex items-center justify-center
-            space-x-2
-            transition-all
-            cursor-pointer
+          @click="authStore.toggleClock"
+          class="w-full py-1.5 rounded-lg font-bold text-[11px] transition-all flex items-center justify-center gap-1 cursor-pointer"
+          :class="
+            authStore.isClockedIn
+              ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30'
+              : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
           "
         >
-          <FileSpreadsheet
-            class="w-3.5 h-3.5 text-[var(--primary)]"
-          />
-
-          <span>
-            門市營運結報中心
+          <span class="material-symbols-outlined text-[14px]">
+            {{ authStore.isClockedIn ? "logout" : "login" }}
           </span>
+          <span>{{
+            authStore.isClockedIn ? "簽退 (Clock Out)" : "打卡上班 (Clock In)"
+          }}</span>
         </button>
-      </div>
-    </div>
 
-
-    <!-- ============================== -->
-    <!-- 使用者 -->
-    <!-- ============================== -->
-    <div
-      @click="emit('openProfile')"
-      class="
-        p-3
-        rounded-2xl
-        bg-[var(--surface-container)]
-        hover:bg-[var(--surface-container-high)]
-        border
-        border-[var(--outline)]
-        transition-all
-        cursor-pointer
-        flex items-center
-        space-x-3
-        group
-      "
-    >
-      <!-- Avatar -->
-      <div
-        class="
-          w-9 h-9
-          rounded-xl
-          bg-gradient-to-br
-          from-[var(--primary)]
-          to-[var(--secondary)]
-          text-[var(--surface)]
-          flex items-center justify-center
-          font-bold
-          text-sm
-          shadow-sm
-          shrink-0
-        "
-      >
-        陳
-      </div>
-
-      <!-- User Info -->
-      <div class="min-w-0 flex-1">
-        <p
-          class="text-xs font-bold text-[var(--on-surface)] truncate group-hover:text-[var(--primary)] transition-colors"
+        <button
+          type="button"
+          @click="router.push('/attendance')"
+          class="mt-2 w-full py-1.5 rounded-lg border border-slate-700 bg-slate-900/80 text-slate-200 font-semibold text-[10px] transition-all hover:bg-slate-800 cursor-pointer"
         >
-          陳思妤 (店長)
-        </p>
+          查看打卡紀錄列表
+        </button>
 
-        <p class="text-[10px] text-[var(--on-surface-variant)] truncate">
-          信義旗艦店 • 執勤中
-        </p>
+        <div class="mt-2 pt-2 border-t border-slate-800/80">
+          <div class="flex items-center justify-between mb-1.5">
+            <span
+              class="text-[10px] font-semibold uppercase tracking-wider text-slate-400"
+            >
+              打卡紀錄
+            </span>
+            <span class="text-[10px] text-slate-500">
+              {{ authStore.clockTimeline.length }} 筆
+            </span>
+          </div>
+
+          <ul class="space-y-1.5">
+            <li
+              v-for="record in latestClockRecords"
+              :key="record.id"
+              class="flex items-start gap-2 text-[10px] text-slate-300"
+            >
+              <span
+                class="mt-0.5 h-1.5 w-1.5 rounded-full"
+                :class="
+                  record.action === '上班打卡'
+                    ? 'bg-emerald-400'
+                    : 'bg-rose-400'
+                "
+              />
+              <div class="min-w-0">
+                <div class="font-semibold text-white">{{ record.action }}</div>
+                <div class="text-[9px] text-slate-500">
+                  {{
+                    new Date(record.timestamp).toLocaleString("zh-TW", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    })
+                  }}
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
       </div>
 
-      <ChevronRight
-        class="
-          w-4 h-4
-          text-[var(--on-surface-variant)]
-          group-hover:text-[var(--on-surface)]
-          transition-colors
-          shrink-0
-        "
-      />
+     
     </div>
+
+   
   </aside>
 </template>
 
 
 <script setup lang="ts">
-
+import { computed, ref } from "vue";
 import {
   useRoute,
   useRouter
 } from "vue-router";
+import { useAuthStore } from "@/stores/auth.store";
 
 
 import {
@@ -289,7 +294,17 @@ const route = useRoute();
 
 const router = useRouter();
 
+const authStore = useAuthStore();
 
+const latestClockRecords = computed(() => {
+  return [...(authStore.clockTimeline ?? [])]
+    .sort(
+      (first, second) =>
+        new Date(second.timestamp).getTime() -
+        new Date(first.timestamp).getTime(),
+    )
+    .slice(0, 2);
+});
 // ==============================
 // Emit
 // ==============================
