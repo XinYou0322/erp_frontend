@@ -99,6 +99,7 @@
       <!-- 更新 -->
       <button
         v-if="showRefresh"
+        type="button"
         class="supplier-tabs__refresh"
         @click="refresh"
       >
@@ -292,7 +293,7 @@ function changePageSize(event) {
 }
 // 更新
 function refresh() {
-
+console.log('有按到刷新按鈕')
   emit('refresh')
 
 }

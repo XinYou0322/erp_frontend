@@ -54,10 +54,14 @@
       </section>
 
       <AllRightCard class="pos-layout__detail" 
-        :items="orderItems"
+         :items="orderItems"
+        v-model:payment-method="paymentMethod"
+        :checking-out="checkoutLoading"
+        :checkout-message="checkoutMessage"
+        :checkout-error="checkoutError"
         @increase="increaseProduct"
         @decrease="decreaseProduct"
-        @checkout="checkoutOrder"/>
+        />
     </div>
   </main>
 </template>
@@ -79,6 +83,14 @@ const loadingProducts = ref(false)
 const productError = ref('')
 //暫存每項商品目前選擇的數量；key 是 product.id
 const productQuantities = ref({})
+
+//需要的付款方式與畫面送出狀態
+const paymentMethod = ref('CASH')
+const checkoutLoading = ref(false)
+const checkoutMessage = ref('')
+const checkoutError = ref('')
+
+const TEST_LOGIN_USER_ID = 1
 
 //統計每個分類所包含的商品數量
 const categoryOptionsWithCount = computed(() => {
@@ -191,8 +203,65 @@ function decreaseProduct(product) {
   productQuantities.value[product.id] = Math.max(0, currentQuantity - 1)
 }
 
-function checkoutOrder(items) {
-  console.log('準備結帳的商品明細：', items)
+//將後端錯誤內容整理成畫面可顯示的文字
+function getCheckoutErrorMessage(error) {
+  const responseData = error.response?.data
+
+  if (typeof responseData === 'string') {
+    return responseData
+  }
+
+  return responseData?.message ||
+    responseData?.error ||
+    '結帳失敗，請確認資料後再試一次'
+}
+
+//建立銷售單
+async function checkoutOrder(items) {
+  if (checkoutLoading.value || items.length === 0) {
+    return
+  }
+
+  checkoutLoading.value = true
+  clearCheckoutFeedback()
+
+  // 固定欄位名稱必須對應 SalesOrderCreDTO 與 SalesOrderItemCreDTO
+  const requestBody = {
+    paymentMethod: paymentMethod.value,
+    note: null,
+    items: items.map((item) => {
+      return {
+        productId: item.id,
+        quantity: Number(item.quantity)
+      }
+    })
+  }
+
+  try {
+    const response = await httpClient.post(
+      '/api/SalesOrder/add',
+      requestBody,
+      {
+        params: {
+          loginUserId: TEST_LOGIN_USER_ID
+        }
+      }
+    )
+
+    const orderNumber = response.data?.orderNumber
+
+    checkoutMessage.value = orderNumber
+      ? `結帳成功，銷售單號：${orderNumber}`
+      : '結帳成功'
+
+    // 建立銷售單成功後才清空商品；失敗時保留明細供使用者重試
+    productQuantities.value = {}
+  } catch (error) {
+    console.error('建立銷售單失敗', error)
+    checkoutError.value = getCheckoutErrorMessage(error)
+  } finally {
+    checkoutLoading.value = false
+  }
 }
 
 onMounted(async () => {

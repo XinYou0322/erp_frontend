@@ -906,6 +906,227 @@
 
 
 /* =====================================================================
+ * 5.1 Filter 共用篩選元件
+ * 適用於採購單頁、簽核頁及其他需要條件查詢的頁面。
+ * Filter.vue 已沿用全域 .shadow-level-1 與 .input-glow，
+ * 以下只補上篩選元件本身缺少的排列與元件樣式。
+ * ===================================================================== */
+
+/* ---------- 篩選列外層容器 ---------- */
+.filter-bar {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(51, 65, 85, 0.65);
+  border-radius: 1rem;
+  color: var(--on-surface);
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(12px);
+}
+
+/* ---------- 每一組「標題 + 輸入元件」 ---------- */
+.filter-group {
+  display: flex;
+  flex: 0 1 10.5rem;
+  flex-direction: column;
+  gap: 0.42rem;
+  min-width: 8.5rem;
+}
+
+/* 搜尋欄或父元件指定 grow 時，可填滿剩餘空間。 */
+.filter-group--search,
+.filter-group--text,
+.filter-group--grow {
+  flex: 1 1 16rem;
+  min-width: 14rem;
+}
+
+/* 日期區間需要容納兩個日期欄位及中間的「至」。 */
+.filter-group--date-range {
+  flex: 1 1 20rem;
+  min-width: 18rem;
+}
+
+.filter-label {
+  color: var(--on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- 共用輸入框與下拉選單 ---------- */
+.filter-input,
+.filter-select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.45rem;
+  padding: 0.62rem 0.8rem;
+  border: 1px solid var(--outline);
+  border-radius: 0.75rem;
+  outline: none;
+  color: var(--on-surface);
+  background: rgba(2, 6, 23, 0.52);
+  font: inherit;
+  font-size: 0.84rem;
+  transition: border-color 0.18s ease, background-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.filter-input::placeholder {
+  color: #64748b;
+}
+
+.filter-input:hover:not(:disabled),
+.filter-select:hover:not(:disabled) {
+  border-color: rgba(6, 182, 212, 0.46);
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.filter-input:focus,
+.filter-select:focus {
+  border-color: var(--primary);
+  background: rgba(15, 23, 42, 0.88);
+}
+
+.filter-input:disabled,
+.filter-select:disabled {
+  color: #64748b;
+  border-color: var(--outline-variant);
+  background: rgba(2, 6, 23, 0.32);
+  cursor: not-allowed;
+}
+
+.filter-select {
+  min-width: 9rem;
+  color-scheme: dark;
+  cursor: pointer;
+}
+
+.filter-select option {
+  color: var(--on-surface);
+  background: var(--surface-container);
+}
+
+.filter-input[type="date"] {
+  color-scheme: dark;
+}
+
+.filter-input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.72;
+}
+
+.filter-input--search {
+  min-width: 0;
+}
+
+/* ---------- 起日／迄日排列 ---------- */
+.filter-date-range {
+  display: grid;
+  grid-template-columns: minmax(8.5rem, 1fr) auto minmax(8.5rem, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-date-sep {
+  color: var(--on-surface-variant);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ---------- 重設按鈕 ---------- */
+.filter-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 2.45rem;
+  padding: 0.62rem 0.9rem;
+  border: 1px solid var(--outline);
+  border-radius: 0.75rem;
+  color: var(--on-surface-variant);
+  background: rgba(30, 41, 59, 0.72);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease,
+    background-color 0.18s ease, transform 0.18s ease;
+}
+
+.filter-reset:hover:not(:disabled) {
+  color: var(--on-surface);
+  border-color: rgba(6, 182, 212, 0.46);
+  background: rgba(51, 65, 85, 0.78);
+  transform: translateY(-1px);
+}
+
+.filter-reset:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+}
+
+.filter-reset:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.filter-reset:disabled {
+  color: #64748b;
+  border-color: var(--outline-variant);
+  background: rgba(2, 6, 23, 0.32);
+  cursor: not-allowed;
+}
+
+/* ---------- 平板與手機版 ---------- */
+@media (max-width: 820px) {
+  .filter-bar {
+    align-items: stretch;
+  }
+
+  .filter-group,
+  .filter-group--search,
+  .filter-group--text,
+  .filter-group--date-range,
+  .filter-group--grow {
+    flex: 1 1 calc(50% - 0.75rem);
+    min-width: 15rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .filter-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .filter-group,
+  .filter-group--search,
+  .filter-group--text,
+  .filter-group--date-range,
+  .filter-group--grow {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .filter-date-range {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-reset {
+    width: 100%;
+  }
+}
+
+
+
+/* =====================================================================
  * 6. POS Module
  * POS 商品區 / 商品卡片 / 右側訂單明細。
  * 延續全域 Design Tokens、Bento Card、暗黑科技風格。
@@ -1137,7 +1358,12 @@
   /* 明細內容填滿中間剩餘空間。 */
   flex: 1;
   min-height: 0;
+  /* 【我新增】高度約為 7 筆明細；第 8 筆開始只捲動明細區。 */
+  max-height: 29.7rem;
   padding: 1rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .pos-detail__empty {
@@ -1164,10 +1390,13 @@
 
 /* 【本次修改】固定三欄寬度，讓每筆商品的數量控制與小計垂直對齊。 */
 .pos-detail__item {
+  box-sizing: border-box;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 5.5rem 4.6rem;
   align-items: center;
   gap: 0.55rem;
+  /* 【我新增】固定每列的最低高度，確保明細區能穩定顯示 7 筆。 */
+  min-height: 3.4rem;
   padding: 0.75rem 0.8rem;
   border: 1px solid var(--outline-variant);
   border-radius: 0.8rem;
@@ -1250,9 +1479,65 @@
   border-top: 1px solid var(--outline-variant);
 }
 
+/* 【我新增】付款方式靠左、總額靠右，並固定留在明細捲動區下方。 */
+.pos-detail__checkout-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+/* 【我新增】三個付款方式按鈕群組。 */
+.pos-detail__payment-methods {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* 【我新增】付款方式按鈕的預設外觀。 */
+.pos-detail__payment-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid var(--outline);
+  border-radius: 0.65rem;
+  color: var(--on-surface-variant);
+  background: rgba(30, 41, 59, 0.72);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease,
+    background-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.pos-detail__payment-btn:hover {
+  transform: translateY(-1px);
+  color: var(--on-surface);
+  border-color: rgba(16, 185, 129, 0.55);
+}
+
+/* 【我新增】目前選取的付款方式使用綠色高亮。 */
+.pos-detail__payment-btn.is-active {
+  color: var(--on-primary);
+  border-color: rgba(16, 185, 129, 0.72);
+  background: linear-gradient(135deg, var(--primary), var(--primary-container));
+  box-shadow: 0 8px 18px -9px rgba(16, 185, 129, 0.9);
+}
+
+.pos-detail__payment-btn:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+}
+
 /* 【本次修改】總額文字整組靠右對齊。 */
 .pos-detail__summary {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: flex-end;
   gap: 0.75rem;

@@ -2,7 +2,7 @@
 
   <tr>
     <td>{{serialNumber}}</td>
-    <td>{{ name }}</td>
+    <td >{{ name }}</td>
     <td>{{  fullPhone  }}</td>
     <td>{{ address }}</td>
     <td>{{ email }}</td>

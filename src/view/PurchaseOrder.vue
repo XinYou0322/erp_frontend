@@ -1,58 +1,84 @@
 <template>
   <div class="supplier-page">
-    <HeadNavBar
-       title="總覽"
-      :total="totalElements"
-      add-title="新增供應商"
-      :active-tab="activeTab"
-      @change-tab="changeTab"
-      :show-search="true"
-      search-placeholder="搜尋供應商名稱、電話、Email..."
-      v-model:search-value="searchText"
+    <Filter
+      id-prefix="purchase-order"
+
       :show-status="true"
+      status-label="狀態"
       status-default-text="全部狀態"
-      :status-options="supplierStatusOptions"
+      :status-options="purchaseOrderStatusOptions"
       v-model:status-value="selectedStatus"
+
+      :show-supplier="true"
+      supplier-label="供應商"
+      supplier-default-text="全部供應商"
+      :supplier-options="supplierOptions"
+      v-model:supplier-value="selectedSupplierId"
+
+      :show-date-range="true"
+      date-label="採購日期"
+      v-model:start-date="startDate"
+      v-model:end-date="endDate"
+
+      :show-search="true"
+      search-label="搜尋"
+      search-placeholder="搜尋採購單號、供應商名稱..."
+      v-model:search-value="searchText"
+
       :show-page-size="true"
       :page-size="pageSize"
       @update:page-size="changePageSize"
+
       :show-refresh="true"
-      @refresh="fetchData"
-    />
+      refresh-title="更新採購單資料"
+      @refresh="refreshData"
+
+      :show-reset="false"
+      />
     <section
-      v-if="activeTab === 'overview'"
       class="supplier-overview bento-card"
     >
       <div class="supplier-table-wrap">
         <table class="supplier-table">
           <thead>
             <tr>
-              <th>ID</th>
+              <th>採購單號</th>
               <th>供應商名稱</th>
-              <th>電話</th>
-              <th>地址</th>
-              <th>Email</th>
+              <th>建立人</th>
+              <th>建立日期</th>
+              <th>預計到貨日</th>
+              <th>總金額</th>
               <th>狀態</th>
+              <!-- <th>簽核進度</th> -->
               <th>操作</th>
             </tr>
           </thead>
           <tbody>
-            <OneSupplier
-              v-for="(oneSupplier, index) in supplierList"
-              :key="oneSupplier.id"
-              :serial-number="currentPage * pageSize + index + 1"
+            <OnePurchaseOrder
+              v-for="onePurchaseOrder in purchaseOrderList"
+              :key="onePurchaseOrder.id"
 
-              :id="oneSupplier.id"
-              :name="oneSupplier.name"
-              :phone-calling-code="oneSupplier.callingCode"
-              :phone="oneSupplier.phone"
-              :phone-extension="oneSupplier.extension"
-              :address="oneSupplier.address"
-              :email="oneSupplier.email"
-              :status="oneSupplier.status"
-            
-              @show-detail="showDetail(oneSupplier)"
-              @update-supplier="showUpdate(oneSupplier)"
+              :id="onePurchaseOrder.id"
+              :order-number="onePurchaseOrder.orderNumber"
+              :supplier-id="onePurchaseOrder.supplierId"
+              :supplier-name="onePurchaseOrder.supplierName"
+              :status="onePurchaseOrder.status"
+              :created-by-user-id="onePurchaseOrder.createdByUserId"
+              :created-by-name="onePurchaseOrder.createdByName"
+              :approved-by-user-id="onePurchaseOrder.approvedByUserId"
+              :approved-by-name="onePurchaseOrder.approvedByName"
+              :total="onePurchaseOrder.total"
+              :created-at="onePurchaseOrder.createdAt"
+              :updated-at="onePurchaseOrder.updatedAt"
+              :expected-delivery-date="onePurchaseOrder.expectedDeliveryDate"
+              :received-at="onePurchaseOrder.receivedAt"
+              :received-by-user-id="onePurchaseOrder.receivedByUserId"
+              :received-by-name="onePurchaseOrder.receivedByName"
+              :receipt-url="onePurchaseOrder.receiptUrl"
+              :decision-remark="onePurchaseOrder.decisionRemark"
+
+              @show-detail="showDetail(onePurchaseOrder)"
+              @update-purchase-order="showUpdate(onePurchaseOrder)"
             />
           </tbody>
         </table>
@@ -65,23 +91,18 @@
       />
     </section>
 
-    <AddSupplier
-      v-else-if="activeTab === 'add'"
-      :login-user-id="loginUserId"
-      @saved="handleSupplierSaved"
-    />
-
-    <CheckSupplier
-      v-if="showCheckSupplier"
-      :visible="showCheckSupplier"
-      :supplier="selectedSupplier"
+    
+    <CheckPurchaseOrder
+      v-if="showCheckPurchaseOrder"
+      :visible="showCheckPurchaseOrder"
+      :PurchaseOrder="selectedPurchaseOrder"
       @close="closeDetail"
     />
     
-    <UpdateSupplier
-      v-if="showUpdateSupplier"
-      :visible="showUpdateSupplier"
-      :supplier="selectedSupplier"
+    <UpdatePurchaseOrder
+      v-if="showUpdatePurchaseOrder"
+      :visible="showUpdatePurchaseOrder"
+      :PurchaseOrder="selectedPurchaseOrder"
       @close="closeUpdate"
       @update="submitUpdate"
     />
@@ -89,240 +110,265 @@
 </template>
 
 <script setup>
-import { ref, watch,onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import httpClient from '@/service/httpClient'
-import HeadNavBar from '@/component/子元件/HeadNavBar.vue'
-import OneSupplier from '@/component/子元件/OneSupplier.vue'
-import CheckSupplier from '@/component/子元件/CheckSupplier.vue'
-import UpdateSupplier from '@/component/子元件/UpdateSupplier.vue'
-import AddSupplier from '@/component/子元件/AddSupplier.vue'
+import Filter from '@/component/子元件/Filter.vue'
+import OnePurchaseOrder from '@/component/子元件/OnePurchaseOrder.vue'
+import CheckPurchaseOrder from '@/component/子元件/CheckPurchaseOrder.vue'
+import UpdatePurchaseOrder from '@/component/子元件/UpdatePurchaseOrder.vue'
 import Pagination from '@/component/子元件/Pagination.vue'
 
-
 onMounted(() => {
+  fetchSupplierOptions()
   fetchData()
 })
-//登入者
+
 const loginUserId = ref(1)
-//HeadNavBar
-const supplierList = ref([])    
-const activeTab = ref('overview')
+
+// ---------- Filter ----------
 const searchText = ref('')
 const selectedStatus = ref('')
+const selectedSupplierId = ref('')
+const startDate = ref('')
+const endDate = ref('')
 
-const supplierStatusOptions = [
+//供應商下拉選單資料 後端查詢後放入
+const supplierOptions = ref([])
+//採購單狀態
+const purchaseOrderStatusOptions = [
   {
-    label: '待審核',
+    label: '草稿',
+    value: 'DRAFT'
+  },
+  {
+    label: '待簽核',
     value: 'PENDING'
   },
   {
-    label: '合作中',
-    value: 'ACTIVE'
+    label: '已核准',
+    value: 'APPROVED'
   },
   {
-    label: '暫停合作',
-    value: 'INACTIVE'
+    label: '已退回',
+    value: 'REJECTED'
   },
   {
-    label: '暫停交易',
-    value: 'SUSPENDED'
+    label: '已收貨',
+    value: 'RECEIVED'
   },
   {
-    label: '黑名單',
-    value: 'BLACKLISTED'
+    label: '已完成',
+    value: 'COMPLETED'
+  },
+  {
+    label: '已取消',
+    value: 'CANCELLED'
   }
 ]
+
+// ---------- 分頁 ----------
 const pageSize = ref(10)
 const currentPage = ref(0)
-// 總筆數
-const totalElements = ref(0)
-// 總頁數
 const totalPages = ref(0)
 
-
-const showCheckSupplier = ref(false)
-const showUpdateSupplier = ref(false)
-const selectedSupplier = ref(null)
-const addedCount = ref(0)
-
-
-function changeTab(tab) {
-  activeTab.value = tab
-}
+// ---------- 採購單列表與彈出視窗 ----------
+const purchaseOrderList = ref([])
+const showCheckPurchaseOrder = ref(false)
+const showUpdatePurchaseOrder = ref(false)
+const selectedPurchaseOrder = ref(null)
 
 function changePageSize(size) {
-
-  // 改成使用者選擇的每頁筆數
   pageSize.value = size
-
-  // 每頁筆數改變時，回到第一頁
   currentPage.value = 0
-
-  // 重新查詢分頁 API
   fetchData()
-
 }
-//接收 Pagination.vue 傳回的畫面頁碼
+// 接收 Pagination.vue 傳回的畫面頁碼。
 function changePage(page) {
-
-  // Pagination.vue 的頁碼從 1 開始，後端 Spring Page 從 0 開始
   currentPage.value = page - 1
-
-  // 使用新頁碼重新查詢後端分頁 API
   fetchData()
 }
-async function fetchData() {
-
+//---------- 供應商取得 ----------
+async function fetchSupplierOptions() {
   try {
-
     const response = await httpClient({
       method: 'get',
-      url: '/api/Supplier/page',
+      url: '/api/Supplier/findAll'
+    })
+
+    const responseList = Array.isArray(response.data)
+      ? response.data
+      : []
+
+    const options = []
+
+    for (const supplier of responseList) {
+      options.push({
+        key: supplier.id,
+        label: supplier.name,
+        value: supplier.id
+      })
+    }
+
+    supplierOptions.value = options
+  } catch (error) {
+    console.error('查詢供應商選項失敗：', error)
+  }
+}
+// 集中在 params 傳入所有查詢條件。
+async function fetchData() {
+  try {
+    const response = await httpClient({
+      method: 'get',
+      url: '/api/purchaseOrder/page',
 
       params: {
-        keyword: searchText.value,
+        keyword: searchText.value || undefined,
+        status: selectedStatus.value || undefined,
+        supplierId: selectedSupplierId.value || undefined,
+        startDate: startDate.value || undefined,
+        endDate: endDate.value || undefined,
         page: currentPage.value,
         size: pageSize.value
       }
     })
-    // Spring Page 的資料不是直接放在 response.data
-    // 真正的供應商陣列在 content
+
+    // Spring Page 的採購單陣列放在 content。
     const responseList = Array.isArray(response.data.content)
       ? response.data.content
       : []
+
     const normalizedList = []
 
-    for (const supplier of responseList) {
-
+    for (const purchaseOrder of responseList) {
       normalizedList.push(
-        normalizeSupplier(supplier)
+        normalizePurchaseOrder(purchaseOrder)
       )
-
     }
-    // 當頁供應商資料
-    supplierList.value = normalizedList
 
-    // 後端 Page 額外提供的分頁資訊
-    totalElements.value = response.data.totalElements
+    purchaseOrderList.value = normalizedList
     totalPages.value = response.data.totalPages
     currentPage.value = response.data.number
   } catch (error) {
-    console.error('查詢供應商失敗：', error)
+    console.error('查詢採購單失敗：', error)
   }
-
 }
+// 搜尋監聽
 watch(searchText, function () {
-
-  // 每次重新搜尋時回到第一頁
   currentPage.value = 0
-
-  // 重新向後端查詢
   fetchData()
-
 })
+//狀態監聽
+watch(selectedStatus, function () {
+  currentPage.value = 0
+  fetchData()
+})
+//供應商改變時重新查詢。
+watch(selectedSupplierId, function () {
+  currentPage.value = 0
+  fetchData()
+})
+//開始日期或結束日期改變時重新查詢。
+watch([startDate, endDate], function () {
+  currentPage.value = 0
+  fetchData()
+})
+//更新按鈕會重新取得供應商選項與採購單資料。
+async function refreshData() {
+  currentPage.value = 0
+  await fetchSupplierOptions()
+  await fetchData()
+}
+
 
 function submitUpdate(updateData) {
+  const purchaseOrderId = updateData.id
 
-  const supplierId = updateData.id
-
+  // 【我新增】id 放在 URL，不重複放進 RequestBody。
   const requestData = {
-    name: updateData.name,
-    callingCode: updateData.callingCode,
-    phone: updateData.phone,
-    extension: updateData.extension,
-    address: updateData.address,
-    email: updateData.email,
-    status: updateData.status
+    ...updateData
   }
+  delete requestData.id
 
   httpClient({
-    method: 'patch',
-    url: `/api/Supplier/update/${supplierId}`,
+    method: 'put',
+    url: `/api/purchaseOrder/${purchaseOrderId}`,
+    params: {
+      loginUserId: loginUserId.value
+    },
     data: requestData
   })
     .then(response => {
-      console.log('修改成功：', response.data)
-
-      alert('供應商修改成功')
-
-      // 關閉修改視窗
+      console.log('採購單修改成功：', response.data)
+      alert('採購單修改成功')
       closeUpdate()
-
-      // 重新查詢，讓總覽顯示最新資料
       fetchData()
     })
     .catch(error => {
-      console.error('修改供應商失敗：', error)
+      console.error('修改採購單失敗：', error)
 
       const errorMessage =
         error.response?.data?.message ||
         error.response?.data ||
-        '供應商修改失敗'
+        '採購單修改失敗'
 
       alert(errorMessage)
     })
 }
 
-function showDetail(oneSupplier) {
-  selectedSupplier.value = oneSupplier
-  showCheckSupplier.value = true
+function showDetail(onePurchaseOrder) {
+  selectedPurchaseOrder.value = onePurchaseOrder
+  showCheckPurchaseOrder.value = true
 }
 
 function closeDetail() {
-  showCheckSupplier.value = false
-  selectedSupplier.value = null
+  showCheckPurchaseOrder.value = false
+  selectedPurchaseOrder.value = null
 }
 
-
-function showUpdate(oneSupplier) {
-  selectedSupplier.value = oneSupplier
-  showUpdateSupplier.value = true
+function showUpdate(onePurchaseOrder) {
+  selectedPurchaseOrder.value = onePurchaseOrder
+  showUpdatePurchaseOrder.value = true
 }
+
 function closeUpdate() {
-  showUpdateSupplier.value = false
-  selectedSupplier.value = null
+  showUpdatePurchaseOrder.value = false
+  selectedPurchaseOrder.value = null
 }
 
-
-
-function normalizeSupplier(supplier) {
+// 補上 DTO 可能為 null 的預設值，避免子元件畫面出現 undefined。
+function normalizePurchaseOrder(purchaseOrder) {
   return {
-    ...supplier,
-    name: supplier.name ?? '',
-    callingCode: supplier.callingCode ?? '',
-    phone: supplier.phone ?? '',
-    extension: supplier.extension ?? '',
-    address: supplier.address ?? '',
-    email: supplier.email ?? '',
-    status: supplier.status ?? ''
+    ...purchaseOrder,
+    orderNumber: purchaseOrder.orderNumber ?? '',
+    supplierId: purchaseOrder.supplierId ?? null,
+    supplierName: purchaseOrder.supplierName ?? '',
+    status: purchaseOrder.status ?? '',
+    createdByUserId: purchaseOrder.createdByUserId ?? null,
+    createdByName: purchaseOrder.createdByName ?? '',
+    approvedByUserId: purchaseOrder.approvedByUserId ?? null,
+    approvedByName: purchaseOrder.approvedByName ?? '',
+    total: purchaseOrder.total ?? 0,
+    createdAt: purchaseOrder.createdAt ?? '',
+    updatedAt: purchaseOrder.updatedAt ?? '',
+    expectedDeliveryDate: purchaseOrder.expectedDeliveryDate ?? '',
+    receivedAt: purchaseOrder.receivedAt ?? '',
+    receivedByUserId: purchaseOrder.receivedByUserId ?? null,
+    receivedByName: purchaseOrder.receivedByName ?? '',
+    receiptUrl: purchaseOrder.receiptUrl ?? '',
+    decisionRemark: purchaseOrder.decisionRemark ?? '',
+    approvalProgress: purchaseOrder.approvalProgress ?? ''
   }
 }
 
-function handleSupplierSaved(savedSuppliers) {
-  const savedSupplierList = Array.isArray(savedSuppliers)
-    ? savedSuppliers
-    : [savedSuppliers]
 
-  for (const savedSupplier of savedSupplierList) {
-    if (!savedSupplier) {
-      continue
-    }
 
-    const normalizedSupplier = normalizeSupplier(savedSupplier)
-    const existingIndex = supplierList.value.findIndex(function (supplier) {
-      return supplier.id === normalizedSupplier.id
-    })
-    if (existingIndex >= 0) {
-      supplierList.value.splice(existingIndex, 1, normalizedSupplier)
-    } else {
-      supplierList.value.push(normalizedSupplier)
-    }
-  }
 
-  addedCount.value += savedSupplierList.filter(Boolean).length
-  // 不修改 activeTab，因此新增成功後會繼續停留在 AddSupplier.vue。
-}
+
+
+
+
 </script>
+
 
 <style>
 </style>

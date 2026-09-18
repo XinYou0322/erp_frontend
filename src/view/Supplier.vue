@@ -181,6 +181,7 @@ async function fetchData() {
 
       params: {
         keyword: searchText.value,
+         status: selectedStatus.value || undefined,
         page: currentPage.value,
         size: pageSize.value
       }
@@ -217,6 +218,17 @@ watch(searchText, function () {
   currentPage.value = 0
 
   // 重新向後端查詢
+  fetchData()
+
+})
+
+// 監聽供應商狀態下拉選單
+watch(selectedStatus, function () {
+
+  // 狀態改變時回到第一頁，避免原本頁碼超出篩選後的總頁數
+  currentPage.value = 0
+
+  //帶著 keyword、status、page、size 重新呼叫後端分頁 API
   fetchData()
 
 })
