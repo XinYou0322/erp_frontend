@@ -153,7 +153,7 @@
         <!-- POS -->
         <button
           type="button"
-          @click="emit('openPos')"
+          @click="router.push('/pos')"
           class="
             w-full
             py-2.5 px-3
@@ -341,9 +341,7 @@ const emit = defineEmits<{
   (e: "openReport"): void;
 
   (e: "openProfile"): void;
-
-  (e: "openPos"): void;
-
+  //(e: "openPos"): void;
 }>();
 
 
@@ -457,10 +455,15 @@ const navItems = [
     label: "供應商管理",
     icon: Sliders,
     path: "/Supplier",
-  },
-
-  {
-    id: "showcase",
+},
+{
+ id: "PurchaseOrder",
+    label: "採購單管理",
+    icon: Sliders,
+    path: "/PurchaseOrder",
+},
+{
+ id: "testings15313",
     label: "展示用",
     icon: Sliders,
     path: "/ComponentShowcase",

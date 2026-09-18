@@ -75,10 +75,20 @@ const routes = [
     component: ()=> import("@/view/ComponentShowcase.vue")
   },
 
-     {
+    {
     path: '/Supplier',
     name: 'Supplier',
     component: ()=> import("@/view/Supplier.vue")
+  },
+    {
+    path: '/pos',
+    name: 'pos',
+    component: ()=> import("@/view/pos.vue")
+  },
+    {
+    path: '/purchaseOrder',
+    name: 'purchaseOrder',
+    component: ()=> import("@/view/PurchaseOrder.vue")
   },
 ]
 

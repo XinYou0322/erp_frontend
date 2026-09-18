@@ -1,19 +1,30 @@
 <template>
-  <div class="erp-page">
+  <div class="supplier-page">
     <HeadNavBar
-      title="總覽"
-      :total="supplierList.length"
-      title2="新增"
-      :total2="addedCount"
+       title="總覽"
+      :total="totalElements"
+      add-title="新增供應商"
       :active-tab="activeTab"
       @change-tab="changeTab"
+      :show-search="true"
+      search-placeholder="搜尋供應商名稱、電話、Email..."
+      v-model:search-value="searchText"
+      :show-status="true"
+      status-default-text="全部狀態"
+      :status-options="supplierStatusOptions"
+      v-model:status-value="selectedStatus"
+      :show-page-size="true"
+      :page-size="pageSize"
+      @update:page-size="changePageSize"
+      :show-refresh="true"
+      @refresh="fetchData"
     />
     <section
       v-if="activeTab === 'overview'"
-      class="erp-card erp-card--flat"
+      class="supplier-overview bento-card"
     >
-      <div class="erp-table-wrap">
-        <table class="erp-table">
+      <div class="supplier-table-wrap">
+        <table class="supplier-table">
           <thead>
             <tr>
               <th>ID</th>
@@ -29,8 +40,7 @@
             <OneSupplier
               v-for="(oneSupplier, index) in supplierList"
               :key="oneSupplier.id"
-              :serial-number="index + 1"
-
+              :serial-number="currentPage * pageSize + index + 1"
 
               :id="oneSupplier.id"
               :name="oneSupplier.name"
@@ -47,6 +57,12 @@
           </tbody>
         </table>
       </div>
+      <!-- currentPage 是後端從 0 開始的頁碼，所以顯示時要加 1 -->
+      <Pagination
+        :current-page="currentPage + 1"
+        :total-pages="totalPages"
+        @change-page="changePage"
+      />
     </section>
 
     <AddSupplier
@@ -73,30 +89,149 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watch,onMounted } from 'vue'
 import httpClient from '@/service/httpClient'
 import HeadNavBar from '@/component/子元件/HeadNavBar.vue'
 import OneSupplier from '@/component/子元件/OneSupplier.vue'
 import CheckSupplier from '@/component/子元件/CheckSupplier.vue'
 import UpdateSupplier from '@/component/子元件/UpdateSupplier.vue'
 import AddSupplier from '@/component/子元件/AddSupplier.vue'
+import Pagination from '@/component/子元件/Pagination.vue'
+
 
 onMounted(() => {
   fetchData()
 })
-
+//登入者
+const loginUserId = ref(1)
+//HeadNavBar
 const supplierList = ref([])    
 const activeTab = ref('overview')
-const loginUserId = ref(1)
+const searchText = ref('')
+const selectedStatus = ref('')
+
+const supplierStatusOptions = [
+  {
+    label: '待審核',
+    value: 'PENDING'
+  },
+  {
+    label: '合作中',
+    value: 'ACTIVE'
+  },
+  {
+    label: '暫停合作',
+    value: 'INACTIVE'
+  },
+  {
+    label: '暫停交易',
+    value: 'SUSPENDED'
+  },
+  {
+    label: '黑名單',
+    value: 'BLACKLISTED'
+  }
+]
+const pageSize = ref(10)
+const currentPage = ref(0)
+// 總筆數
+const totalElements = ref(0)
+// 總頁數
+const totalPages = ref(0)
+
 
 const showCheckSupplier = ref(false)
 const showUpdateSupplier = ref(false)
 const selectedSupplier = ref(null)
 const addedCount = ref(0)
 
+
 function changeTab(tab) {
   activeTab.value = tab
 }
+
+function changePageSize(size) {
+
+  // 改成使用者選擇的每頁筆數
+  pageSize.value = size
+
+  // 每頁筆數改變時，回到第一頁
+  currentPage.value = 0
+
+  // 重新查詢分頁 API
+  fetchData()
+
+}
+//接收 Pagination.vue 傳回的畫面頁碼
+function changePage(page) {
+
+  // Pagination.vue 的頁碼從 1 開始，後端 Spring Page 從 0 開始
+  currentPage.value = page - 1
+
+  // 使用新頁碼重新查詢後端分頁 API
+  fetchData()
+}
+async function fetchData() {
+
+  try {
+
+    const response = await httpClient({
+      method: 'get',
+      url: '/api/Supplier/page',
+
+      params: {
+        keyword: searchText.value,
+         status: selectedStatus.value || undefined,
+        page: currentPage.value,
+        size: pageSize.value
+      }
+    })
+    // Spring Page 的資料不是直接放在 response.data
+    // 真正的供應商陣列在 content
+    const responseList = Array.isArray(response.data.content)
+      ? response.data.content
+      : []
+    const normalizedList = []
+
+    for (const supplier of responseList) {
+
+      normalizedList.push(
+        normalizeSupplier(supplier)
+      )
+
+    }
+    // 當頁供應商資料
+    supplierList.value = normalizedList
+
+    // 後端 Page 額外提供的分頁資訊
+    totalElements.value = response.data.totalElements
+    totalPages.value = response.data.totalPages
+    currentPage.value = response.data.number
+  } catch (error) {
+    console.error('查詢供應商失敗：', error)
+  }
+
+}
+watch(searchText, function () {
+
+  // 每次重新搜尋時回到第一頁
+  currentPage.value = 0
+
+  // 重新向後端查詢
+  fetchData()
+
+})
+
+// 監聽供應商狀態下拉選單
+watch(selectedStatus, function () {
+
+  // 狀態改變時回到第一頁，避免原本頁碼超出篩選後的總頁數
+  currentPage.value = 0
+
+  //帶著 keyword、status、page、size 重新呼叫後端分頁 API
+  fetchData()
+
+})
 
 function submitUpdate(updateData) {
 
@@ -160,28 +295,7 @@ function closeUpdate() {
   selectedSupplier.value = null
 }
 
-async function fetchData() {
-  try {
-    const response = await httpClient({
-      method: 'get',
-      url: '/api/Supplier/All'
-    })
 
-    const responseList = Array.isArray(response.data)
-      ? response.data
-      : []
-
-    const normalizedList = []
-
-    for (const supplier of responseList) {
-      normalizedList.push(normalizeSupplier(supplier))
-    }
-
-    supplierList.value = normalizedList
-  } catch (error) {
-    console.error('查詢供應商失敗：', error)
-  }
-}
 
 function normalizeSupplier(supplier) {
   return {
