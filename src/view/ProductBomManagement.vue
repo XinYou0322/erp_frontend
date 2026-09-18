@@ -585,13 +585,13 @@
   :total-pages="totalPages"
   @change-page="goToPage"
 />
-    <EditRecipeModal
-      :is-open="editRecipeModalOpen"
-      :product="selectedProduct"
-      @close="editRecipeModalOpen = false"
-      @success="handleRecipeSuccess"
-    />
-
+  <EditRecipeModal
+  :is-open="editRecipeModalOpen"
+  :product="selectedProduct"
+  :initial-bom="selectedProduct ? bomMap[selectedProduct.id] : []"
+  @close="editRecipeModalOpen = false"
+  @success="handleRecipeSuccess"
+/>
 
     <AddProductModal
       :is-open="addProductModalOpen"
@@ -635,12 +635,12 @@ const handleCategorySuccess = async () => {
   await loadCategories()
 }
 
-const handleOpenEditRecipe = (product) => {
-
+const handleOpenEditRecipe = async (product) => {
   selectedProduct.value = product
 
-  editRecipeModalOpen.value = true
+  await loadBom(product.id)
 
+  editRecipeModalOpen.value = true
 }
 const handleRecipeSuccess = () => {
 
@@ -663,6 +663,8 @@ const selectedCategory = ref('全部')
 
 const currentPage = ref(1)
 const pageSize = 6
+
+
 
 
 
@@ -696,33 +698,32 @@ const loadProducts = () => {
       loading.value = false
     })
 }
-const loadBom = (productId) => {
-
-  httpClient
-    .get(`/api/bom/product/${productId}`)
-
-    .then((response) => {
-
-      bomMap.value[productId] =
-        response.data
-
-      console.log(
-        `產品 ${productId} 的 BOM：`,
-        response.data
-      )
-
+const loadBom = async (productId) => {
+  try {
+    const response = await httpClient({
+      method: 'get',
+      url: `/api/bom/product/${productId}`,
+      data: {}
     })
 
-    .catch((error) => {
+    bomMap.value[productId] = response.data
 
-      console.error(
-        `取得產品 ${productId} BOM 失敗：`,
-        error
-      )
+    console.log(
+      `產品 ${productId} 的 BOM：`,
+      response.data
+    )
 
-      bomMap.value[productId] = []
+    return response.data
+  } catch (error) {
+    console.error(
+      `取得產品 ${productId} BOM 失敗：`,
+      error
+    )
 
-    })
+    bomMap.value[productId] = []
+
+    return []
+  }
 }
 const filteredProducts = computed(() => {
 

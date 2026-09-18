@@ -228,12 +228,16 @@
             >
 
               <!-- 原物料摘要 -->
-              <tr
-                class="
-                  hover:bg-[var(--surface-container-high)]
-                  transition-colors
-                "
-              >
+<tr
+  class="
+    hover:bg-[var(--surface-container-high)]
+    transition-colors
+  "
+  :class="{
+    'inactive-material-row':
+      item.materialStatus === 'INACTIVE'
+  }"
+>
 
                 <!-- 名稱 / Code -->
                 <td class="py-3.5 px-4">
@@ -247,7 +251,23 @@
                   >
                     {{ item.name }}
                   </div>
-
+ <span
+    v-if="item.materialStatus === 'INACTIVE'"
+    class="
+      ml-2
+      rounded-md
+      border
+      border-[var(--outline)]
+      bg-[var(--surface-container-highest)]
+      px-2
+      py-0.5
+      text-[length:var(--font-small)]
+      font-bold
+      text-[var(--on-surface-variant)]
+    "
+  >
+    已停用
+  </span>
                   <div
                     class="
                       text-[length:var(--font-body)]
@@ -429,34 +449,66 @@
 
 
                 <!-- 查看批次 -->
-                <td class="py-3.5 px-4 text-right pr-6">
+<td class="py-3.5 px-4 text-right pr-6">
+  <!-- 停用原物料：只顯示一鍵報廢 -->
+  <button
+    v-if="item.materialStatus === 'INACTIVE'"
+    type="button"
+    :disabled="Number(item.totalQuantity) <= 0"
+    @click="handleWasteInactiveMaterial(item)"
+    class="
+      px-3
+      py-1.5
+      rounded-lg
+      bg-[var(--error)]/10
+      hover:bg-[var(--error)]/20
+      active:bg-[var(--error)]/30
+      text-[var(--error)]
+      border
+      border-[var(--error)]/30
+      font-bold
+      text-[length:var(--font-body)]
+      transition-colors
+      cursor-pointer
+      disabled:opacity-40
+      disabled:cursor-not-allowed
+      disabled:hover:bg-[var(--error)]/10
+    "
+  >
+    {{
+      Number(item.totalQuantity) > 0
+        ? "一鍵報廢"
+        : "已無庫存"
+    }}
+  </button>
 
-                  <button
-                    type="button"
-                    @click="toggleBatches(item.materialId)"
-                    class="
-                      px-3
-                      py-1.5
-                      rounded-lg
-                      bg-[var(--primary)]/10
-                      hover:bg-[var(--primary)]/20
-                      text-[var(--primary)]
-                      border
-                      border-[var(--primary)]/30
-                      font-bold
-                      text-[length:var(--font-body)]
-                      transition-colors
-                      cursor-pointer
-                    "
-                  >
-                    {{
-                      expandedMaterialId === item.materialId
-                        ? "收起批次"
-                        : "查看批次"
-                    }}
-                  </button>
-
-                </td>
+  <!-- 啟用原物料：只顯示查看批次 -->
+  <button
+    v-else
+    type="button"
+    @click="toggleBatches(item.materialId)"
+    class="
+      px-3
+      py-1.5
+      rounded-lg
+      bg-[var(--primary)]/10
+      hover:bg-[var(--primary)]/20
+      text-[var(--primary)]
+      border
+      border-[var(--primary)]/30
+      font-bold
+      text-[length:var(--font-body)]
+      transition-colors
+      cursor-pointer
+    "
+  >
+    {{
+      expandedMaterialId === item.materialId
+        ? "收起批次"
+        : "查看批次"
+    }}
+  </button>
+</td>
 
               </tr>
 
@@ -774,7 +826,17 @@ import StatusBadge from '@/component/子元件/StatusBadge.vue'
 
 const inventory = ref([]);
 
+const sortedInventory = computed(() => {
+  return [...inventory.value].sort((a, b) => {
+    const aInactive =
+      a.materialStatus === "INACTIVE" ? 1 : 0;
 
+    const bInactive =
+      b.materialStatus === "INACTIVE" ? 1 : 0;
+
+    return aInactive - bInactive;
+  });
+});
 
 
 // 分頁
@@ -786,19 +848,18 @@ const pageSize = 6;
 
 const totalPages = computed(() => {
   return Math.ceil(
-    inventory.value.length / pageSize
+    sortedInventory.value.length / pageSize
   );
 });
 
 const paginatedInventory = computed(() => {
-
   const start =
     (currentPage.value - 1) * pageSize;
 
   const end =
     start + pageSize;
 
-  return inventory.value.slice(
+  return sortedInventory.value.slice(
     start,
     end
   );
@@ -1071,7 +1132,73 @@ const expiringSoonBatchTotal = computed(() => {
     0,
   );
 });
+const handleWasteInactiveMaterial = async (item) => {
+  if (item.materialStatus !== "INACTIVE") {
+    return;
+  }
 
+  const confirmed = window.confirm(
+    `確定要將已停用原物料「${item.name}」的全部剩餘庫存報廢嗎？此操作無法復原。`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    const batchResponse = await httpClient({
+      method: "get",
+      url: `/api/inventory/material/${item.materialId}/batches`,
+      data: {}
+    });
+
+    const availableBatches =
+      batchResponse.data.filter(
+        (batch) => Number(batch.quantity) > 0
+      );
+
+    if (availableBatches.length === 0) {
+      window.alert("此原物料目前沒有可報廢的庫存。");
+      return;
+    }
+
+    const data = {
+      items: availableBatches.map((batch) => ({
+        inventoryId: batch.inventoryId,
+        action: "WASTE",
+        quantity: Number(batch.quantity),
+        note: "停用原物料一鍵報廢"
+      }))
+    };
+
+    await httpClient({
+      method: "post",
+      url: "/api/inventory-logs/adjustments",
+      data: data
+    });
+
+    await loadInventory();
+
+    if (
+      expandedMaterialId.value ===
+      item.materialId
+    ) {
+      await loadBatches(item.materialId);
+    }
+
+    window.alert("庫存報廢完成。");
+  } catch (error) {
+    console.error(
+      "停用原物料一鍵報廢失敗：",
+      error
+    );
+
+    window.alert(
+      error.response?.data?.message ||
+      "庫存報廢失敗"
+    );
+  }
+};
 onMounted(() => {
   loadInventory();
 });
@@ -1096,5 +1223,20 @@ onMounted(() => {
   background-color: #9ca3af;
 
   pointer-events: none;
+}
+.inactive-material-row {
+  background-color: var(--surface-container-low);
+}
+
+/* 操作欄以外的欄位套用灰階 */
+.inactive-material-row > td:not(:last-child) {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+
+/* 最後一欄的按鈕維持正常顏色 */
+.inactive-material-row > td:last-child {
+  opacity: 1;
+  filter: none;
 }
 </style>

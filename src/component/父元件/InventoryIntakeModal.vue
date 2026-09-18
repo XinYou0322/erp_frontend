@@ -287,16 +287,20 @@ const errorMessage = ref("");
 // ==============================
 
 const loadMaterials = () => {
-  httpClient
-    .get("/api/material")
-
+  httpClient({
+    method: "get",
+    url: "/api/material/active",
+    data: {}
+  })
     .then((response) => {
-      materials.value = response.data;
+      materials.value = response.data.filter(
+        (material) => material.status === "ACTIVE"
+      );
     })
-
     .catch((error) => {
-      console.error("取得原物料失敗：", error);
+      console.error("取得啟用原物料失敗：", error);
 
+      materials.value = [];
       errorMessage.value = "取得原物料資料失敗";
     });
 };
@@ -407,12 +411,12 @@ const handleSubmit = () => {
   // ==========================
 
   const invalidItem =
-    intakeItems.value.find(
-      (item) =>
-        !item.materialId ||
-        Number(item.quantity) <= 0
-    );
-
+  intakeItems.value.find(
+    (item) =>
+      item.materialId === "" ||
+      item.materialId == null ||
+      Number(item.quantity) <= 0
+  );
   if (invalidItem) {
 
     errorMessage.value =
@@ -466,13 +470,12 @@ const handleSubmit = () => {
 
   saving.value = true;
 
-  httpClient
-    .post(
-      "/api/inventory/batch",
-      data
-    )
-
-    .then((response) => {
+httpClient({
+  method: "post",
+  url: "/api/inventory/batch",
+  data: data
+})
+  .then((response) => {
 
       console.log(
         "批次進貨成功：",
