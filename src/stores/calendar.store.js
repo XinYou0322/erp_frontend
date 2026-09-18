@@ -236,6 +236,7 @@ export const useCalendarStore = defineStore("calendar", () => {
 
   // 事件編輯彈窗控制狀態
   const isEventModalOpen = ref(false);
+  /** @type {import("vue").Ref<any | null>} */
   const editingEvent = ref(null); // null 表示新增模式
 
   // 日期詳情抽屜/彈窗
@@ -689,6 +690,7 @@ export const useCalendarStore = defineStore("calendar", () => {
   /** 開啟新增事件彈窗 */
   const openCreateModal = (defaultDate = "") => {
     editingEvent.value = null;
+    isDayDetailModalOpen.value = false;
     if (defaultDate) {
       selectedDate.value = defaultDate;
     }
@@ -698,6 +700,7 @@ export const useCalendarStore = defineStore("calendar", () => {
   /** 開啟編輯事件彈窗 */
   const openEditModal = (evt) => {
     editingEvent.value = { ...evt };
+    isDayDetailModalOpen.value = false;
     isEventModalOpen.value = true;
   };
 
@@ -731,6 +734,9 @@ export const useCalendarStore = defineStore("calendar", () => {
   const addEvent = async (eventData) => {
     const notifStore = useNotificationStore();
     const authStore = useAuthStore();
+    if (!authStore.isAdmin) {
+      return null;
+    }
 
     const newEvent = {
       id: `evt-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -803,6 +809,9 @@ export const useCalendarStore = defineStore("calendar", () => {
   /** 更新事件 */
   const updateEvent = async (id, updatedData) => {
     const authStore = useAuthStore();
+    if (!authStore.isAdmin) {
+      return null;
+    }
     const idx = events.value.findIndex((e) => e.id === id);
     const patchData = {
       ...(events.value[idx] || {}),
@@ -850,6 +859,9 @@ export const useCalendarStore = defineStore("calendar", () => {
   /** 刪除事件 */
   const deleteEvent = async (id) => {
     const authStore = useAuthStore();
+    if (!authStore.isAdmin) {
+      return false;
+    }
     const target = events.value.find((e) => e.id === id);
 
     try {
@@ -883,6 +895,10 @@ export const useCalendarStore = defineStore("calendar", () => {
 
   /** 快速切換事件狀態 (pending <-> completed) */
   const toggleEventStatus = async (id) => {
+    const authStore = useAuthStore();
+    if (!authStore.isAdmin) {
+      return null;
+    }
     const target = events.value.find((e) => e.id === id);
     if (!target) return null;
 

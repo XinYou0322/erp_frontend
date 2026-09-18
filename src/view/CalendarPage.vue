@@ -41,9 +41,9 @@ const getStatusMeta = (status?: string) => {
   );
 };
 
-// 權限檢查
+// 權限檢查：只有最高權限可新增/修改/刪除，使用者只能瀏覽
 const canEdit = computed(() => {
-  return authStore.hasPermission("calendar.edit" as any);
+  return !!authStore.isAdmin;
 });
 
 // 統計數據
@@ -87,6 +87,12 @@ const handlePeriodChange = () => {
   calendarStore.selectDate(dateStr);
 };
 
+const handleDateInputChange = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  if (!target.value) return;
+  calendarStore.selectDate(target.value);
+};
+
 // 點擊月曆格子
 const handleDayClick = (dayObj: any) => {
   calendarStore.selectDate(dayObj.dateStr);
@@ -117,6 +123,34 @@ const handleExportCSV = () => {
   uiStore.showToast("已匯出排程清單 CSV 檔案", "success");
 };
 </script>
+
+<style scoped>
+.calendar-select {
+  color-scheme: dark;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41Z' fill='%2347e4b9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 1rem;
+  padding-right: 2rem;
+}
+
+.calendar-select option {
+  background: #020817;
+  color: #e2e8f0;
+}
+
+.calendar-select:focus,
+.calendar-select:focus-visible {
+  border-color: rgba(52, 211, 153, 0.9);
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.35);
+  outline: none;
+}
+
+.material-symbols-outlined {
+  color: #34d399;
+}
+</style>
 
 <template>
   <div class="space-y-6">
@@ -188,36 +222,13 @@ const handleExportCSV = () => {
         <div
           class="flex items-center gap-1.5 px-2 py-1 bg-slate-950 border border-slate-700/80 rounded-xl"
         >
-          <select
-            v-model.number="calendarStore.currentYear"
-            @change="handlePeriodChange"
-            aria-label="選擇年份"
-            class="bg-transparent text-white font-bold text-sm font-data-mono focus:outline-hidden cursor-pointer"
-          >
-            <option
-              v-for="year in yearOptions"
-              :key="year"
-              :value="year"
-              class="bg-slate-950"
-            >
-              {{ year }} 年
-            </option>
-          </select>
-          <select
-            v-model.number="calendarStore.currentMonth"
-            @change="handlePeriodChange"
-            aria-label="選擇月份"
-            class="bg-transparent text-white font-bold text-sm font-data-mono focus:outline-hidden cursor-pointer"
-          >
-            <option
-              v-for="month in monthOptions"
-              :key="month.value"
-              :value="month.value"
-              class="bg-slate-950"
-            >
-              {{ month.label }}
-            </option>
-          </select>
+          <input
+            :value="calendarStore.selectedDate"
+            type="date"
+            aria-label="選擇日期"
+            @change="handleDateInputChange"
+            class="calendar-select bg-slate-950 text-white font-bold text-sm font-data-mono focus:outline-hidden cursor-pointer border border-slate-700/80 rounded-lg px-2.5 py-1.5"
+          />
         </div>
 
         <!-- View Mode Switcher -->

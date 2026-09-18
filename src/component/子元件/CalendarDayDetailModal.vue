@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useCalendarStore } from "../../stores/calendar.store";
+import { useAuthStore } from "../../stores/auth.store";
 
 const calendarStore = useCalendarStore();
+const authStore = useAuthStore();
+
+const canMutateCalendar = computed(() => !!authStore.isAdmin);
 
 const formattedDateTitle = computed(() => {
   if (!calendarStore.selectedDate) return "";
@@ -28,11 +32,17 @@ const getCategoryMeta = (category?: string) => {
 };
 
 const handleQuickAdd = () => {
+  if (!authStore.isAdmin) {
+    return;
+  }
   calendarStore.isDayDetailModalOpen = false;
   calendarStore.openCreateModal(calendarStore.selectedDate);
 };
 
 const handleEdit = (evt: any) => {
+  if (!authStore.isAdmin) {
+    return;
+  }
   calendarStore.openEditModal(evt);
 };
 
@@ -44,7 +54,7 @@ const closeModal = () => {
 <template>
   <div
     v-if="calendarStore.isDayDetailModalOpen"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs transition-opacity"
+    class="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs transition-opacity"
     @click.self="closeModal"
   >
     <div
@@ -91,6 +101,7 @@ const closeModal = () => {
           >
           <p class="text-sm font-medium">當日尚未安排任何營運或會議排程</p>
           <button
+            v-if="canMutateCalendar"
             @click="handleQuickAdd"
             class="px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 text-xs font-bold transition-colors inline-flex items-center gap-1.5 cursor-pointer"
           >
@@ -138,6 +149,7 @@ const closeModal = () => {
 
             <div class="flex items-center gap-1">
               <button
+                v-if="canMutateCalendar"
                 @click="calendarStore.toggleEventStatus(evt.id)"
                 :title="
                   evt.status === 'completed' ? '設為待處理' : '標記已完成'
@@ -153,6 +165,7 @@ const closeModal = () => {
                 </span>
               </button>
               <button
+                v-if="canMutateCalendar"
                 @click="handleEdit(evt)"
                 title="編輯排程"
                 class="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
@@ -216,6 +229,7 @@ const closeModal = () => {
         class="px-6 py-3.5 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between"
       >
         <button
+          v-if="canMutateCalendar"
           @click="handleQuickAdd"
           class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
         >

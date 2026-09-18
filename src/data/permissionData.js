@@ -231,6 +231,8 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     "workflows.approve",
     "analytics.view",
     "analytics.export",
+    "calendar.view",
+    "calendar.edit",
     "permissions.view",
     "permissions.manage",
   ],
@@ -252,6 +254,7 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     "workflows.approve",
     "analytics.view",
     "analytics.export",
+    "calendar.view",
     "permissions.view",
   ],
   employee: [
@@ -260,8 +263,9 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     "pos.checkout",
     "workflows.view",
     "workflows.submit",
+    "calendar.view",
   ],
-  guest: ["overview.view", "analytics.view"],
+  guest: ["overview.view", "analytics.view", "calendar.view"],
 };
 export const INITIAL_SECURITY_AUDIT_LOGS = [
   {

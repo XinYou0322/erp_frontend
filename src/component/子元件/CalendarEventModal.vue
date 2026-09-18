@@ -26,49 +26,58 @@ const form = ref({
 });
 
 const isEditMode = computed(() => !!calendarStore.editingEvent);
+const currentUserName = computed(
+  () => authStore.currentUser?.name || "Alex Smith",
+);
 
 // 監聽彈窗開啟並初始化表單
 watch(
   () => calendarStore.isEventModalOpen,
   (isOpen) => {
-    if (isOpen) {
-      if (calendarStore.editingEvent) {
-        const e = calendarStore.editingEvent;
-        form.value = {
-          id: e.id,
-          title: e.title || "",
-          description: e.description || "",
-          category: e.category || "meeting",
-          date: e.date || calendarStore.selectedDate,
-          startTime: e.startTime || "09:00",
-          endTime: e.endTime || "10:00",
-          location: e.location || "",
-          organizer: e.organizer || authStore.currentUser.name,
-          attendeesStr: (e.attendees || []).join(", "),
-          priority: e.priority || "medium",
-          status: e.status || "pending",
-          relatedRef: e.relatedRef || "",
-          reminderMinutes: e.reminderMinutes ?? 15,
-        };
-      } else {
-        form.value = {
-          id: "",
-          title: "",
-          description: "",
-          category: "meeting",
-          date: calendarStore.selectedDate || "2026-09-06",
-          startTime: "09:00",
-          endTime: "10:00",
-          location: "台北總部 3F 會議室",
-          organizer: authStore.currentUser.name || "Alex Smith",
-          attendeesStr: authStore.currentUser.name || "",
-          priority: "medium",
-          status: "pending",
-          relatedRef: "",
-          reminderMinutes: 15,
-        };
-      }
+    if (!isOpen) return;
+
+    const userName = currentUserName.value;
+
+    if (calendarStore.editingEvent) {
+      const e = calendarStore.editingEvent as any;
+
+      if (!e) return;
+
+      form.value = {
+        id: e.id || "",
+        title: e.title || "",
+        description: e.description || "",
+        category: e.category || "meeting",
+        date: e.date || calendarStore.selectedDate,
+        startTime: e.startTime || "09:00",
+        endTime: e.endTime || "10:00",
+        location: e.location || "",
+        organizer: e.organizer || userName,
+        attendeesStr: Array.isArray(e.attendees) ? e.attendees.join(", ") : "",
+        priority: e.priority || "medium",
+        status: e.status || "pending",
+        relatedRef: e.relatedRef || "",
+        reminderMinutes: e.reminderMinutes ?? 15,
+      };
+      return;
     }
+
+    form.value = {
+      id: "",
+      title: "",
+      description: "",
+      category: "meeting",
+      date: calendarStore.selectedDate || "2026-09-06",
+      startTime: "09:00",
+      endTime: "10:00",
+      location: "台北總部 3F 會議室",
+      organizer: userName,
+      attendeesStr: userName,
+      priority: "medium",
+      status: "pending",
+      relatedRef: "",
+      reminderMinutes: 15,
+    };
   },
 );
 
@@ -92,6 +101,10 @@ const applyTemplate = (tpl: (typeof quickTemplates)[0]) => {
 };
 
 const handleSave = () => {
+  if (!authStore.isAdmin) {
+    uiStore.showToast("只有最高權限可新增或修改排程", "warning");
+    return;
+  }
   if (!form.value.title.trim()) {
     uiStore.showToast("請輸入排程標題", "warning");
     return;
@@ -132,6 +145,10 @@ const handleSave = () => {
 };
 
 const handleDelete = () => {
+  if (!authStore.isAdmin) {
+    uiStore.showToast("只有最高權限可刪除排程", "warning");
+    return;
+  }
   if (!form.value.id) return;
   if (confirm(`確定要永久刪除此排程「${form.value.title}」嗎？`)) {
     calendarStore.deleteEvent(form.value.id);
@@ -144,10 +161,60 @@ const closeModal = () => {
 };
 </script>
 
+<style scoped>
+.date-field,
+.time-field {
+  color-scheme: dark;
+  appearance: none;
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+.date-field::-webkit-calendar-picker-indicator,
+.time-field::-webkit-calendar-picker-indicator {
+  opacity: 0.9;
+  cursor: pointer;
+  filter: brightness(1.3) saturate(1.4) sepia(1) hue-rotate(110deg) saturate(2);
+}
+
+.date-field::-webkit-datetime-edit,
+.time-field::-webkit-datetime-edit {
+  color: #f8fafc;
+}
+
+.date-field:focus,
+.time-field:focus,
+.select-accent:focus,
+.select-accent:focus-visible {
+  border-color: rgba(52, 211, 153, 0.9);
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.35);
+  outline: none;
+}
+
+.select-accent {
+  color-scheme: dark;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41Z' fill='%2347e4b9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+  background-size: 1rem;
+  padding-right: 2.2rem;
+}
+
+.select-accent option {
+  background: #020817;
+  color: #e2e8f0;
+}
+
+.icon-accent {
+  color: #34d399 !important;
+}
+</style>
+
 <template>
   <div
     v-if="calendarStore.isEventModalOpen"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs transition-opacity"
+    class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs transition-opacity"
     @click.self="closeModal"
   >
     <div
@@ -302,7 +369,7 @@ const closeModal = () => {
             <input
               v-model="form.date"
               type="date"
-              class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-hidden focus:border-emerald-500 font-data-mono"
+              class="date-field w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-hidden focus:border-emerald-500 font-data-mono"
             />
           </div>
           <div>
@@ -312,7 +379,7 @@ const closeModal = () => {
             <input
               v-model="form.startTime"
               type="time"
-              class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-hidden focus:border-emerald-500 font-data-mono"
+              class="time-field w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-hidden focus:border-emerald-500 font-data-mono"
             />
           </div>
           <div>
@@ -322,7 +389,7 @@ const closeModal = () => {
             <input
               v-model="form.endTime"
               type="time"
-              class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-hidden focus:border-emerald-500 font-data-mono"
+              class="time-field w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-hidden focus:border-emerald-500 font-data-mono"
             />
           </div>
         </div>
@@ -335,7 +402,7 @@ const closeModal = () => {
             >
             <div class="relative">
               <span
-                class="material-symbols-outlined absolute left-3 top-2.5 text-slate-500 text-[18px]"
+                class="material-symbols-outlined absolute left-3 top-2.5 text-emerald-400 text-[18px] icon-accent"
               >
                 location_on
               </span>
