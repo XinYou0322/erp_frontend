@@ -327,11 +327,13 @@
                     </option>
 
                     <option
-                      v-for="material in materials"
+                      v-for="material in getSelectableMaterials(item)"
                       :key="material.id"
                       :value="material.id"
+                      :disabled="material.status === 'INACTIVE'"
                     >
                       {{ material.name }} ({{ material.code }})
+                      {{ material.status === 'INACTIVE' ? '【已停用】' : '' }}
                     </option>
                   </select>
                 </td>
@@ -464,11 +466,11 @@
     </div>
 
     <!-- Footer -->
-    <template #footer>
+   <template #footer="{ close }">
       <button
         type="button"
         class="btn-secondary text-xs"
-        @click="emit('close')"
+            @click="close"
       >
         取消
       </button>
@@ -522,6 +524,11 @@ const props = defineProps({
   product: {
     type: Object,
     default: null
+  },
+
+  initialBom: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -533,58 +540,59 @@ const emit = defineEmits([
 const materials = ref([])
 const ingredientsList = ref([])
 const loading = ref(false)
-
 const loadMaterials = () => {
-  return httpClient
-    .get('/api/material')
+  return httpClient({
+    method: 'get',
+    url: '/api/material',
+    data: {}
+  })
     .then((response) => {
       materials.value = response.data
     })
 }
-
-const loadBom = (productId) => {
-  return httpClient
-    .get(`/api/bom/product/${productId}`)
-    .then((response) => {
-      ingredientsList.value = response.data.map((bom) => ({
-        bomId: bom.id,
-        materialId: bom.materialId,
-        materialName: bom.materialName,
-        quantity: Number(bom.quantity),
-        unit: bom.unit,
-        materialCost: Number(bom.materialCost || 0)
-      }))
-    })
+const setIngredients = (bomList = []) => {
+  ingredientsList.value = bomList.map((bom) => ({
+    bomId: bom.id,
+    materialId: bom.materialId,
+    originalMaterialId: bom.materialId,
+    materialName: bom.materialName,
+    quantity: Number(bom.quantity),
+    unit: bom.unit,
+    materialCost: Number(bom.materialCost || 0)
+  }))
 }
 
 watch(
-  () => [props.isOpen, props.product?.id],
+  () => [
+    props.isOpen,
+    props.product?.id,
+    props.initialBom
+  ],
 
-  ([isOpen, productId]) => {
-    if (!isOpen || !productId) {
-      return
-    }
+  async ([isOpen, productId, initialBom]) => {
+  if (!isOpen || productId == null) {
+  return
+}
 
     loading.value = true
+    ingredientsList.value = []
 
-    Promise
-      .all([
-        loadMaterials(),
-        loadBom(productId)
-      ])
-      .catch((error) => {
-        console.error(
-          '載入 BOM 編輯資料失敗：',
-          error
-        )
-      })
-      .finally(() => {
-        loading.value = false
-      })
+    try {
+      await loadMaterials()
+      setIngredients(initialBom)
+    } catch (error) {
+      console.error(
+        '載入 BOM 編輯資料失敗：',
+        error
+      )
+    } finally {
+      loading.value = false
+    }
   },
 
   {
-    immediate: true
+    immediate: true,
+    deep: true
   }
 )
 
@@ -592,6 +600,7 @@ const addIngredientRow = () => {
   ingredientsList.value.push({
     bomId: null,
     materialId: '',
+    originalMaterialId: null,
     materialName: '',
     quantity: 0,
     unit: '',
@@ -601,6 +610,20 @@ const addIngredientRow = () => {
 
 const removeIngredientRow = (idx) => {
   ingredientsList.value.splice(idx, 1)
+}
+
+// 下拉選單規則：
+// 1. ACTIVE 原物料都可以選
+// 2. 舊 BOM 原本綁定的 INACTIVE 原物料仍要顯示，但不可重新選擇
+// 3. 其他 INACTIVE 原物料完全不出現在這一列的選單
+const getSelectableMaterials = (item) => {
+  return materials.value.filter((material) => {
+    if (material.status === 'ACTIVE') {
+      return true
+    }
+
+    return material.id === item.originalMaterialId
+  })
 }
 
 const onMaterialChange = (item) => {
@@ -689,6 +712,29 @@ const handleSaveRecipe = () => {
     return
   }
 
+  // 前端再做一次防呆：停用原物料只能保留在原本的 BOM 關聯，
+  // 不允許被新增或改選成新的 BOM 原料。
+  const hasInvalidInactiveMaterial = ingredientsList.value.some((item) => {
+    if (!item.materialId) {
+      return false
+    }
+
+    const material = materials.value.find(
+      material => material.id === item.materialId
+    )
+
+    if (!material || material.status !== 'INACTIVE') {
+      return false
+    }
+
+    return material.id !== item.originalMaterialId
+  })
+
+  if (hasInvalidInactiveMaterial) {
+    console.error('停用原物料不可新增至 BOM')
+    return
+  }
+
   const items =
     ingredientsList.value
       .filter(
@@ -715,12 +761,12 @@ const handleSaveRecipe = () => {
     data
   )
 
-  httpClient
-    .put(
-      `/api/bom/product/${props.product.id}`,
-      data
-    )
-    .then((response) => {
+ httpClient({
+  method: 'put',
+  url: `/api/bom/product/${props.product.id}`,
+  data: data
+})
+  .then((response) => {
       console.log(
         '整份 BOM 儲存成功：',
         response.data

@@ -61,7 +61,7 @@
         <div
           class="
             font-bold
-            text-sm
+            text-[length:var(--font-heading)]
             text-[var(--on-surface)]
           "
         >
@@ -70,7 +70,7 @@
 
         <div
           class="
-            text-xs
+            text-[length:var(--font-body)]
             text-[var(--on-surface-variant)]
             mt-1
           "
@@ -87,7 +87,7 @@
           @click="loadInventory"
           class="
             btn-secondary
-            text-xs
+            text-[length:var(--font-body)]
             px-3
             py-1.5
             flex
@@ -98,32 +98,12 @@
           <RefreshCw class="w-3.5 h-3.5" />
           <span>重新整理</span>
         </button>
-
-
-        <button
-          type="button"
-          @click="emit('openReport')"
-          class="
-            btn-secondary
-            text-xs
-            px-3
-            py-1.5
-            flex
-            items-center
-            space-x-1.5
-          "
-        >
-          <FileSpreadsheet class="w-3.5 h-3.5" />
-          <span>盤點報表</span>
-        </button>
-
-
-        <button
+             <button
           type="button"
           @click="inventoryIntakeModalOpen = true"
           class="
             btn-primary
-            text-xs
+            text-[length:var(--font-body)]
             px-3.5
             py-1.5
             flex
@@ -146,7 +126,7 @@
         rounded-2xl
         p-8
         text-center
-        text-sm
+        text-[length:var(--font-title)]
         bg-[var(--surface-container)]
         border
         border-[var(--outline)]
@@ -166,7 +146,7 @@
         border-[var(--error)]/30
         bg-[var(--error)]/10
         p-4
-        text-sm
+        text-[length:var(--font-title)]
         text-[var(--error)]
       "
     >
@@ -196,7 +176,7 @@
                 bg-[var(--surface-container-high)]
                 border-b
                 border-[var(--outline)]
-                text-[11px]
+                text-[length:var(--font-body)]
                 font-bold
                 text-[var(--on-surface-variant)]
                 uppercase
@@ -238,22 +218,26 @@
             class="
               divide-y
               divide-[var(--outline-variant)]
-              text-xs
+              text-[length:var(--font-body)]
             "
           >
 
             <template
-              v-for="item in inventory"
-              :key="item.materialId"
+            v-for="item in paginatedInventory"
+  :key="item.materialId"
             >
 
               <!-- 原物料摘要 -->
-              <tr
-                class="
-                  hover:bg-[var(--surface-container-high)]
-                  transition-colors
-                "
-              >
+<tr
+  class="
+    hover:bg-[var(--surface-container-high)]
+    transition-colors
+  "
+  :class="{
+    'inactive-material-row':
+      item.materialStatus === 'INACTIVE'
+  }"
+>
 
                 <!-- 名稱 / Code -->
                 <td class="py-3.5 px-4">
@@ -261,16 +245,32 @@
                   <div
                     class="
                       font-bold
-                      text-sm
+                      text-[length:var(--font-title)]
                       text-[var(--on-surface)]
                     "
                   >
                     {{ item.name }}
                   </div>
-
+ <span
+    v-if="item.materialStatus === 'INACTIVE'"
+    class="
+      ml-2
+      rounded-md
+      border
+      border-[var(--outline)]
+      bg-[var(--surface-container-highest)]
+      px-2
+      py-0.5
+      text-[length:var(--font-small)]
+      font-bold
+      text-[var(--on-surface-variant)]
+    "
+  >
+    已停用
+  </span>
                   <div
                     class="
-                      text-[11px]
+                      text-[length:var(--font-body)]
                       text-[var(--on-surface-variant)]
                       font-data-mono
                       mt-0.5
@@ -289,6 +289,7 @@
                     class="
                       font-data-mono
                       font-bold
+                      text-[length:var(--font-body)]
                       text-[var(--on-surface)]
                     "
                   >
@@ -300,7 +301,7 @@
 
                   <div
                     class="
-                      text-[11px]
+                      text-[length:var(--font-body)]
                       text-[var(--primary)]
                       mt-1
                     "
@@ -314,7 +315,7 @@
                   <div
                     v-if="Number(item.expiredQuantity) > 0"
                     class="
-                      text-[11px]
+                      text-[length:var(--font-body)]
                       text-[var(--error)]
                       mt-1
                     "
@@ -327,7 +328,7 @@
 
                   <div
                     class="
-                      text-[10px]
+                      text-[length:var(--font-body)]
                       text-[var(--on-surface-variant)]
                       mt-1
                     "
@@ -343,55 +344,9 @@
                 <!-- 庫存狀態 -->
                 <td class="py-3.5 px-4">
 
-                  <span
-                    v-if="item.status === 'NORMAL'"
-                    class="
-                      px-2.5
-                      py-1
-                      rounded-full
-                      bg-[var(--primary)]/15
-                      text-[var(--primary)]
-                      border
-                      border-[var(--primary)]/30
-                      font-bold
-                    "
-                  >
-                    存量充足
-                  </span>
-
-
-                  <span
-                    v-else-if="item.status === 'LOW'"
-                    class="
-                      px-2.5
-                      py-1
-                      rounded-full
-                      bg-[var(--tertiary)]/15
-                      text-[var(--tertiary)]
-                      border
-                      border-[var(--tertiary)]/30
-                      font-bold
-                    "
-                  >
-                    偏低需補
-                  </span>
-
-
-                  <span
-                    v-else-if="item.status === 'URGENT'"
-                    class="
-                      px-2.5
-                      py-1
-                      rounded-full
-                      bg-[var(--error)]/15
-                      text-[var(--error)]
-                      border
-                      border-[var(--error)]/30
-                      font-bold
-                    "
-                  >
-                    緊急缺料
-                  </span>
+                 <StatusBadge
+  :status="item.status.toLowerCase()"
+/>
 
                 </td>
 
@@ -403,6 +358,7 @@
                     v-if="item.nearestExpiryDate"
                     class="
                       font-data-mono
+                      text-[length:var(--font-body)]
                       text-[var(--on-surface)]
                     "
                   >
@@ -412,6 +368,7 @@
                   <div
                     v-else
                     class="
+                      text-[length:var(--font-body)]
                       text-[var(--on-surface-variant)]
                     "
                   >
@@ -422,7 +379,7 @@
                   <div
                     v-if="item.expiryStatus === 'EXPIRED'"
                     class="
-                      text-[11px]
+                      text-[length:var(--font-body)]
                       text-[var(--error)]
                       font-bold
                       mt-1
@@ -435,7 +392,7 @@
                   <div
                     v-else-if="item.expiryStatus === 'EXPIRING_SOON'"
                     class="
-                      text-[11px]
+                      text-[length:var(--font-body)]
                       text-[var(--tertiary)]
                       font-bold
                       mt-1
@@ -448,7 +405,7 @@
                   <div
                     v-else
                     class="
-                      text-[11px]
+                      text-[length:var(--font-body)]
                       text-[var(--primary)]
                       mt-1
                     "
@@ -466,6 +423,7 @@
                     px-4
                     font-data-mono
                     font-bold
+                    text-[length:var(--font-body)]
                     text-[var(--on-surface)]
                   "
                 >
@@ -481,6 +439,7 @@
                     py-3.5
                     px-4
                     font-data-mono
+                    text-[length:var(--font-body)]
                     text-[var(--on-surface)]
                   "
                 >
@@ -490,34 +449,66 @@
 
 
                 <!-- 查看批次 -->
-                <td class="py-3.5 px-4 text-right pr-6">
+<td class="py-3.5 px-4 text-right pr-6">
+  <!-- 停用原物料：只顯示一鍵報廢 -->
+  <button
+    v-if="item.materialStatus === 'INACTIVE'"
+    type="button"
+    :disabled="Number(item.totalQuantity) <= 0"
+    @click="handleWasteInactiveMaterial(item)"
+    class="
+      px-3
+      py-1.5
+      rounded-lg
+      bg-[var(--error)]/10
+      hover:bg-[var(--error)]/20
+      active:bg-[var(--error)]/30
+      text-[var(--error)]
+      border
+      border-[var(--error)]/30
+      font-bold
+      text-[length:var(--font-body)]
+      transition-colors
+      cursor-pointer
+      disabled:opacity-40
+      disabled:cursor-not-allowed
+      disabled:hover:bg-[var(--error)]/10
+    "
+  >
+    {{
+      Number(item.totalQuantity) > 0
+        ? "一鍵報廢"
+        : "已無庫存"
+    }}
+  </button>
 
-                  <button
-                    type="button"
-                    @click="toggleBatches(item.materialId)"
-                    class="
-                      px-3
-                      py-1.5
-                      rounded-lg
-                      bg-[var(--primary)]/10
-                      hover:bg-[var(--primary)]/20
-                      text-[var(--primary)]
-                      border
-                      border-[var(--primary)]/30
-                      font-bold
-                      text-[11px]
-                      transition-colors
-                      cursor-pointer
-                    "
-                  >
-                    {{
-                      expandedMaterialId === item.materialId
-                        ? "收起批次"
-                        : "查看批次"
-                    }}
-                  </button>
-
-                </td>
+  <!-- 啟用原物料：只顯示查看批次 -->
+  <button
+    v-else
+    type="button"
+    @click="toggleBatches(item.materialId)"
+    class="
+      px-3
+      py-1.5
+      rounded-lg
+      bg-[var(--primary)]/10
+      hover:bg-[var(--primary)]/20
+      text-[var(--primary)]
+      border
+      border-[var(--primary)]/30
+      font-bold
+      text-[length:var(--font-body)]
+      transition-colors
+      cursor-pointer
+    "
+  >
+    {{
+      expandedMaterialId === item.materialId
+        ? "收起批次"
+        : "查看批次"
+    }}
+  </button>
+</td>
 
               </tr>
 
@@ -539,7 +530,7 @@
                   <div
                     v-if="batchLoading"
                     class="
-                      text-xs
+                      text-[length:var(--font-body)]
                       text-[var(--on-surface-variant)]
                       py-3
                     "
@@ -552,7 +543,7 @@
                   <div
                     v-else-if="batches.length === 0"
                     class="
-                      text-xs
+                      text-[length:var(--font-body)]
                       text-[var(--on-surface-variant)]
                       py-3
                     "
@@ -580,7 +571,7 @@
                         border-b
                         border-[var(--outline)]
                         font-bold
-                        text-xs
+                        text-[length:var(--font-title)]
                         text-[var(--on-surface)]
                       "
                     >
@@ -588,7 +579,7 @@
                     </div>
 
 
-                    <table class="w-full text-xs">
+                    <table class="w-full text-[length:var(--font-body)]">
 
                       <thead>
                         <tr
@@ -635,6 +626,7 @@
                               px-4
                               py-2
                               font-data-mono
+                              text-[length:var(--font-body)]
                               text-[var(--on-surface)]
                             "
                           >
@@ -648,6 +640,7 @@
                               py-2
                               font-data-mono
                               font-bold
+                              text-[length:var(--font-body)]
                               text-[var(--on-surface)]
                             "
                           >
@@ -662,6 +655,7 @@
                             <span
                               v-if="!batch.expiryDate"
                               class="
+                                text-[length:var(--font-body)]
                                 text-[var(--on-surface-variant)]
                               "
                             >
@@ -674,7 +668,10 @@
                               v-else-if="
                                 getExpiryStatus(batch.expiryDate) === 'expired'
                               "
-                              class="font-bold"
+                              class="
+                                font-bold
+                                text-[length:var(--font-body)]
+                              "
                               :class="
                                 Number(batch.quantity) === 0
                                   ? 'text-[var(--on-surface-variant)]'
@@ -701,7 +698,7 @@
                                   text-[var(--error)]
                                   border
                                   border-[var(--error)]/30
-                                  text-[11px]
+                                  text-[length:var(--font-body)]
                                   font-bold
                                   transition-colors
                                 "
@@ -718,6 +715,7 @@
                               "
                               class="
                                 font-bold
+                                text-[length:var(--font-body)]
                                 text-[var(--tertiary)]
                               "
                             >
@@ -730,6 +728,7 @@
                             <span
                               v-else
                               class="
+                                text-[length:var(--font-body)]
                                 text-[var(--on-surface)]
                               "
                             >
@@ -743,6 +742,7 @@
                             class="
                               px-4
                               py-2
+                              text-[length:var(--font-body)]
                               text-[var(--on-surface-variant)]
                               font-data-mono
                             "
@@ -772,7 +772,7 @@
                 class="
                   py-12
                   text-center
-                  text-sm
+                  text-[length:var(--font-title)]
                   text-[var(--on-surface-variant)]
                 "
               >
@@ -787,7 +787,11 @@
 
       </div>
     </div>
-
+<Pagination
+  :current-page="currentPage"
+  :total-pages="totalPages"
+  @change-page="goToPage"
+/>
 
     <InventoryIntakeModal
       :is-open="inventoryIntakeModalOpen"
@@ -797,7 +801,6 @@
 
   </div>
 </template>
-
 <script setup>
 import { ref, computed, onMounted } from "vue";
 
@@ -813,15 +816,75 @@ import {
 } from "lucide-vue-next";
 
 import MetricCard from "@/component/子元件/MetricCard.vue";
-
+import Pagination from '@/component/子元件/Pagination.vue'
 import httpClient from "@/service/httpClient";
 import InventoryIntakeModal from "@/component/父元件/InventoryIntakeModal.vue";
-
+import StatusBadge from '@/component/子元件/StatusBadge.vue'
 // ==============================
 // 庫存摘要資料
 // ==============================
 
 const inventory = ref([]);
+
+const sortedInventory = computed(() => {
+  return [...inventory.value].sort((a, b) => {
+    const aInactive =
+      a.materialStatus === "INACTIVE" ? 1 : 0;
+
+    const bInactive =
+      b.materialStatus === "INACTIVE" ? 1 : 0;
+
+    return aInactive - bInactive;
+  });
+});
+
+
+// 分頁
+// ==============================
+
+const currentPage = ref(1);
+
+const pageSize = 6;
+
+const totalPages = computed(() => {
+  return Math.ceil(
+    sortedInventory.value.length / pageSize
+  );
+});
+
+const paginatedInventory = computed(() => {
+  const start =
+    (currentPage.value - 1) * pageSize;
+
+  const end =
+    start + pageSize;
+
+  return sortedInventory.value.slice(
+    start,
+    end
+  );
+});
+
+const goToPage = (page) => {
+
+  if (
+    page < 1 ||
+    page > totalPages.value
+  ) {
+    return;
+  }
+
+  currentPage.value = page;
+
+  // 換頁時把展開的批次收起來
+  expandedMaterialId.value = null;
+  batches.value = [];
+};
+
+
+
+
+
 
 // ==============================
 // 批次資料
@@ -1069,7 +1132,73 @@ const expiringSoonBatchTotal = computed(() => {
     0,
   );
 });
+const handleWasteInactiveMaterial = async (item) => {
+  if (item.materialStatus !== "INACTIVE") {
+    return;
+  }
 
+  const confirmed = window.confirm(
+    `確定要將已停用原物料「${item.name}」的全部剩餘庫存報廢嗎？此操作無法復原。`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    const batchResponse = await httpClient({
+      method: "get",
+      url: `/api/inventory/material/${item.materialId}/batches`,
+      data: {}
+    });
+
+    const availableBatches =
+      batchResponse.data.filter(
+        (batch) => Number(batch.quantity) > 0
+      );
+
+    if (availableBatches.length === 0) {
+      window.alert("此原物料目前沒有可報廢的庫存。");
+      return;
+    }
+
+    const data = {
+      items: availableBatches.map((batch) => ({
+        inventoryId: batch.inventoryId,
+        action: "WASTE",
+        quantity: Number(batch.quantity),
+        note: "停用原物料一鍵報廢"
+      }))
+    };
+
+    await httpClient({
+      method: "post",
+      url: "/api/inventory-logs/adjustments",
+      data: data
+    });
+
+    await loadInventory();
+
+    if (
+      expandedMaterialId.value ===
+      item.materialId
+    ) {
+      await loadBatches(item.materialId);
+    }
+
+    window.alert("庫存報廢完成。");
+  } catch (error) {
+    console.error(
+      "停用原物料一鍵報廢失敗：",
+      error
+    );
+
+    window.alert(
+      error.response?.data?.message ||
+      "庫存報廢失敗"
+    );
+  }
+};
 onMounted(() => {
   loadInventory();
 });
@@ -1094,5 +1223,20 @@ onMounted(() => {
   background-color: #9ca3af;
 
   pointer-events: none;
+}
+.inactive-material-row {
+  background-color: var(--surface-container-low);
+}
+
+/* 操作欄以外的欄位套用灰階 */
+.inactive-material-row > td:not(:last-child) {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+
+/* 最後一欄的按鈕維持正常顏色 */
+.inactive-material-row > td:last-child {
+  opacity: 1;
+  filter: none;
 }
 </style>

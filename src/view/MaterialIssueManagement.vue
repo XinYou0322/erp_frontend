@@ -38,7 +38,7 @@
               text-[var(--on-surface)]
             "
           >
-            庫存異動紀錄
+            當日領料紀錄
           </div>
 
           <div
@@ -48,7 +48,7 @@
               mt-1
             "
           >
-            查詢原物料進貨、銷售扣減、耗損與盤點調整歷程
+            查看今日原物料領用狀況與新增手動領料
           </div>
 
         </div>
@@ -86,7 +86,8 @@
               space-x-1.5
             "
           >
-            <span>庫存調整</span>
+            <PackageMinus class="w-3.5 h-3.5" />
+            <span>新增領料</span>
           </button>
 
         </div>
@@ -98,7 +99,7 @@
         class="
           grid
           grid-cols-1
-          md:grid-cols-3
+          md:grid-cols-2
           gap-3
         "
       >
@@ -167,41 +168,7 @@
         </div>
 
 
-        <div>
 
-          <label
-            class="
-              block
-              text-[length:var(--font-body)]
-              font-bold
-              text-[var(--on-surface-variant)]
-              mb-1
-            "
-          >
-            異動類型
-          </label>
-
-          <select
-            v-model="selectedAction"
-            class="
-              input-field
-              text-[length:var(--font-body)]
-            "
-          >
-            <option value="">
-              全部異動類型
-            </option>
-
-            <option
-              v-for="action in actionOptions"
-              :key="action"
-              :value="action"
-            >
-              {{ getActionLabel(action) }}
-            </option>
-          </select>
-
-        </div>
 
       </div>
 
@@ -222,7 +189,7 @@
         text-[var(--on-surface-variant)]
       "
     >
-      正在讀取庫存異動紀錄...
+      正在讀取當日領料紀錄...
     </div>
 
 
@@ -274,7 +241,7 @@
               "
             >
               <th class="py-3 px-4">
-                異動時間
+                領料時間
               </th>
 
               <th class="py-3 px-4">
@@ -282,15 +249,11 @@
               </th>
 
               <th class="py-3 px-4">
-                異動類型
+                領料類型
               </th>
 
               <th class="py-3 px-4">
-                異動數量
-              </th>
-
-              <th class="py-3 px-4">
-                關聯單據
+                領料數量
               </th>
 
               <th class="py-3 px-4">
@@ -383,55 +346,17 @@
 
               <!-- Quantity -->
               <td class="py-3.5 px-4">
-
                 <span
                   class="
                     font-data-mono
                     font-bold
                     text-[length:var(--font-title)]
-                  "
-                  :class="
-                    Number(log.quantity) >= 0
-                      ? 'text-[var(--primary)]'
-                      : 'text-[var(--error)]'
-                  "
-                >
-                  {{
-                    Number(log.quantity) > 0
-                      ? '+'
-                      : ''
-                  }}
-                  {{ formatQuantity(log.quantity) }}
-                  {{ log.unit }}
-                </span>
-
-              </td>
-
-
-              <!-- Ref ID -->
-              <td class="py-3.5 px-4">
-
-                <span
-                  v-if="log.refId !== null && log.refId !== undefined"
-                  class="
-                    font-data-mono
-                    text-[length:var(--font-body)]
                     text-[var(--on-surface)]
                   "
                 >
-                  #{{ log.refId }}
+                  {{ formatQuantity(Math.abs(Number(log.quantity))) }}
+                  {{ log.unit }}
                 </span>
-
-                <span
-                  v-else
-                  class="
-                    text-[length:var(--font-body)]
-                    text-[var(--on-surface-variant)]
-                  "
-                >
-                  -
-                </span>
-
               </td>
 
 
@@ -467,7 +392,7 @@
             <tr v-if="filteredLogs.length === 0">
 
               <td
-                colspan="6"
+                colspan="5"
                 class="
                   py-12
                   text-center
@@ -475,7 +400,7 @@
                   text-[var(--on-surface-variant)]
                 "
               >
-                目前沒有符合條件的庫存異動紀錄
+                今日尚無領料紀錄
               </td>
 
             </tr>
@@ -493,11 +418,12 @@
   @change-page="goToPage"
 />
 
-    <InventoryAdjustmentModal
-      :is-open="inventoryAdjustmentModalOpen"
-      @close="inventoryAdjustmentModalOpen = false"
-      @success="handleAdjustmentSuccess"
-    />
+ <InventoryAdjustmentModal
+  :is-open="inventoryAdjustmentModalOpen"
+  fixed-action="MANUAL_USE"
+  @close="inventoryAdjustmentModalOpen = false"
+  @success="handleAdjustmentSuccess"
+/>
 
   </div>
 </template>
@@ -510,12 +436,8 @@ import {
 } from 'vue'
 
 import {
-  History,
-  PackagePlus,
   PackageMinus,
-  Boxes,
-  RefreshCw,
-  Import
+  RefreshCw
 } from 'lucide-vue-next'
 import Pagination from '@/component/子元件/Pagination.vue'
 import httpClient from '@/service/httpClient'
@@ -549,11 +471,10 @@ const searchQuery = ref('')
 
 const selectedMaterialId = ref('')
 
-const selectedAction = ref('')
 
 
 // ==============================
-// 取得全部庫存異動紀錄
+// 取得全部當日領料紀錄
 // ==============================
 
 const loadLogs = () => {
@@ -571,7 +492,7 @@ const loadLogs = () => {
       logs.value = response.data
 
       console.log(
-        '庫存異動紀錄：',
+        '當日領料紀錄：',
         logs.value
       )
 
@@ -580,12 +501,12 @@ const loadLogs = () => {
     .catch((error) => {
 
       console.error(
-        '取得庫存異動紀錄失敗：',
+        '取得當日領料紀錄失敗：',
         error
       )
 
       errorMessage.value =
-        '取得庫存異動紀錄失敗'
+        '取得當日領料紀錄失敗'
 
     })
 
@@ -630,7 +551,7 @@ const materialOptions = computed(() => {
 
 
 // ==============================
-// 異動類型選項
+// 領料類型選項
 // ==============================
 
 const actionOptions = computed(() => {
@@ -657,8 +578,21 @@ const filteredLogs = computed(() => {
       .trim()
       .toLowerCase()
 
+  const today = new Date()
 
   return logs.value.filter((log) => {
+
+    const isManualUse =
+      log.action === 'MANUAL_USE'
+
+    const logDate = new Date(log.createdAt)
+
+    const isToday =
+      logDate.getFullYear() === today.getFullYear()
+      &&
+      logDate.getMonth() === today.getMonth()
+      &&
+      logDate.getDate() === today.getDate()
 
     const matchesKeyword =
       !keyword
@@ -671,26 +605,20 @@ const filteredLogs = computed(() => {
         .toLowerCase()
         .includes(keyword)
 
-
     const matchesMaterial =
       !selectedMaterialId.value
       ||
       String(log.materialId)
         === selectedMaterialId.value
 
-
-    const matchesAction =
-      !selectedAction.value
-      ||
-      log.action === selectedAction.value
-
-
     return (
+      isManualUse
+      &&
+      isToday
+      &&
       matchesKeyword
       &&
       matchesMaterial
-      &&
-      matchesAction
     )
 
   })
@@ -769,7 +697,7 @@ const materialCount = computed(() => {
 
 
 // ==============================
-// 異動類型中文
+// 領料類型中文
 // ==============================
 
 const getActionLabel = (action) => {
@@ -806,7 +734,7 @@ const getActionLabel = (action) => {
 
 
 // ==============================
-// 異動類型樣式
+// 領料類型樣式
 // ==============================
 const getActionStatus = (action) => {
 

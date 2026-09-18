@@ -1,8 +1,8 @@
 <template>
   <ModalWrapper
     :is-open="isOpen"
-    title="庫存異動批次作業"
-    subtitle="一次處理多筆耗損、過期報廢、手動領料與盤點調整"
+    :title="isIssueMode ? '新增領料' : '庫存異動批次作業'"
+    :subtitle="isIssueMode ? '一次處理多筆原物料手動領料' : '一次處理多筆耗損、過期報廢、手動領料與盤點調整'"
     max-width="6xl"
     :icon="ClipboardList"
     @close="emit('close')"
@@ -32,7 +32,7 @@
               text-[var(--on-surface)]
             "
           >
-            庫存異動作業
+            {{ isIssueMode ? "手動領料作業" : "庫存異動作業" }}
           </div>
 
           <p
@@ -42,11 +42,11 @@
               mt-1
             "
           >
-            所有數量請輸入正數，系統會依異動類型自動判斷加庫或扣庫。
+            {{ isIssueMode ? "所有領料數量請輸入正數，儲存後系統會自動扣除所選庫存批次。" : "所有數量請輸入正數，系統會依異動類型自動判斷加庫或扣庫。" }}
           </p>
         </div>
 
-        <div class="flex items-center space-x-2 text-xs">
+        <div v-if="!isIssueMode" class="flex items-center space-x-2 text-xs">
 
           <!-- 扣庫 -->
           <span
@@ -106,7 +106,7 @@
           />
 
           <span>
-            異動明細
+            {{ isIssueMode ? "領料明細" : "異動明細" }}
           </span>
         </h4>
 
@@ -135,7 +135,7 @@
           <Plus class="w-3.5 h-3.5" />
 
           <span>
-            加入異動項目
+            {{ isIssueMode ? "加入領料項目" : "加入異動項目" }}
           </span>
         </button>
 
@@ -303,7 +303,27 @@
 
                 <!-- 異動類型 -->
                 <td class="py-2.5 px-3">
+                  <div
+                    v-if="isIssueMode"
+                    class="
+                      inline-flex
+                      items-center
+                      px-2.5
+                      py-1
+                      rounded-lg
+                      bg-[var(--primary)]/10
+                      text-[var(--primary)]
+                      border
+                      border-[var(--primary)]/30
+                      font-bold
+                      text-xs
+                    "
+                  >
+                    手動領料
+                  </div>
+
                   <select
+                    v-else
                     v-model="item.action"
                     class="input-field py-1 text-xs"
                   >
@@ -358,7 +378,7 @@
                   <input
                     v-model="item.note"
                     type="text"
-                    placeholder="例如：煮製失敗、到期報廢、盤點短少..."
+                    :placeholder="isIssueMode ? '例如：開店備料、午班追加、晚班備料...' : '例如：煮製失敗、到期報廢、盤點短少...'"
                     class="input-field py-1 text-xs"
                   />
                 </td>
@@ -397,7 +417,7 @@
                     text-xs
                   "
                 >
-                  尚未加入異動項目，請點擊右上角「加入異動項目」。
+                  尚未{{ isIssueMode ? "加入領料項目" : "加入異動項目" }}，請點擊右上角「{{ isIssueMode ? "加入領料項目" : "加入異動項目" }}」。
                 </td>
 
               </tr>
@@ -455,7 +475,7 @@
             whitespace-nowrap
           "
         >
-          批次異動模式
+          {{ isIssueMode ? "批次領料模式" : "批次異動模式" }}
         </span>
       </div>
 
@@ -463,11 +483,11 @@
 
 
     <!-- Footer -->
-    <template #footer>
+<template #footer="{ close }">
 
       <button
         type="button"
-        @click="emit('close')"
+         @click="close"
         class="btn-secondary text-xs"
       >
         取消
@@ -491,7 +511,7 @@
         <Save class="w-4 h-4" />
 
         <span>
-          {{ saving ? "儲存中..." : "儲存全部異動" }}
+          {{ saving ? "儲存中..." : (isIssueMode ? "確認全部領料" : "儲存全部異動") }}
         </span>
       </button>
 
@@ -500,7 +520,7 @@
   </ModalWrapper>
 </template>
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import { ClipboardList, Boxes, Plus, Trash2, Save } from "lucide-vue-next";
 
 import ModalWrapper from "../子元件/ModalWrapper.vue";
@@ -511,9 +531,17 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+
+  // 傳入 MANUAL_USE 時，Modal 會變成「領料模式」
+  fixedAction: {
+    type: String,
+    default: "",
+  },
 });
 
 const emit = defineEmits(["close", "success"]);
+
+const isIssueMode = computed(() => props.fixedAction === "MANUAL_USE");
 
 const materials = ref([]);
 const adjustmentItems = ref([]);
@@ -566,7 +594,7 @@ const addAdjustmentRow = () => {
   adjustmentItems.value.push({
     materialId: "",
     inventoryId: "",
-    action: "WASTE",
+    action: props.fixedAction || "WASTE",
     quantity: 1,
     unit: "",
     note: "",
@@ -660,7 +688,7 @@ if (duplicateItem) {
   return
 }
   if (adjustmentItems.value.length === 0) {
-    errorMessage.value = "請至少加入一筆庫存異動";
+    errorMessage.value = isIssueMode.value ? "請至少加入一筆領料項目" : "請至少加入一筆庫存異動";
     return;
   }
 
@@ -669,7 +697,9 @@ if (duplicateItem) {
   );
 
   if (invalidItem) {
-    errorMessage.value = "請確認每一筆都有選擇批次、異動類型，且數量必須大於 0";
+    errorMessage.value = isIssueMode.value
+      ? "請確認每一筆都有選擇庫存批次，且領料數量必須大於 0"
+      : "請確認每一筆都有選擇批次、異動類型，且數量必須大於 0";
     return;
   }
 

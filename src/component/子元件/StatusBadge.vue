@@ -1,15 +1,15 @@
 <template>
   <span
-    class="
-      inline-flex
-      items-center
-      space-x-1.5
-      px-2.5
-      py-0.5
-      rounded-full
-      text-xs
-      font-semibold
-    "
+  class="
+    inline-flex
+    items-center
+    space-x-1.5
+    px-3
+    py-1
+    rounded-full
+    text-[length:var(--font-body)]
+    font-semibold
+  "
     :class="statusClasses"
   >
 
@@ -66,10 +66,10 @@ const statusClasses = computed(() => {
     case 'normal':
     case 'completed':
       return `
-        bg-[var(--primary)]/15
-        text-[var(--primary)]
+        bg-[var(--good-container)]/15
+        text-[var(--good-container)]
         border
-        border-[var(--primary)]/30
+        border-[var(--good-container)]/30
       `
 
 
@@ -118,7 +118,7 @@ const dotClasses = computed(() => {
     case 'active':
     case 'normal':
     case 'completed':
-      return 'bg-[var(--primary)]'
+      return 'bg-emerald-400'
 
 
     case 'low_stock':
