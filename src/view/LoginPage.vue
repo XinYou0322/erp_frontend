@@ -148,6 +148,18 @@ const handleRegisterSubmit = () => {
     status: "pending",
   });
 
+  notifStore.addNotification(
+    {
+      title: "收到新的帳號申請",
+      message: `${name} 申請成為 ${requestedRole === "manager" ? "營運經理" : requestedRole === "employee" ? "現場員工" : "訪客"}，目前待管理員審核。`,
+      type: "info",
+      category: "security",
+      actionLabel: "前往權限管理",
+      actionRoute: "/permissions",
+    },
+    true,
+  );
+
   uiStore.showToast(
     "帳號申請已送出，系統已記錄申請資料並自動建立臨時測試帳號。",
   );

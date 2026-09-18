@@ -7,26 +7,15 @@
     :icon="PackagePlus"
     @close="emit('close')"
   >
-
     <form
       id="add-material-form"
       @submit.prevent="handleSubmit"
       class="space-y-4"
     >
-
       <!-- 名稱 / 代碼 -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
         <div>
-          <label
-            class="
-              block
-              font-bold
-              text-[var(--on-surface)]
-              text-xs
-              mb-1
-            "
-          >
+          <label class="block font-bold text-[var(--on-surface)] text-xs mb-1">
             原物料名稱
             <span class="text-[var(--error)]">*</span>
           </label>
@@ -40,17 +29,8 @@
           />
         </div>
 
-
         <div>
-          <label
-            class="
-              block
-              font-bold
-              text-[var(--on-surface)]
-              text-xs
-              mb-1
-            "
-          >
+          <label class="block font-bold text-[var(--on-surface)] text-xs mb-1">
             物料代碼
             <span class="text-[var(--error)]">*</span>
           </label>
@@ -63,31 +43,16 @@
             placeholder="例如：TEA-001"
           />
         </div>
-
       </div>
-
 
       <!-- 單位 -->
       <div>
-
-        <label
-          class="
-            block
-            font-bold
-            text-[var(--on-surface)]
-            text-xs
-            mb-1
-          "
-        >
+        <label class="block font-bold text-[var(--on-surface)] text-xs mb-1">
           計量單位
           <span class="text-[var(--error)]">*</span>
         </label>
 
-        <select
-          v-model="unit"
-          required
-          class="input-field"
-        >
+        <select v-model="unit" required class="input-field">
           <option value="kg">公斤 (kg)</option>
           <option value="g">公克 (g)</option>
           <option value="L">公升 (L)</option>
@@ -99,59 +64,30 @@
           <option value="箱">箱</option>
           <option value="支">支</option>
         </select>
-
       </div>
-
 
       <!-- 安全庫存 / 成本 -->
       <div
-        class="
-          p-3.5
-          rounded-xl
-          bg-[var(--surface-container-high)]
-          border
-          border-[var(--outline)]
-          space-y-3
-        "
+        class="p-3.5 rounded-xl bg-[var(--surface-container-high)] border border-[var(--outline)] space-y-3"
       >
-
         <div
-          class="
-            flex
-            items-center
-            space-x-1.5
-            text-xs
-            font-bold
-            text-[var(--primary)]
-          "
+          class="flex items-center space-x-1.5 text-xs font-bold text-[var(--primary)]"
         >
           <Layers class="w-4 h-4" />
 
-          <span>
-            庫存基準與成本
-          </span>
+          <span> 庫存基準與成本 </span>
         </div>
 
-
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
           <!-- 安全庫存 -->
           <div>
-
             <label
-              class="
-                block
-                font-semibold
-                text-[var(--on-surface-variant)]
-                text-xs
-                mb-1
-              "
+              class="block font-semibold text-[var(--on-surface-variant)] text-xs mb-1"
             >
               安全庫存
             </label>
 
             <div class="relative">
-
               <input
                 v-model.number="safetyStock"
                 type="number"
@@ -162,40 +98,22 @@
               />
 
               <span
-                class="
-                  absolute
-                  right-3
-                  top-1/2
-                  -translate-y-1/2
-                  text-[var(--on-surface-variant)]
-                  text-xs
-                "
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] text-xs"
               >
                 {{ unit }}
               </span>
-
             </div>
-
           </div>
-
 
           <!-- 成本 -->
           <div>
-
             <label
-              class="
-                block
-                font-semibold
-                text-[var(--on-surface-variant)]
-                text-xs
-                mb-1
-              "
+              class="block font-semibold text-[var(--on-surface-variant)] text-xs mb-1"
             >
               原物料成本 (NT$)
             </label>
 
             <div class="relative">
-
               <input
                 v-model.number="cost"
                 type="number"
@@ -206,31 +124,17 @@
               />
 
               <span
-                class="
-                  absolute
-                  right-3
-                  top-1/2
-                  -translate-y-1/2
-                  text-[var(--on-surface-variant)]
-                  text-xs
-                "
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] text-xs"
               >
                 /{{ unit }}
               </span>
-
             </div>
-
           </div>
-
         </div>
-
       </div>
-
     </form>
 
-
     <template #footer>
-
       <button
         type="button"
         @click="emit('close')"
@@ -239,96 +143,62 @@
         取消
       </button>
 
-
       <button
         type="submit"
         form="add-material-form"
-        class="
-          btn-primary
-          text-xs
-          flex
-          items-center
-          space-x-1.5
-        "
+        class="btn-primary text-xs flex items-center space-x-1.5"
       >
-
         <Check class="w-4 h-4" />
 
-        <span>
-          確認建立原物料
-        </span>
-
+        <span> 確認建立原物料 </span>
       </button>
-
     </template>
-
   </ModalWrapper>
 </template>
 
-
 <script setup>
+import { ref, watch } from "vue";
 
-import {
-  ref,
-  watch
-} from 'vue'
+import { PackagePlus, Check, Layers } from "lucide-vue-next";
 
-import {
-  PackagePlus,
-  Check,
-  Layers
-} from 'lucide-vue-next'
+import ModalWrapper from "../子元件/ModalWrapper.vue";
+import { useNotificationStore } from "@/stores/notification.store";
 
-import ModalWrapper from '../子元件/ModalWrapper.vue'
+import httpClient from "@/service/httpClient";
 
-import httpClient
-  from '@/service/httpClient'
-
+const notifStore = useNotificationStore();
 
 const props = defineProps({
   isOpen: {
     type: Boolean,
-    required: true
-  }
-})
+    required: true,
+  },
+});
 
+const emit = defineEmits(["close", "success"]);
 
-const emit = defineEmits([
-  'close',
-  'success'
-])
-
-
-const name = ref('')
-const code = ref('')
-const unit = ref('kg')
-const cost = ref(0)
-const safetyStock = ref(0)
-
+const name = ref("");
+const code = ref("");
+const unit = ref("kg");
+const cost = ref(0);
+const safetyStock = ref(0);
 
 watch(
   () => props.isOpen,
 
   (isOpen) => {
-
     if (isOpen) {
-
-      name.value = ''
-      code.value = ''
-      unit.value = 'kg'
-      cost.value = 0
-      safetyStock.value = 0
-
+      name.value = "";
+      code.value = "";
+      unit.value = "kg";
+      cost.value = 0;
+      safetyStock.value = 0;
     }
-
-  }
-)
-
+  },
+);
 
 const handleSubmit = () => {
-
   const data = {
-
     code: code.value.trim(),
 
     name: name.value.trim(),
@@ -337,43 +207,36 @@ const handleSubmit = () => {
 
     cost: Number(cost.value),
 
-    safetyStock:
-      Number(safetyStock.value)
+    safetyStock: Number(safetyStock.value),
+  };
 
-  }
-
-
-  console.log(
-    '準備新增的原物料：',
-    data
-  )
-
+  console.log("準備新增的原物料：", data);
 
   httpClient
-    .post('/api/material/add', data)
+    .post("/api/material/add", data)
 
     .then((response) => {
+      console.log("新增原物料成功：", response.data);
 
-      console.log(
-        '新增原物料成功：',
-        response.data
-      )
+      notifStore.addNotification(
+        {
+          title: "原物料新增成功",
+          message: `${data.name}（${data.code}）已新增至原物料主檔，庫存警示與採購提醒將同步更新。`,
+          type: "success",
+          category: "inventory",
+          actionLabel: "前往庫存管理",
+          actionRoute: "/material",
+        },
+        true,
+      );
 
-      emit('success')
+      emit("success");
 
-      emit('close')
-
+      emit("close");
     })
 
     .catch((error) => {
-
-      console.error(
-        '新增原物料失敗：',
-        error
-      )
-
-    })
-
-}
-
+      console.error("新增原物料失敗：", error);
+    });
+};
 </script>

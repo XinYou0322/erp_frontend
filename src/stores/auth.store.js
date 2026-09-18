@@ -549,7 +549,12 @@ export const useAuthStore = defineStore("auth", () => {
     if (idx === -1) return;
 
     const nextStatus = normalizeUserStatus(status);
+    const currentName = users.value[idx].name || "";
+
     users.value[idx].status = nextStatus;
+    if (nextStatus === "approved") {
+      users.value[idx].name = currentName.replace(/\s*\(待核准\)$/, "");
+    }
     StorageService.set("system_users", users.value);
 
     if (nextStatus === "rejected") {

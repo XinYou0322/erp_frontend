@@ -154,16 +154,12 @@ const filteredUsers = computed(() => {
 });
 
 const approvalQueue = computed(() =>
-  authStore.users.filter((user: any) =>
-    ["pending", "approved", "rejected"].includes(normalizeStatus(user.status)),
-  ),
-);
-
-const pendingApplications = computed(() =>
-  approvalQueue.value.filter(
+  authStore.users.filter(
     (user: any) => normalizeStatus(user.status) === "pending",
   ),
 );
+
+const pendingApplications = computed(() => approvalQueue.value);
 
 const getUserStatusMeta = (
   status: string | undefined,
