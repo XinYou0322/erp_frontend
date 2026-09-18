@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed } from "vue";
 import { useAuthStore } from "../stores/auth.store";
 import { useUIStore } from "../stores/ui.store";
 import { UserProfile, UserRole, PermissionKey } from "../types";
 import { PERMISSION_MODULES } from "../data/permissionData";
-import { DEFAULT_AVATARS, normalizeAvatarUrl } from "../data/defaultAvatars";
 import BaseCard from "../component/子元件/BaseCard.vue";
 import BaseBadge from "../component/子元件/BaseBadge.vue";
 import BaseModal from "../component/子元件/BaseModal.vue";
 import BaseInput from "../component/子元件/BaseInput.vue";
+import { onMounted } from "vue";
 
 const authStore = useAuthStore();
 const uiStore = useUIStore();
 
-// Tab state: 'matrix' | 'users' | 'approval' | 'audit-logs'
-const activeTab = ref<"matrix" | "users" | "approval" | "audit-logs">("matrix");
+// Tab state: 'matrix' | 'users' | 'audit-logs'
+const activeTab = ref<"matrix" | "users" | "audit-logs">("matrix");
 
 // Role selector for matrix view
 const selectedRoleForMatrix = ref<UserRole>("manager");
@@ -55,54 +55,6 @@ const availableRoles: {
   },
 ];
 
-const currentRoleKey = computed(() => {
-  return authStore.normalizedRole || authStore.currentUser?.role || "guest";
-});
-
-const canManageAllRoles = computed(() => {
-  return authStore.isAdmin;
-});
-
-const canViewApprovalPage = computed(() => {
-  return authStore.isAdmin;
-});
-
-const isPermissionMatrixEditable = computed(() => canManageAllRoles.value);
-
-const visibleRolesForCurrentUser = computed(() => {
-  if (canManageAllRoles.value) return availableRoles;
-  return availableRoles.filter((role) => role.key === currentRoleKey.value);
-});
-
-const visiblePermissionModules = computed(() => {
-  const allowedSet = new Set(
-    canManageAllRoles.value ? [] : authStore.userPermissions || [],
-  );
-
-  return PERMISSION_MODULES.map((module) => ({
-    ...module,
-    permissions: module.permissions.filter(
-      (perm) => canManageAllRoles.value || allowedSet.has(perm.key),
-    ),
-  })).filter(
-    (module) => canManageAllRoles.value || module.permissions.length > 0,
-  );
-});
-
-watch(
-  () => currentRoleKey.value,
-  (role) => {
-    if (
-      !visibleRolesForCurrentUser.value.some(
-        (r) => r.key === selectedRoleForMatrix.value,
-      )
-    ) {
-      selectedRoleForMatrix.value = role;
-    }
-  },
-  { immediate: true },
-);
-
 // Users filtering
 const userSearchTerm = ref("");
 const selectedDepartmentFilter = ref("全部");
@@ -114,25 +66,6 @@ const departments = [
   "門市收銀課",
   "外部審計顧問",
 ];
-
-type BadgeVariant = "success" | "warning" | "danger" | "info" | "neutral";
-
-const normalizeStatus = (status: string | undefined): string => {
-  const value = String(status || "approved").toLowerCase();
-  if (
-    [
-      "pending",
-      "approved",
-      "rejected",
-      "active",
-      "inactive",
-      "locked",
-    ].includes(value)
-  ) {
-    return value;
-  }
-  return "approved";
-};
 
 const filteredUsers = computed(() => {
   let list = [...authStore.users];
@@ -146,38 +79,11 @@ const filteredUsers = computed(() => {
         u.name.toLowerCase().includes(term) ||
         u.email.toLowerCase().includes(term) ||
         u.roleName.toLowerCase().includes(term) ||
-        u.department.toLowerCase().includes(term) ||
-        (u.reason || "").toLowerCase().includes(term),
+        u.department.toLowerCase().includes(term),
     );
   }
   return list;
 });
-
-const approvalQueue = computed(() =>
-  authStore.users.filter(
-    (user: any) => normalizeStatus(user.status) === "pending",
-  ),
-);
-
-const pendingApplications = computed(() => approvalQueue.value);
-
-const getUserStatusMeta = (
-  status: string | undefined,
-): { label: string; variant: BadgeVariant } => {
-  const normalized = normalizeStatus(status);
-  switch (normalized) {
-    case "pending":
-      return { label: "待審核", variant: "warning" };
-    case "approved":
-      return { label: "已核准", variant: "success" };
-    case "rejected":
-      return { label: "已駁回", variant: "danger" };
-    case "inactive":
-      return { label: "已停用", variant: "danger" };
-    default:
-      return { label: "啟用中", variant: "success" };
-  }
-};
 
 const activeUsersCount = computed(() => {
   return authStore.users.filter((u: any) => u.status !== "inactive").length;
@@ -207,47 +113,12 @@ const userForm = ref<{
   avatar: "",
 });
 
-const defaultAvatars = DEFAULT_AVATARS;
-
-const handleAvatarFileChange = async (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-
-  if (!file) return;
-
-  if (!file.type.startsWith("image/")) {
-    uiStore.showToast("請選擇圖片檔案", "error");
-    target.value = "";
-    return;
-  }
-
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const uploadRes = await fetch(
-      `${import.meta.env.VITE_AXIOS_HTTP_BASEURL || "http://localhost:8080"}/api/users/upload-avatar`,
-      {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      },
-    );
-
-    const uploadData = await uploadRes.json();
-
-    if (!uploadRes.ok) {
-      throw new Error(uploadData?.message || "圖片上傳失敗");
-    }
-
-    userForm.value.avatar = uploadData.avatarUrl;
-    uiStore.showToast("大頭照已上傳並儲存成功", "success");
-    target.value = "";
-  } catch (error: any) {
-    uiStore.showToast(error?.message || "圖片上傳失敗", "error");
-    target.value = "";
-  }
-};
+const defaultAvatars = [
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuD-YzW0n-kW7Jp0sqt1EFEZfAo-iYKA7Z7HI32vcbhOevRNgGuidWgTpPt8RC7YcCWAgedfowVIjtEQ3z7zsOpoFuXqXb5V-qxLZbY8RyQiWpMh9J-mIH6VtXpK7HM7f1PwgGCyiW6lI0_zAunLz59q9dDV5r06WNzGK8L3BCKxee2MCrLK4Yzz2H8LT64kb1v7DCQ_UM1ncnls00fPcx5Kt7tYJTzu6fufu3_fjHz5Ze7icOAJ0Q",
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuBoxnhfXr9EK0AufrkNkqOJ9ftN5hC4UHO6TsyiQtskBb1ci5MhMkJt57C0DiN0xEcNjwCgXrXqRz06MxoC1V1cOOpf8ujJHhFNWIMQ5oviZUnJZMhoY7nczJJvmNu1ZDsUbg00Mu8ia-fbhLRxHEUZsyQ9xQr2Cj-31w6ZGnVsUUfG8cMhtVRu--_dUGr7yNBjhOD1gwgDQhymS8uQqiiCZixEhW3uSBcuv-wKdlnGHRVPkRxAPQ",
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuDOS_omgOzqObIL2YMC5ZVlxsuevTRI_ZUuOMJH0op7wlqS9g_dzF72SeX3rjhw2v_PrCy6ZPFOM6rfy5aqri8Uf9cqjTdDXZjnqp8JXH-y_llaolNjgGBlm-1eT4JULt7wQ4ofMO_L3-7cduHivskEaSNEdAGXH1haef803_syVgDoXn5ZlCHzdVEDTGwA0VuRc3loQ4jRCI1TSvUQ7xPGutW7vAf_NiW-UYu_ufgfh3fivP9cmA",
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuAPSzRjOVgMOfqYtdalxwMql8EMJ5XUl4edCD4WRoM0JOH6kNYGykoTj68TsWZ7S0coZa5mqtzzAvk-7KVvWxKipQaIrVt8DIHhs-ovm13kLY-T31xn95nORxIK-gfKUnb5XCGJTqc8REKUyctrzoJAn44wI9rxRT9WDSbRg65dRCBa20ep0CMwI7nFESqsh-lH0fWBuxag5aWaj2ihOCAjCsGHmFF4ED8H-2aOubZVrC-mIkdWPA",
+];
 
 onMounted(() => {
   authStore.fetchUsersFromApi();
@@ -277,19 +148,13 @@ const handleSaveNewUser = async () => {
   let targetRoleId = 1;
   if (authStore.serverRoles && authStore.serverRoles.length > 0) {
     if (userForm.value.role === "admin") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("店長"),
-      ) as any;
+      const r = authStore.serverRoles.find((x: any) => (x.roleName || x.name)?.includes("店長")) as any;
       if (r) targetRoleId = r.id;
     } else if (userForm.value.role === "manager") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("經理"),
-      ) as any;
+      const r = authStore.serverRoles.find((x: any) => (x.roleName || x.name)?.includes("經理")) as any;
       if (r) targetRoleId = r.id;
     } else if (userForm.value.role === "employee") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("正職"),
-      ) as any;
+      const r = authStore.serverRoles.find((x: any) => (x.roleName || x.name)?.includes("正職")) as any;
       if (r) targetRoleId = r.id;
     }
   }
@@ -328,19 +193,13 @@ const handleSaveEditUser = async () => {
   let targetRoleId = 1;
   if (authStore.serverRoles && authStore.serverRoles.length > 0) {
     if (userForm.value.role === "admin") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("店長"),
-      ) as any;
+      const r = authStore.serverRoles.find((x: any) => (x.roleName || x.name)?.includes("店長")) as any;
       if (r) targetRoleId = r.id;
     } else if (userForm.value.role === "manager") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("經理"),
-      ) as any;
+      const r = authStore.serverRoles.find((x: any) => (x.roleName || x.name)?.includes("經理")) as any;
       if (r) targetRoleId = r.id;
     } else if (userForm.value.role === "employee") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("正職"),
-      ) as any;
+      const r = authStore.serverRoles.find((x: any) => (x.roleName || x.name)?.includes("正職")) as any;
       if (r) targetRoleId = r.id;
     }
   }
@@ -356,24 +215,6 @@ const handleSaveEditUser = async () => {
   });
   uiStore.showToast(`已更新「${userForm.value.name}」使用者資料！`);
   isEditUserModalOpen.value = false;
-};
-
-const handleApproveRequest = (user: any) => {
-  if (!canViewApprovalPage.value) {
-    uiStore.showToast("只有管理員可審核帳號申請。", "warning");
-    return;
-  }
-  authStore.updateUserStatus(user.id, "approved");
-  uiStore.showToast(`已核准申請：${user.name}`);
-};
-
-const handleRejectRequest = (user: any) => {
-  if (!canViewApprovalPage.value) {
-    uiStore.showToast("只有管理員可審核帳號申請。", "warning");
-    return;
-  }
-  authStore.updateUserStatus(user.id, "rejected");
-  uiStore.showToast(`已駁回申請：${user.name}`, "warning");
 };
 
 const handleToggleStatus = async (user: any) => {
@@ -409,30 +250,15 @@ const isPermissionActive = (role: UserRole, key: PermissionKey) => {
 };
 
 const handleTogglePermission = (role: UserRole, key: PermissionKey) => {
-  if (!isPermissionMatrixEditable.value) {
-    uiStore.showToast(
-      "目前權限為唯讀模式，非最高權限不可更動任何權限設定。",
-      "warning",
-    );
-    return;
-  }
-
   if (role === "admin") {
     uiStore.showToast("系統管理員擁有完整根層權限，不可單獨取消！", "warning");
     return;
   }
-
   authStore.toggleRolePermission(role, key);
   uiStore.showToast(`已更新【${role}】之權限設定！`);
 };
 
 const handleResetDefaultPermissions = () => {
-  if (!canManageAllRoles.value) {
-    uiStore.showToast("只有最高權限角色可重設全系統預設權限。", "warning");
-    isResetConfirmModalOpen.value = false;
-    return;
-  }
-
   authStore.resetPermissionsToDefault();
   uiStore.showToast("已將全系統所有角色之權限矩陣復原至出廠預設值！");
   isResetConfirmModalOpen.value = false;
@@ -581,7 +407,6 @@ const handleResetDefaultPermissions = () => {
       </button>
 
       <button
-        v-if="canManageAllRoles"
         @click="activeTab = 'users'"
         class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
         :class="
@@ -594,20 +419,6 @@ const handleResetDefaultPermissions = () => {
           >manage_accounts</span
         >
         <span>使用者帳號維護清單 ({{ authStore.users.length }})</span>
-      </button>
-
-      <button
-        v-if="canViewApprovalPage"
-        @click="activeTab = 'approval'"
-        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
-        :class="
-          activeTab === 'approval'
-            ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm'
-            : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
-        "
-      >
-        <span class="material-symbols-outlined text-[18px]">fact_check</span>
-        <span>帳號審核 ({{ pendingApplications.length }})</span>
       </button>
 
       <button
@@ -629,7 +440,7 @@ const handleResetDefaultPermissions = () => {
       <!-- Role Switcher Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div
-          v-for="role in visibleRolesForCurrentUser"
+          v-for="role in availableRoles"
           :key="role.key"
           @click="selectedRoleForMatrix = role.key"
           class="p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-2"
@@ -685,37 +496,16 @@ const handleResetDefaultPermissions = () => {
             </div>
             <div class="text-xs text-slate-400 flex items-center gap-2">
               <span
-                class="w-2.5 h-2.5 rounded-full"
-                :class="
-                  isPermissionMatrixEditable
-                    ? 'bg-emerald-400 animate-pulse'
-                    : 'bg-slate-500'
-                "
+                class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"
               ></span>
-              <span>
-                {{
-                  isPermissionMatrixEditable
-                    ? "即時同步儲存至本機快取"
-                    : "唯讀模式：非最高權限不可更動權限"
-                }}
-              </span>
+              <span>即時同步儲存至本機快取</span>
             </div>
           </div>
         </template>
 
         <div class="space-y-6 text-xs">
           <div
-            v-if="!canManageAllRoles"
-            class="rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-[11px] text-emerald-300"
-          >
-            目前僅顯示您「{{
-              availableRoles.find((role) => role.key === currentRoleKey)
-                ?.name || "目前角色"
-            }}」可使用的權限，其他角色設定已隱藏。
-          </div>
-
-          <div
-            v-for="module in visiblePermissionModules"
+            v-for="module in PERMISSION_MODULES"
             :key="module.id"
             class="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-3"
           >
@@ -748,14 +538,11 @@ const handleResetDefaultPermissions = () => {
                 v-for="perm in module.permissions"
                 :key="perm.key"
                 @click="handleTogglePermission(selectedRoleForMatrix, perm.key)"
-                class="p-3 rounded-xl border transition-all flex items-start justify-between gap-3 group"
+                class="p-3 rounded-xl border transition-all flex items-start justify-between gap-3 cursor-pointer group"
                 :class="
-                  isPermissionMatrixEditable
-                    ? 'cursor-pointer ' +
-                      (isPermissionActive(selectedRoleForMatrix, perm.key)
-                        ? 'bg-slate-900/90 border-emerald-500/40 text-white'
-                        : 'bg-slate-950/60 border-slate-800/70 text-slate-400 hover:border-slate-700')
-                    : 'cursor-not-allowed bg-slate-950/60 border-slate-800/70 text-slate-400'
+                  isPermissionActive(selectedRoleForMatrix, perm.key)
+                    ? 'bg-slate-900/90 border-emerald-500/40 text-white'
+                    : 'bg-slate-950/60 border-slate-800/70 text-slate-400 hover:border-slate-700'
                 "
               >
                 <div class="space-y-0.5 min-w-0">
@@ -803,126 +590,8 @@ const handleResetDefaultPermissions = () => {
       </BaseCard>
     </div>
 
-    <!-- TAB 2: Account Approval Queue -->
-    <div
-      v-else-if="activeTab === 'approval' && canViewApprovalPage"
-      class="space-y-4"
-    >
-      <BaseCard>
-        <template #header>
-          <div class="flex items-center justify-between gap-3 w-full">
-            <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-amber-400 text-[20px]"
-                >fact_check</span
-              >
-              <span class="font-bold text-sm text-white">企業帳號申請審核</span>
-            </div>
-            <BaseBadge variant="warning" size="sm"
-              >{{ pendingApplications.length }} 件待審核</BaseBadge
-            >
-          </div>
-        </template>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
-            <thead>
-              <tr
-                class="border-b border-slate-800 text-slate-400 font-semibold"
-              >
-                <th class="pb-3 px-3">申請人</th>
-                <th class="pb-3 px-3">部門</th>
-                <th class="pb-3 px-3">欲申請角色</th>
-                <th class="pb-3 px-3">申請理由</th>
-                <th class="pb-3 px-3">狀態</th>
-                <th class="pb-3 px-3 text-right">審核操作</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-800/60 font-sans">
-              <tr
-                v-for="user in approvalQueue"
-                :key="user.id"
-                class="hover:bg-slate-900/60 transition-colors"
-              >
-                <td class="py-3 px-3">
-                  <div class="flex items-center gap-2.5">
-                    <img
-                      :src="
-                        normalizeAvatarUrl(user.avatar || defaultAvatars[0])
-                      "
-                      :alt="user.name"
-                      class="w-9 h-9 rounded-xl object-cover border border-slate-700"
-                      @error="
-                        ($event.target as HTMLImageElement).src =
-                          defaultAvatars[0]
-                      "
-                    />
-                    <div>
-                      <div class="font-bold text-white">{{ user.name }}</div>
-                      <div class="text-[10px] text-slate-400 font-data-mono">
-                        {{ user.email }}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td class="py-3 px-3 text-slate-300">
-                  {{ user.department || "未填寫" }}
-                </td>
-                <td class="py-3 px-3">
-                  <BaseBadge
-                    :variant="
-                      user.role === 'manager'
-                        ? 'info'
-                        : user.role === 'employee'
-                          ? 'warning'
-                          : 'neutral'
-                    "
-                    size="sm"
-                  >
-                    {{ user.roleName || user.role }}
-                  </BaseBadge>
-                </td>
-                <td class="py-3 px-3 text-slate-300 max-w-md">
-                  <div class="line-clamp-3">
-                    {{ user.reason || "未提供申請理由" }}
-                  </div>
-                </td>
-                <td class="py-3 px-3">
-                  <BaseBadge
-                    :variant="getUserStatusMeta(user.status).variant"
-                    size="sm"
-                    dot
-                  >
-                    {{ getUserStatusMeta(user.status).label }}
-                  </BaseBadge>
-                </td>
-                <td class="py-3 px-3 text-right">
-                  <div class="inline-flex items-center gap-1.5">
-                    <button
-                      @click="handleApproveRequest(user)"
-                      class="px-2 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-semibold transition-colors cursor-pointer"
-                    >
-                      核准
-                    </button>
-                    <button
-                      @click="handleRejectRequest(user)"
-                      class="px-2 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold transition-colors cursor-pointer"
-                    >
-                      駁回
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </BaseCard>
-    </div>
-
     <!-- TAB 2: User Accounts Maintenance View -->
-    <div
-      v-else-if="canManageAllRoles && activeTab === 'users'"
-      class="space-y-4"
-    >
+    <div v-else-if="activeTab === 'users'" class="space-y-4">
       <BaseCard>
         <template #header>
           <div class="flex flex-wrap items-center justify-between gap-3 w-full">
@@ -979,7 +648,6 @@ const handleResetDefaultPermissions = () => {
                 <th class="pb-3 px-3">使用者姓名與頭像</th>
                 <th class="pb-3 px-3">電子郵件 (登入帳號)</th>
                 <th class="pb-3 px-3">所屬部門</th>
-                <th class="pb-3 px-3">申請理由</th>
                 <th class="pb-3 px-3">系統指派角色</th>
                 <th class="pb-3 px-3">帳號狀態</th>
                 <th class="pb-3 px-3">最後登入時間</th>
@@ -999,15 +667,9 @@ const handleResetDefaultPermissions = () => {
                 <td class="py-3 px-3">
                   <div class="flex items-center gap-2.5">
                     <img
-                      :src="
-                        normalizeAvatarUrl(user.avatar || defaultAvatars[0])
-                      "
+                      :src="user.avatar"
                       :alt="user.name"
                       class="w-8 h-8 rounded-xl object-cover border border-slate-700 shrink-0"
-                      @error="
-                        ($event.target as HTMLImageElement).src =
-                          defaultAvatars[0]
-                      "
                     />
                     <div>
                       <div class="flex items-center gap-1.5">
@@ -1038,11 +700,6 @@ const handleResetDefaultPermissions = () => {
                   {{ user.department }}
                 </td>
 
-                <!-- Request Reason -->
-                <td class="py-3 px-3 text-slate-300 max-w-[180px]">
-                  <div class="line-clamp-2">{{ user.reason || "—" }}</div>
-                </td>
-
                 <!-- Role Badge -->
                 <td class="py-3 px-3">
                   <BaseBadge
@@ -1064,11 +721,11 @@ const handleResetDefaultPermissions = () => {
                 <!-- Status Badge -->
                 <td class="py-3 px-3">
                   <BaseBadge
-                    :variant="getUserStatusMeta(user.status).variant"
+                    :variant="user.status === 'inactive' ? 'danger' : 'success'"
                     dot
                     size="sm"
                   >
-                    {{ getUserStatusMeta(user.status).label }}
+                    {{ user.status === "inactive" ? "已停用" : "啟用中" }}
                   </BaseBadge>
                 </td>
 
@@ -1325,44 +982,21 @@ const handleResetDefaultPermissions = () => {
 
         <div>
           <label class="block text-slate-400 mb-1.5 font-semibold"
-            >大頭照設定</label
+            >選擇預設大頭照</label
           >
-          <div class="space-y-3">
-            <div class="flex items-center gap-3">
-              <img
-                :src="userForm.avatar || defaultAvatars[0]"
-                class="w-14 h-14 rounded-xl object-cover border-2 border-slate-800"
-              />
-              <label
-                class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-700 bg-slate-900 text-slate-200 font-semibold cursor-pointer hover:bg-slate-800 transition-colors"
-              >
-                <input
-                  type="file"
-                  accept="image/*"
-                  class="hidden"
-                  @change="handleAvatarFileChange"
-                />
-                <span class="material-symbols-outlined text-[18px]"
-                  >upload_file</span
-                >
-                <span>從電腦選擇</span>
-              </label>
-            </div>
-
-            <div class="flex items-center gap-3">
-              <img
-                v-for="(av, idx) in defaultAvatars"
-                :key="idx"
-                :src="av"
-                @click="userForm.avatar = av"
-                class="w-11 h-11 rounded-xl object-cover border-2 transition-all cursor-pointer"
-                :class="
-                  userForm.avatar === av
-                    ? 'border-emerald-500 scale-105 shadow-md shadow-emerald-950/40'
-                    : 'border-slate-800 hover:border-slate-600'
-                "
-              />
-            </div>
+          <div class="flex items-center gap-3">
+            <img
+              v-for="(av, idx) in defaultAvatars"
+              :key="idx"
+              :src="av"
+              @click="userForm.avatar = av"
+              class="w-11 h-11 rounded-xl object-cover border-2 transition-all cursor-pointer"
+              :class="
+                userForm.avatar === av
+                  ? 'border-emerald-500 scale-105 shadow-md shadow-emerald-950/40'
+                  : 'border-slate-800 hover:border-slate-600'
+              "
+            />
           </div>
         </div>
 
@@ -1471,34 +1105,6 @@ const handleResetDefaultPermissions = () => {
               <option value="門市收銀課">門市收銀課</option>
               <option value="外部審計顧問">外部審計顧問</option>
             </select>
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-slate-400 mb-1.5 font-semibold"
-            >大頭照設定</label
-          >
-          <div class="space-y-3">
-            <div class="flex items-center gap-3">
-              <img
-                :src="userForm.avatar || defaultAvatars[0]"
-                class="w-14 h-14 rounded-xl object-cover border-2 border-slate-800"
-              />
-              <label
-                class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-700 bg-slate-900 text-slate-200 font-semibold cursor-pointer hover:bg-slate-800 transition-colors"
-              >
-                <input
-                  type="file"
-                  accept="image/*"
-                  class="hidden"
-                  @change="handleAvatarFileChange"
-                />
-                <span class="material-symbols-outlined text-[18px]"
-                  >upload_file</span
-                >
-                <span>從電腦選擇</span>
-              </label>
-            </div>
           </div>
         </div>
 

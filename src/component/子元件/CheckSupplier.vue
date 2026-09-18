@@ -2,76 +2,76 @@
   <Teleport to="body">
     <div
       v-if="visible"
-      class="supplier-modal-backdrop"
+      class="erp-modal-layer erp-modal-layer--supplier"
       @click.self="closeModal"
     >
-      <div class="supplier-modal bento-card shadow-level-2">
+      <div class="erp-modal erp-modal--supplier-detail">
         <!------------------------------------------->
-        <div class="supplier-modal__header">
+        <div class="erp-modal__head erp-modal__head--supplier">
           <div>
-            <p class="supplier-modal__eyebrow">SUPPLIER DETAIL</p>
-            <h2 class="supplier-modal__title">{{ supplier?.name || '供應商詳細資料' }}</h2>
+            <p class="erp-modal__eyebrow">SUPPLIER DETAIL</p>
+            <h2 class="erp-modal__title">{{ supplier?.name || '供應商詳細資料' }}</h2>
           </div>
           <button
             type="button"
-            class="supplier-icon-button supplier-modal__close"
+            class="erp-icon-btn erp-modal__close"
             aria-label="關閉"
             @click="closeModal"
           >×</button>
         </div>
          <!------------------------------------------->
-        <div class="supplier-modal__body">
-          <section class="supplier-detail-section">
-            <div class="supplier-detail-section__header">
+        <div class="erp-modal__body erp-modal__body--supplier">
+          <section class="erp-detail-section">
+            <div class="erp-detail-section__head">
               <span>基本資料</span>
-              <span class="supplier-status" :class="statusClass">{{ supplier?.status || '-' }}</span>
+              <span class="erp-status" :class="statusClass">{{ supplier?.status || '-' }}</span>
             </div>
-            <div class="supplier-detail-grid">
-              <div class="supplier-detail-item">
-                <span class="supplier-detail-item__label">ID</span>
-                <span class="supplier-detail-item__value">{{ supplier?.id ?? '-' }}</span>
+            <div class="erp-detail-grid">
+              <div class="erp-detail-item">
+                <span class="erp-detail-item__label">ID</span>
+                <span class="erp-detail-item__value">{{ supplier?.id ?? '-' }}</span>
               </div>
-              <div class="supplier-detail-item">
-                <span class="supplier-detail-item__label">供應商名稱</span>
-                <span class="supplier-detail-item__value">{{ supplier?.name || '-' }}</span>
+              <div class="erp-detail-item">
+                <span class="erp-detail-item__label">供應商名稱</span>
+                <span class="erp-detail-item__value">{{ supplier?.name || '-' }}</span>
               </div>
-              <div class="supplier-detail-item">
-                <span class="supplier-detail-item__label">電話</span>
-                <span class="supplier-detail-item__value">{{ fullPhone }}</span>
+              <div class="erp-detail-item">
+                <span class="erp-detail-item__label">電話</span>
+                <span class="erp-detail-item__value">{{ fullPhone }}</span>
               </div>
-              <div class="supplier-detail-item">
-                <span class="supplier-detail-item__label">Email</span>
-                <span class="supplier-detail-item__value">{{ supplier?.email || '-' }}</span>
+              <div class="erp-detail-item">
+                <span class="erp-detail-item__label">Email</span>
+                <span class="erp-detail-item__value">{{ supplier?.email || '-' }}</span>
               </div>
-              <div class="supplier-detail-item supplier-detail-item--full">
-                <span class="supplier-detail-item__label">地址</span>
-                <span class="supplier-detail-item__value">{{ supplier?.address || '-' }}</span>
+              <div class="erp-detail-item erp-detail-item--full">
+                <span class="erp-detail-item__label">地址</span>
+                <span class="erp-detail-item__value">{{ supplier?.address || '-' }}</span>
               </div>
             </div>
           </section>
-          <section class="supplier-detail-section">
-            <div class="supplier-detail-section__header">
+          <section class="erp-detail-section">
+            <div class="erp-detail-section__head">
               <span>供應商備註</span>
-              <span class="supplier-count-badge">{{ supplierNotes.length }} 筆</span>
+              <span class="erp-count-badge">{{ supplierNotes.length }} 筆</span>
             </div>
-            <div v-if="supplierNotes.length > 0" class="supplier-note-list">
-              <div v-for="(note, index) in supplierNotes" :key="note.id ?? index" class="supplier-note-card">
-                <div class="supplier-note-card__header">
-                  <div class="supplier-note-card__number">備註 {{ index + 1 }}</div>
-                  <div class="supplier-note-card__time">{{ formatDate(note.createTime || note.createdAt) }}</div>
+            <div v-if="supplierNotes.length > 0" class="erp-note-list">
+              <div v-for="(note, index) in supplierNotes" :key="note.id ?? index" class="erp-note-card">
+                <div class="erp-note-card__head">
+                  <div class="erp-note-card__number">備註 {{ index + 1 }}</div>
+                  <div class="erp-note-card__time">{{ formatDate(note.createTime || note.createdAt) }}</div>
                 </div>
-                <div class="supplier-note-card__content">{{ note.content || '-' }}</div>
-                <div class="supplier-note-card__footer">
-                  <span class="supplier-note-card__label">建立人</span>
+                <div class="erp-note-card__content">{{ note.content || '-' }}</div>
+                <div class="erp-note-card__footer">
+                  <span class="erp-note-card__label">建立人</span>
                   <span>{{ getCreatorName(note) }}</span>
                 </div>
               </div>
             </div>
-            <div v-else class="supplier-empty-state">此供應商目前沒有備註</div>
+            <div v-else class="erp-empty-state">此供應商目前沒有備註</div>
           </section>
         </div>
-        <div class="supplier-modal__footer">
-          <button type="button" class="supplier-btn supplier-btn--primary" @click="closeModal">關閉</button>
+        <div class="erp-modal__footer erp-modal__footer--supplier">
+          <button type="button" class="erp-btn erp-btn--primary" @click="closeModal">關閉</button>
         </div>
       </div>
     </div>

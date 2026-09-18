@@ -1,14 +1,9 @@
-import httpClient from "./httpClient";
-import { useAuthStore } from "@/stores/auth.store";
+import httpClient from './httpClient'
 
 // 對應後端 WorkflowController 的每支端點
 // 專案是 cookie-based 認證（httpClient 已設定 withCredentials），
 // 之後後端若能從 session 取得目前登入者，approve/reject 就不用再自己帶 operator
-//const CURRENT_APPROVER_ID = 2 // TODO: 之後改成從登入狀態取得目前使用者 id
-function getCurrentUserId() {
-  const authStore = useAuthStore();
-  return authStore.currentUser?.id;
-}
+const CURRENT_APPROVER_ID = 2 // TODO: 之後改成從登入狀態取得目前使用者 id
 
 // 後端 WorkflowStatus enum 是大寫（PENDING/APPROVED/REJECTED），
 // 畫面元件（WorkflowStatusBadge 等）用小寫字串判斷樣式，這裡統一轉換一次
@@ -35,13 +30,13 @@ function formatDate(date) {
 }
 
 //只列出待辦事項
-export const getPendingWorkflows = (approverId = getCurrentUserId()) =>
+export const getPendingWorkflows = (approverId = CURRENT_APPROVER_ID) =>
   httpClient
     .get('/api/workflows/pending', { params: { approverId } })
     .then((res) => res.data.map(toTableRow))
 
 //利用id列出所有簽核單
-export const getWorkflows = (approverId = getCurrentUserId()) =>
+export const getWorkflows = (approverId = CURRENT_APPROVER_ID) =>
   httpClient
     .get('/api/workflows', { params: { approverId } })
     .then((res) => res.data.map(toTableRow))
@@ -55,10 +50,10 @@ export const getWorkflowLogs = (id) =>
 
 export const approveWorkflow = (id, remark) =>
   httpClient
-    .patch(`/api/workflows/${id}/approve`, { approverId: getCurrentUserId(), remark })
+    .post(`/api/workflows/${id}/approve`, { operator: CURRENT_APPROVER_ID, remark })
     .then((res) => res.data)
 
 export const rejectWorkflow = (id, remark) =>
   httpClient
-    .patch(`/api/workflows/${id}/reject`, { approverId: getCurrentUserId(), remark })
+    .post(`/api/workflows/${id}/reject`, { operator: CURRENT_APPROVER_ID, remark })
     .then((res) => res.data)

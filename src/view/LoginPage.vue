@@ -7,9 +7,6 @@ import { UserProfile, UserRole } from "../types";
 import BaseBadge from "../component/子元件/BaseBadge.vue";
 import BaseModal from "../component/子元件/BaseModal.vue";
 import { useNotificationStore } from "../stores/notification.store";
-import { getDefaultAvatar } from "../data/defaultAvatars";
-
-const defaultAvatar = getDefaultAvatar();
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -19,7 +16,7 @@ const uiStore = useUIStore();
 const activeLoginMode = ref<"credentials" | "quick-select">("credentials");
 
 // Form state
-const email = ref("store.manager01@example.com");
+const email = ref("store_manager01");
 const password = ref("Test1234!");
 const rememberMe = ref(true);
 const isPasswordVisible = ref(false);
@@ -39,7 +36,6 @@ const registerForm = ref({
   department: "營運與行銷部",
   requestedRole: "manager" as UserRole,
   reason: "",
-  avatar: "",
 });
 
 // Quick Credentials Auto Fill
@@ -85,14 +81,8 @@ const handleFormLogin = async () => {
 const handleSelectUser = (user: UserProfile) => {
   isLoading.value = true;
   setTimeout(() => {
-    const loginResult = authStore.login(user);
+    authStore.login(user);
     isLoading.value = false;
-
-    if (!loginResult.success) {
-      uiStore.showToast(loginResult.message, "warning");
-      return;
-    }
-
     uiStore.showToast(`已登入為：${user.name} (${user.roleName})`);
     router.push("/overview");
   }, 300);
@@ -108,72 +98,24 @@ const handleSendResetLink = () => {
 };
 
 // Register Request
-const handleAvatarPreview = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  if (!file || !file.type.startsWith("image/")) return;
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    registerForm.value.avatar = String(reader.result || "");
-  };
-  reader.readAsDataURL(file);
-};
-
 const handleRegisterSubmit = () => {
-  const {
-    name,
-    email: applicantEmail,
-    department,
-    requestedRole,
-    reason,
-    avatar,
-  } = registerForm.value;
-
-  if (!name || !applicantEmail || !reason.trim()) {
-    uiStore.showToast("請填寫姓名、公司電子郵件與申請理由", "warning");
+  if (!registerForm.value.name || !registerForm.value.email) {
+    uiStore.showToast("請填寫完整申請資料", "warning");
     return;
   }
 
-  const normalizedReason = reason.trim();
-
   authStore.addUser({
-    name: `${name} (待核准)`,
-    email: applicantEmail,
+    name: `${registerForm.value.name} (待核准)`,
+    email: registerForm.value.email,
     password: "user123",
-    role: requestedRole,
-    department,
-    reason: normalizedReason,
-    avatar: avatar || "",
-    status: "pending",
+    role: registerForm.value.requestedRole,
+    department: registerForm.value.department,
   });
 
-  notifStore.addNotification(
-    {
-      title: "收到新的帳號申請",
-      message: `${name} 申請成為 ${requestedRole === "manager" ? "營運經理" : requestedRole === "employee" ? "現場員工" : "訪客"}，目前待管理員審核。`,
-      type: "info",
-      category: "security",
-      actionLabel: "前往權限管理",
-      actionRoute: "/permissions",
-    },
-    true,
-  );
-
-  uiStore.showToast(
-    "帳號申請已送出，系統已記錄申請資料並自動建立臨時測試帳號。",
-  );
+  uiStore.showToast("帳號申請已送出，系統管理員已自動核發臨時測試帳號！");
   isRegisterModalOpen.value = false;
-  email.value = applicantEmail;
+  email.value = registerForm.value.email;
   password.value = "user123";
-  registerForm.value = {
-    name: "",
-    email: "",
-    department: "營運與行銷部",
-    requestedRole: "manager" as UserRole,
-    reason: "",
-    avatar: "",
-  };
 };
 </script>
 
@@ -660,45 +602,6 @@ const handleRegisterSubmit = () => {
             required
             class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-data-mono focus:outline-hidden focus:border-emerald-500"
           />
-        </div>
-
-        <div>
-          <label class="block text-slate-400 mb-1 font-semibold"
-            >申請理由 / 職務說明</label
-          >
-          <textarea
-            v-model="registerForm.reason"
-            rows="3"
-            placeholder="例如：我負責門市營運與排班，需使用 POS 與人事相關權限。"
-            required
-            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-hidden focus:border-emerald-500 resize-none"
-          ></textarea>
-        </div>
-
-        <div class="space-y-2">
-          <label class="block text-slate-400 mb-1 font-semibold"
-            >大頭照預覽</label
-          >
-          <div class="flex items-center gap-3">
-            <img
-              :src="registerForm.avatar || defaultAvatar"
-              class="w-14 h-14 rounded-xl object-cover border border-slate-700"
-            />
-            <label
-              class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-700 bg-slate-900 text-slate-200 font-semibold cursor-pointer hover:bg-slate-800 transition-colors"
-            >
-              <input
-                type="file"
-                accept="image/*"
-                class="hidden"
-                @change="handleAvatarPreview"
-              />
-              <span class="material-symbols-outlined text-[18px]"
-                >upload_file</span
-              >
-              <span>選擇頭像</span>
-            </label>
-          </div>
         </div>
 
         <div class="grid grid-cols-2 gap-2">

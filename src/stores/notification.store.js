@@ -333,44 +333,6 @@ export const useNotificationStore = defineStore("notification", () => {
     }
   };
 
-  const triggerLowStockAlert = async (materials = []) => {
-    const userId = useAuthStore().currentUser?.id;
-    if (!Array.isArray(materials) || materials.length === 0 || !userId) {
-      return;
-    }
-
-    try {
-      await httpClient.post("/api/notifications/low-stock", {
-        userId,
-        materials,
-      });
-
-      const topMaterials = materials.slice(0, 3);
-      const materialNames = topMaterials
-        .map(
-          (m) => `${m.name || "原物料"}（${m.stock ?? 0}/${m.minStock ?? 0}）`,
-        )
-        .join("、");
-
-      addNotification(
-        {
-          title: `庫存告急：${materials.length} 項原物料低於安全水位`,
-          message:
-            materialNames.length > 0
-              ? `目前低庫存項目：${materialNames}${materials.length > 3 ? "..." : ""}，建議立即補貨。`
-              : "目前有原物料低於安全水位，請盡快補貨。",
-          type: "warning",
-          category: "inventory",
-          actionLabel: "前往庫存管理",
-          actionRoute: "/material",
-        },
-        true,
-      );
-    } catch (err) {
-      console.warn("低庫存通知同步失敗:", err);
-    }
-  };
-
   /** 單則標記已讀 (同步後端) */
   const markAsRead = async (id) => {
     const target = notifications.value.find((n) => n.id === id);
@@ -506,7 +468,6 @@ export const useNotificationStore = defineStore("notification", () => {
     hasUrgentNotification,
     filteredNotifications,
     addNotification,
-    triggerLowStockAlert,
     markAsRead,
     toggleRead,
     markAllAsRead,
