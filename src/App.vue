@@ -112,20 +112,20 @@ const initNotificationConnection = () => {
 };
 
 
-onMounted(() => {
-  initNotificationConnection();
-});
+// onMounted(() => {
+//   initNotificationConnection();
+// });
 
 
-watch(
-  () => authStore.isAuthenticated,
+// watch(
+//   () => authStore.isAuthenticated,
 
-  (isAuth) => {
+//   (isAuth) => {
 
-    if (isAuth) {
-      initNotificationConnection();
-    }
+//     if (isAuth) {
+//       initNotificationConnection();
+//     }
 
-  }
-);
+//   }
+// );
 </script>
