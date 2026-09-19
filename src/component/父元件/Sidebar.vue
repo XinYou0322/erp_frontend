@@ -1,13 +1,32 @@
 <template>
   <aside
     id="app-sidebar"
-    class="w-64 h-screen fixed left-0 top-0 z-30 flex flex-col justify-between p-4 bg-[var(--surface-container-low)] border-r border-[var(--outline)] transition-all"
+    class="
+      w-64 h-screen fixed left-0 top-0 z-30
+      flex flex-col justify-between
+      p-4
+      bg-[var(--surface-container-low)]
+      border-r border-[var(--outline)]
+      transition-all
+    "
   >
     <div class="space-y-6">
+
+      <!-- ============================== -->
       <!-- Logo -->
+      <!-- ============================== -->
       <div class="flex items-center space-x-3 px-2 pt-2">
         <div
-          class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] flex items-center justify-center text-[var(--surface)] shadow-lg shadow-black/20"
+          class="
+            w-10 h-10
+            rounded-2xl
+            bg-gradient-to-br
+            from-[var(--primary)]
+            to-[var(--secondary)]
+            flex items-center justify-center
+            text-[var(--surface)]
+            shadow-lg shadow-black/20
+          "
         >
           <CupSoda class="w-6 h-6" />
         </div>
@@ -20,7 +39,7 @@
           </h1>
 
           <p
-            class="text-[10px] font-semibold text-[var(--primary)] tracking-widest mt-1"
+            class="text-[10px] font-semibold text-[var(--primary)] tracking-widest mt-1"          
           >
             BEVERAGE CONTROL
           </p>
@@ -28,111 +47,123 @@
       </div>
 
       <!-- 主選單 -->
-      <nav class="space-y-1.5" aria-label="系統主要功能選單">
-        <div v-for="item in navItems" :key="item.id">
-          <button
-            type="button"
-            @click="handleNavClick(item)"
-            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
+      <!-- ============================== -->
+      <nav
+        class="space-y-1.5"
+        aria-label="系統主要功能選單"
+      >
+
+        <button
+          v-for="item in navItems"
+          :key="item.id"
+          type="button"
+          @click="handleNavClick(item)"
+          class="
+            w-full
+            flex items-center justify-between
+            px-3.5 py-2.5
+            rounded-xl
+            text-xs
+            font-bold
+            transition-all
+            cursor-pointer
+          "
+          :class="
+            isMainItemActive(item)
+              ? `
+                  bg-gradient-to-r
+                  from-[var(--primary)]
+                  to-[var(--secondary)]
+                  text-[var(--surface)]
+                  shadow-md shadow-black/20
+                `
+              : `
+                  text-[var(--on-surface-variant)]
+                  hover:bg-[var(--surface-container-high)]
+                  hover:text-[var(--on-surface)]
+                `
+          "
+        >
+
+          <!-- 左邊：Icon + 名稱 -->
+          <div class="flex items-center space-x-3">
+
+            <component
+              :is="item.icon"
+              class="w-4 h-4"
+            />
+
+            <span>
+              {{ item.label }}
+            </span>
+
+          </div>
+
+
+          <!-- 右邊 Badge -->
+          <span
+            v-if="item.badge"
+            class="
+              px-1.5 py-0.5
+              rounded-full
+              text-[10px]
+              font-bold
+            "
             :class="
               isMainItemActive(item)
-                ? 'bg-[var(--primary)] text-[var(--surface)] shadow-md shadow-black/20'
-                : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]'
+                ? `
+                    bg-[var(--surface)]/15
+                    text-[var(--surface)]
+                  `
+                : `
+                    bg-[var(--primary)]/10
+                    text-[var(--primary)]
+                  `
             "
           >
-            <div class="flex items-center space-x-3">
-              <component :is="item.icon" class="w-4 h-4" />
+            {{ item.badge }}
+          </span>
 
-              <span>
-                {{ item.label }}
-              </span>
-            </div>
+        </button>
 
-            <div class="flex items-center space-x-1">
-              <!-- Badge -->
-              <span
-                v-if="item.badge"
-                class="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
-                :class="
-                  isMainItemActive(item)
-                    ? 'bg-[var(--surface)]/15 text-[var(--surface)]'
-                    : 'bg-[var(--primary)]/10 text-[var(--primary)]'
-                "
-              >
-                {{ item.badge }}
-              </span>
-
-              <ChevronDown
-                v-if="item.id === 'inventory'"
-                class="w-3.5 h-3.5 transition-transform"
-                :class="inventoryMenuOpen ? 'rotate-180' : ''"
-              />
-            </div>
-          </button>
-
-          <!-- 庫存子選單 -->
-          <div
-            v-if="item.id === 'inventory' && inventoryMenuOpen"
-            class="mt-1 ml-5 pl-3 border-l border-[var(--outline)] space-y-1"
-          >
-            <!-- 庫存總覽 -->
-            <button
-              type="button"
-              @click="router.push('/inventory')"
-              class="w-full text-left px-3 py-2 rounded-lg text-[11px] font-bold transition-colors cursor-pointer"
-              :class="
-                route.path === '/inventory'
-                  ? 'bg-[var(--primary)]/10 text-[var(--primary)]'
-                  : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]'
-              "
-            >
-              庫存總覽
-            </button>
-
-            <!-- 庫存異動紀錄 -->
-            <button
-              type="button"
-              @click="router.push('/inventory/logs')"
-              class="w-full text-left px-3 py-2 rounded-lg text-[11px] font-bold transition-colors cursor-pointer"
-              :class="
-                route.path === '/inventory/logs'
-                  ? 'bg-[var(--primary)]/10 text-[var(--primary)]'
-                  : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]'
-              "
-            >
-              庫存異動紀錄
-            </button>
-          </div>
-        </div>
       </nav>
 
+
+      <!-- ============================== -->
       <!-- 快捷功能 -->
+      <!-- ============================== -->
       <div class="px-2 pt-2 space-y-2">
         <!-- POS -->
         <button
           type="button"
-          @click="emit('openPos')"
-          class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] hover:opacity-95 text-[var(--surface)] text-xs font-bold flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-md shadow-black/20"
+          @click="router.push('/pos')"
+          class="
+            w-full
+            py-2.5 px-3
+            rounded-xl
+            bg-gradient-to-r
+            from-[var(--primary)]
+            to-[var(--secondary)]
+            hover:opacity-95
+            text-[var(--surface)]
+            text-xs
+            font-bold
+            flex items-center justify-center
+            space-x-2
+            transition-all
+            cursor-pointer
+            shadow-md shadow-black/20
+          "
         >
           <CupSoda class="w-4 h-4" />
 
           <span> 門市點餐開單 (POS) </span>
         </button>
 
-        <!-- 報表 -->
-        <button
-          type="button"
-          @click="emit('openReport')"
-          class="w-full py-2 px-3 rounded-xl bg-[var(--surface-container)] hover:bg-[var(--surface-container-high)] border border-[var(--outline)] text-[var(--on-surface)] text-xs font-bold flex items-center justify-center space-x-2 transition-all cursor-pointer"
-        >
-          <FileSpreadsheet class="w-3.5 h-3.5 text-[var(--primary)]" />
-
-          <span> 門市營運結報中心 </span>
-        </button>
+       
       </div>
     </div>
-
-    <!-- Bottom Widget: Punch Clock & Settings -->
+ <!-- Bottom Widget: Punch Clock & Settings -->
     <div class="space-y-3 pt-4 border-t border-slate-800/80">
       <!-- Punch Clock Badge Widget -->
       <div
@@ -223,18 +254,22 @@
         </div>
       </div>
 
-      <ChevronRight
-        class="w-4 h-4 text-[var(--on-surface-variant)] group-hover:text-[var(--on-surface)] transition-colors shrink-0"
-      />
+     
     </div>
+
+   
   </aside>
 </template>
+
+
 <script setup lang="ts">
 import { computed, ref } from "vue";
-
-import { useRoute, useRouter } from "vue-router";
-
+import {
+  useRoute,
+  useRouter
+} from "vue-router";
 import { useAuthStore } from "@/stores/auth.store";
+
 
 import {
   CupSoda,
@@ -245,11 +280,15 @@ import {
   Sliders,
   FileSpreadsheet,
   ChevronRight,
-  ChevronDown,
   FlaskConical,
   Receipt,
   ShieldUser,
 } from "lucide-vue-next";
+
+
+// ==============================
+// Router
+// ==============================
 
 const route = useRoute();
 
@@ -266,53 +305,71 @@ const latestClockRecords = computed(() => {
     )
     .slice(0, 2);
 });
+// ==============================
+// Emit
+// ==============================
 
 const emit = defineEmits<{
+
   (e: "openReport"): void;
+
   (e: "openProfile"): void;
-  (e: "openPos"): void;
+  //(e: "openPos"): void;
 }>();
 
-const inventoryMenuOpen = ref(route.path.startsWith("/inventory"));
+
+// ==============================
+// 點擊 Sidebar
+// ==============================
 
 const handleNavClick = (item: any) => {
-  if (item.id === "inventory") {
-    inventoryMenuOpen.value = !inventoryMenuOpen.value;
-
-    return;
-  }
 
   if (item.path) {
     router.push(item.path);
   }
+
 };
 
+
+// ==============================
+// 判斷目前 Sidebar 哪個項目 Active
+// ==============================
+
 const isMainItemActive = (item: any) => {
+
+  // 庫存底下未來可能有很多功能
+  // 例如：
+  // /inventory
+  // /inventory/xxx
+  //
+  // 所以只要是 /inventory 開頭
+  // 都讓「原物料進銷存」保持亮起來
+
   if (item.id === "inventory") {
+
     return route.path.startsWith("/inventory");
+
   }
 
   return route.path === item.path;
+
 };
 
+
+// ==============================
+// Sidebar 選單
+// ==============================
+
 const navItems = [
+
   {
     id: "dashboard",
     label: "門市營運儀表板",
     icon: LayoutDashboard,
     path: "/dashboard",
   },
-
   {
-    id: "products",
-    label: "飲品品項菜單",
-    icon: Layers,
-    badge: "8款",
-    path: "/product2",
-  },
-
-  {
-    id: "products",
+    id: "bom",
     label: "原料配方 BOM 管理",
     icon: FlaskConical,
     badge: "SOP",
@@ -332,6 +389,7 @@ const navItems = [
     label: "原物料進銷存",
     icon: Package,
     badge: "庫存",
+    path: "/inventory",
   },
 
   {
@@ -341,36 +399,37 @@ const navItems = [
     badge: "出單",
     path: "/orders",
   },
-
   {
-    id: "settings",
-    label: "門市系統參數設定",
-    icon: Sliders,
-    path: "/settings",
-  },
-  {
-    id: "PermissionPage",
+    id: "permission",
     label: "權限與用戶管理",
     icon: ShieldUser,
     path: "/PermissionPage",
   },
+
   {
-    id: "Supplier",
+    id: "supplier",
     label: "供應商管理",
     icon: Sliders,
     path: "/Supplier",
-  },
-  {
-    id: "testings15313",
-    label: "展示用",
+},
+{
+ id: "PurchaseOrder",
+    label: "採購單管理",
     icon: Sliders,
-    path: "/ComponentShowcase",
-  },
+    path: "/PurchaseOrder",
+},
   {
     id: "workflow",
     label: "簽核系統",
     icon: Sliders,
     path: "/workflows",
   },
+  {
+    id: "leave",
+    label: "請假系統",
+    icon: Sliders,
+    path: "/leave-requests",
+  },
 ];
+
 </script>

@@ -1,16 +1,16 @@
 <script setup>
-import { ref } from 'vue'
+import { ref } from "vue";
 
 // status: 'pending' | 'approved' | 'rejected'
 // pending 時顯示可操作的核准/駁回按鈕，其餘狀態顯示已結案提示
 const props = defineProps({
-  status: { type: String, default: 'pending' },
+  status: { type: String, default: "pending" },
   submitting: { type: Boolean, default: false },
-})
+});
 
-const emit = defineEmits(['approve', 'reject'])
+const emit = defineEmits(["approve", "reject"]);
 
-const remark = ref('')
+const remark = ref("");
 </script>
 
 <template>
@@ -25,18 +25,28 @@ const remark = ref('')
       :disabled="submitting"
     ></textarea>
     <div class="actions__buttons">
-      <button type="button" class="btn btn--reject" :disabled="submitting" @click="emit('reject', remark)">
+      <button
+        type="button"
+        class="btn btn--reject"
+        :disabled="submitting"
+        @click="emit('reject', remark)"
+      >
         駁回
       </button>
-      <button type="button" class="btn btn--approve" :disabled="submitting" @click="emit('approve', remark)">
-        {{ submitting ? '處理中…' : '核准' }}
+      <button
+        type="button"
+        class="btn btn--approve"
+        :disabled="submitting"
+        @click="emit('approve', remark)"
+      >
+        {{ submitting ? "處理中…" : "核准" }}
       </button>
     </div>
   </div>
 
   <div class="actions__done" v-else>
     <span class="actions__done-text">
-      此單據已{{ status === 'approved' ? '核准' : '駁回' }}，無法再變更
+      此單據已{{ status === "approved" ? "核准" : "駁回" }}，無法再變更
     </span>
   </div>
 </template>
@@ -105,6 +115,7 @@ const remark = ref('')
 
 .btn--approve:hover {
   background: var(--wf-seal-hover);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
 }
 
 .btn:disabled {

@@ -45,10 +45,49 @@
         </div>
       </div>
 
+ <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
       <!-- 單位 -->
       <div>
-        <label class="block font-bold text-[var(--on-surface)] text-xs mb-1">
-          計量單位
+  <label
+          class="
+            block
+            font-bold
+            text-[var(--on-surface)]
+            text-xs
+            mb-1
+          "
+        >
+
+          成本模式
+          <span class="text-[var(--error)]">*</span>
+        </label>
+   <select
+          v-model="costMode"
+          requiredc
+          class="input-field"
+        >
+          <option value="DIRECT">直接輸入</option>
+          <option value="CONVERSION">採購換算</option>
+
+        </select>
+
+      </div>
+      
+      <div>
+
+
+        <label
+          class="
+            block
+            font-bold
+            text-[var(--on-surface)]
+            text-xs
+            mb-1
+          "
+        >
+        
+          bom單位
           <span class="text-[var(--error)]">*</span>
         </label>
 
@@ -66,6 +105,7 @@
         </select>
       </div>
 
+     </div>
       <!-- 安全庫存 / 成本 -->
       <div
         class="p-3.5 rounded-xl bg-[var(--surface-container-high)] border border-[var(--outline)] space-y-3"
@@ -102,11 +142,23 @@
               >
                 {{ unit }}
               </span>
+
+
+
+
+
+              
             </div>
-          </div>
+            
+           
+
 
           <!-- 成本 -->
           <div>
+
+ </div>
+            </div>
+<div v-if="costMode === 'DIRECT'">
             <label
               class="block font-semibold text-[var(--on-surface-variant)] text-xs mb-1"
             >
@@ -127,17 +179,130 @@
                 class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] text-xs"
               >
                 /{{ unit }}
-              </span>
-            </div>
+
+   </span>
+</div>
+</div>
+<div v-else>
+                 <label
+              class="
+                block
+                font-semibold
+                text-[var(--on-surface-variant)]
+                text-xs
+                mb-1
+              "
+            >
+             採購單位
+               </label>
+     <select
+          v-model="purchaseUnit"
+          required
+          class="input-field"
+        >
+          <option value="kg">公斤 (kg)</option>
+          <option value="g">公克 (g)</option>
+          <option value="L">公升 (L)</option>
+          <option value="ml">毫升 (ml)</option>
+          <option value="瓶">瓶</option>
+          <option value="包">包</option>
+          <option value="桶">桶</option>
+          <option value="個">個</option>
+          <option value="箱">箱</option>
+          <option value="支">支</option>
+        </select>
+          
+           </div>
           </div>
-        </div>
+ <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" v-if="costMode === 'CONVERSION'">
+ <div >
+          <label
+            class="
+              block
+              font-bold
+              text-[var(--on-surface)]
+              text-xs
+              
+            "
+          >
+           採購單位換算bom單位  
+            <span class="text-[var(--error)]">*</span>
+          </label>
+
+          <input
+            v-model="conversionQuantity"
+            type="text"
+            required
+            class="input-field font-mono"
+         
+          />   <div
+        class="
+          rounded-xl
+          border
+          border-[var(--outline)]
+          bg-[var(--surface-container-high)]
+          p-3.5
+          text-xs
+          text-[var(--on-surface-variant)]
+        "
+      >
+        例如：買1瓶牛奶1850毫升 就輸入1850
       </div>
+
+       
+</div>
+<div >
+  
+       <label
+            class="
+              block
+              font-bold
+              text-[var(--on-surface)]
+              text-xs
+              
+            "
+          >
+           採購價格
+            <span class="text-[var(--error)]">*</span>
+          </label>
+
+          <input
+            v-model.number="purchaseCost"
+            type="text"
+            required
+            class="input-field font-mono"
+         
+          /> 
+<div
+        class="
+          rounded-xl
+          border
+          border-[var(--outline)]
+          bg-[var(--surface-container-high)]
+          p-3.5
+          text-xs
+          text-[var(--on-surface-variant)]
+        "
+      >
+    <span >  NT$ {{ unitCostPreview }}  / </span>
+     <span>{{ unit }}</span>
+      </div>
+
+
+        </div>
+
+ </div>
+        </div>
+
+    
+
     </form>
 
-    <template #footer>
+  <template #footer="{ close }">
+
       <button
         type="button"
-        @click="emit('close')"
+       @click="close"
         class="btn-secondary text-xs"
       >
         取消
@@ -157,7 +322,12 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+
+import {
+  ref,
+  watch,
+  computed
+} from 'vue'
 
 import { PackagePlus, Check, Layers } from "lucide-vue-next";
 
@@ -177,13 +347,16 @@ const props = defineProps({
 
 const emit = defineEmits(["close", "success"]);
 
-const name = ref("");
-const code = ref("");
-const unit = ref("kg");
-const cost = ref(0);
-const safetyStock = ref(0);
-
-watch(
+const name = ref('')
+const code = ref('')
+const unit = ref('kg')
+const cost = ref(0)
+const safetyStock = ref(0)
+const costMode = ref('DIRECT')
+const purchaseUnit= ref("l")
+const conversionQuantity= ref("") 
+const purchaseCost= ref("l")
+watch(  
   () => props.isOpen,
 
   (isOpen) => {
@@ -205,12 +378,30 @@ const handleSubmit = () => {
 
     unit: unit.value,
 
-    cost: Number(cost.value),
+    costMode: costMode.value,
 
-    safetyStock: Number(safetyStock.value),
-  };
+    safetyStock:
+      Number(safetyStock.value)
+      
 
-  console.log("準備新增的原物料：", data);
+  }
+
+if (costMode.value === 'DIRECT') {
+
+  data.cost = Number(cost.value)
+
+} else if (costMode.value === 'CONVERSION') {
+
+  data.purchaseUnit = purchaseUnit.value
+  data.conversionQuantity = Number(conversionQuantity.value)
+  data.purchaseCost = Number(purchaseCost.value)
+
+}
+  console.log(
+    '準備新增的原物料：',
+    data
+  )
+
 
   httpClient
     .post("/api/material/add", data)
@@ -236,7 +427,20 @@ const handleSubmit = () => {
     })
 
     .catch((error) => {
-      console.error("新增原物料失敗：", error);
-    });
-};
+
+      console.error(
+        '新增原物料失敗：',
+        error
+      )
+
+    })
+
+}
+const unitCostPreview = computed(() => {
+    if (!purchaseCost.value || !conversionQuantity.value) {
+    return 0
+  }
+return purchaseCost.value/conversionQuantity.value
+
+})
 </script>

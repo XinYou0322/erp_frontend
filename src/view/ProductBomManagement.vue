@@ -1,48 +1,6 @@
 <template>
   <div class="space-y-6 pb-12">
 
-    <!-- Top KPI Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <MetricCard
-        id="recipe-metric-total"
-        title="已建檔飲品品項"
-        :value="`${products.length} 項`"
-        growth="即時資料"
-        subtitle="目前系統已建立的飲品品項"
-        :icon="FlaskConical"
-      />
-
-      <MetricCard
-        id="recipe-metric-cost"
-        title="全品項單杯平均物料成本"
-        :value="`NT$ ${avgCost.toFixed(1)}`"
-        growth="依目前產品計算"
-        variant="cyan"
-        subtitle="目前產品的平均單杯成本"
-        :icon="DollarSign"
-      />
-
-      <MetricCard
-        id="recipe-metric-margin"
-        title="門市標準配方平均毛利率"
-        :value="`${avgMargin}%`"
-        growth="依售價與成本計算"
-        variant="emerald"
-        subtitle="目前產品平均毛利率"
-        :icon="Layers"
-      />
-
-      <MetricCard
-        id="recipe-metric-binding"
-        title="原料扣庫連動狀態"
-        value="待串接"
-        growth="下一階段"
-        variant="default"
-        subtitle="BOM 與即時扣庫尚未接入前端"
-        :icon="CheckCircle2"
-      />
-    </div>
-
 
     <!-- Controls & Filter Bar -->
     <div
@@ -80,7 +38,7 @@
             px-3.5
             py-1.5
             rounded-xl
-            text-xs
+            text-[length:var(--font-body)]
             font-bold
             transition-all
             shrink-0
@@ -101,7 +59,7 @@
               px-1.5
               py-0.5
               rounded-full
-              text-[10px]
+              text-[length:var(--font-small)]
             "
             :class="
               selectedCategory === '全部'
@@ -124,7 +82,7 @@
             px-3.5
             py-1.5
             rounded-xl
-            text-xs
+            text-[length:var(--font-body)]
             font-bold
             transition-all
             shrink-0
@@ -145,7 +103,7 @@
               px-1.5
               py-0.5
               rounded-full
-              text-[10px]
+              text-[length:var(--font-small)]
             "
             :class="
               selectedCategory === cat.name
@@ -167,7 +125,7 @@
           @click="showCategoryModal = true"
           class="
             btn-primary
-            text-xs
+            text-[length:var(--font-body)]
             px-3
             py-1.5
             flex
@@ -184,7 +142,7 @@
           @click="addProductModalOpen = true"
           class="
             btn-primary
-            text-xs
+            text-[length:var(--font-body)]
             px-3
             py-1.5
             flex
@@ -207,7 +165,7 @@
         rounded-2xl
         p-8
         text-center
-        text-sm
+        text-[length:var(--font-title)]
         bg-[var(--surface-container)]
         border
         border-[var(--outline)]
@@ -227,7 +185,7 @@
         border-[var(--error)]/30
         bg-[var(--error)]/10
         p-4
-        text-sm
+        text-[length:var(--font-title)]
         text-[var(--error)]
       "
     >
@@ -248,8 +206,8 @@
     >
 
       <div
-        v-for="product in filteredProducts"
-        :key="product.id"
+     v-for="product in paginatedProducts"
+  :key="product.id"
         class="
           p-5
           rounded-2xl
@@ -300,7 +258,7 @@
                 <h3
                   class="
                     font-bold
-                    text-sm
+                    text-[length:var(--font-title)]
                     text-[var(--on-surface)]
                     group-hover:text-[var(--primary)]
                     transition-colors
@@ -312,7 +270,7 @@
 
                 <div
                   class="
-                    text-[11px]
+                    text-[length:var(--font-body)]
                     text-[var(--on-surface-variant)]
                     font-data-mono
                     mt-0.5
@@ -354,7 +312,7 @@
                 text-[var(--primary)]
                 border
                 border-[var(--primary)]/25
-                text-xs
+                text-[length:var(--font-body)]
                 font-bold
                 transition-colors
                 cursor-pointer
@@ -383,7 +341,7 @@
               grid-cols-3
               gap-2
               text-center
-              text-xs
+              text-[length:var(--font-body)]
               font-data-mono
             "
           >
@@ -392,7 +350,7 @@
 
               <span
                 class="
-                  text-[10px]
+                  text-[length:var(--font-small)]
                   text-[var(--on-surface-variant)]
                   block
                   font-sans
@@ -404,6 +362,7 @@
               <span
                 class="
                   font-bold
+                  text-[length:var(--font-title)]
                   text-[var(--on-surface)]
                 "
               >
@@ -422,7 +381,7 @@
 
               <span
                 class="
-                  text-[10px]
+                  text-[length:var(--font-small)]
                   text-[var(--on-surface-variant)]
                   block
                   font-sans
@@ -434,6 +393,7 @@
               <span
                 class="
                   font-bold
+                  text-[length:var(--font-title)]
                   text-[var(--primary)]
                 "
               >
@@ -447,7 +407,7 @@
 
               <span
                 class="
-                  text-[10px]
+                  text-[length:var(--font-small)]
                   text-[var(--on-surface-variant)]
                   block
                   font-sans
@@ -457,7 +417,10 @@
               </span>
 
               <span
-                class="font-bold"
+                class="
+                  font-bold
+                  text-[length:var(--font-title)]
+                "
                 :class="
                   getMargin(product) >= 65
                     ? 'text-[var(--primary)]'
@@ -477,7 +440,7 @@
 
             <span
               class="
-                text-[11px]
+                text-[length:var(--font-body)]
                 font-bold
                 text-[var(--on-surface-variant)]
                 uppercase
@@ -496,7 +459,7 @@
               "
               class="
                 space-y-1.5
-                text-xs
+                text-[length:var(--font-body)]
               "
             >
 
@@ -530,7 +493,7 @@
                   <span
                     class="
                       ml-2
-                      text-[10px]
+                      text-[length:var(--font-small)]
                       text-[var(--on-surface-variant)]
                       font-data-mono
                     "
@@ -544,6 +507,7 @@
                 <span
                   class="
                     font-data-mono
+                    text-[length:var(--font-body)]
                     text-[var(--on-surface-variant)]
                     font-bold
                   "
@@ -561,7 +525,7 @@
               v-else
               class="
                 text-[var(--on-surface-variant)]
-                text-[11px]
+                text-[length:var(--font-body)]
                 py-2
                 text-center
               "
@@ -580,7 +544,7 @@
             pt-3
             border-t
             border-[var(--outline-variant)]
-            text-[11px]
+            text-[length:var(--font-body)]
             text-[var(--on-surface-variant)]
             flex
             items-center
@@ -601,7 +565,7 @@
               text-[var(--primary)]
               border
               border-[var(--primary)]/20
-              text-[10px]
+              text-[length:var(--font-small)]
               font-bold
               shrink-0
               ml-2
@@ -613,16 +577,21 @@
         </div>
 
       </div>
+
     </div>
 
-
-    <EditRecipeModal
-      :is-open="editRecipeModalOpen"
-      :product="selectedProduct"
-      @close="editRecipeModalOpen = false"
-      @success="handleRecipeSuccess"
-    />
-
+<Pagination
+  :current-page="currentPage"
+  :total-pages="totalPages"
+  @change-page="goToPage"
+/>
+  <EditRecipeModal
+  :is-open="editRecipeModalOpen"
+  :product="selectedProduct"
+  :initial-bom="selectedProduct ? bomMap[selectedProduct.id] : []"
+  @close="editRecipeModalOpen = false"
+  @success="handleRecipeSuccess"
+/>
 
     <AddProductModal
       :is-open="addProductModalOpen"
@@ -639,22 +608,25 @@
 
   </div>
 </template>
-
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue' 
 import { FlaskConical, DollarSign, Layers, CheckCircle2, Coffee, Edit3, Plus, Import } from 'lucide-vue-next'
 import MetricCard from '@/component/子元件/MetricCard.vue'
 import httpClient from '@/service/httpClient'
 import EditRecipeModal from '@/component/父元件/EditRecipeModal.vue'
 import AddProductModal from '@/component/父元件/AddProductModal.vue'
 import ProductCategoryManagementModal from '@/component/父元件/ProductCategoryManagementModal.vue'
-
+import Pagination from '@/component/子元件/Pagination.vue'
 
 
 const editRecipeModalOpen = ref(false)
 const addProductModalOpen = ref(false)
 const selectedProduct = ref(null)
 const showCategoryModal = ref(false)
+
+
+
+
 const handleProductSuccess = async () => {
   await loadProducts()
 }
@@ -663,12 +635,12 @@ const handleCategorySuccess = async () => {
   await loadCategories()
 }
 
-const handleOpenEditRecipe = (product) => {
-
+const handleOpenEditRecipe = async (product) => {
   selectedProduct.value = product
 
-  editRecipeModalOpen.value = true
+  await loadBom(product.id)
 
+  editRecipeModalOpen.value = true
 }
 const handleRecipeSuccess = () => {
 
@@ -688,6 +660,15 @@ const loading = ref(false)
 const errorMessage = ref('')
 const categories = ref([])
 const selectedCategory = ref('全部')
+
+const currentPage = ref(1)
+const pageSize = 6
+
+
+
+
+
+
 
 const loadProducts = () => {
   loading.value = true
@@ -717,33 +698,32 @@ const loadProducts = () => {
       loading.value = false
     })
 }
-const loadBom = (productId) => {
-
-  httpClient
-    .get(`/api/bom/product/${productId}`)
-
-    .then((response) => {
-
-      bomMap.value[productId] =
-        response.data
-
-      console.log(
-        `產品 ${productId} 的 BOM：`,
-        response.data
-      )
-
+const loadBom = async (productId) => {
+  try {
+    const response = await httpClient({
+      method: 'get',
+      url: `/api/bom/product/${productId}`,
+      data: {}
     })
 
-    .catch((error) => {
+    bomMap.value[productId] = response.data
 
-      console.error(
-        `取得產品 ${productId} BOM 失敗：`,
-        error
-      )
+    console.log(
+      `產品 ${productId} 的 BOM：`,
+      response.data
+    )
 
-      bomMap.value[productId] = []
+    return response.data
+  } catch (error) {
+    console.error(
+      `取得產品 ${productId} BOM 失敗：`,
+      error
+    )
 
-    })
+    bomMap.value[productId] = []
+
+    return []
+  }
 }
 const filteredProducts = computed(() => {
 
@@ -756,7 +736,44 @@ const filteredProducts = computed(() => {
       product.categoryName === selectedCategory.value
   )
 })
+const totalPages = computed(() => {
 
+  return Math.ceil(
+    filteredProducts.value.length / pageSize
+  )
+
+})
+watch(selectedCategory, () => {
+
+  currentPage.value = 1
+
+})
+const paginatedProducts = computed(() => {
+
+  const start =
+    (currentPage.value - 1) * pageSize
+
+  const end =
+    start + pageSize
+
+  return filteredProducts.value.slice(
+    start,
+    end
+  )
+
+})
+const goToPage = (page) => {
+
+  if (
+    page < 1 ||
+    page > totalPages.value
+  ) {
+    return
+  }
+
+  currentPage.value = page
+
+}
 const getCategoryCount = (cat) => {
 
   if (cat === '全部') {

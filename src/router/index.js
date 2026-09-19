@@ -60,15 +60,16 @@ const routes = [
     component: () => import("@/view/WorkflowDetail.vue"),
     props: true,
   },
+{
+  path: "/inventory",
+  name: "inventory",
+  component: () =>
+    import("@/view/InventoryPage.vue"),
+},
   {
-    path: "/inventory",
-    name: "inventory",
-    component: () => import("@/view/InventoryManagement.vue"),
-  },
-  {
-    path: "/material",
-    name: "material",
-    component: () => import("@/view/MaterialManagement.vue"),
+    path: '/material',
+    name: 'material',
+    component: () => import("@/view/MaterialManagement.vue")
   },
   {
     path: "/inventory/logs",
@@ -95,9 +96,39 @@ const routes = [
   },
 
   {
-    path: "/Supplier",
-    name: "Supplier",
-    component: () => import("@/view/Supplier.vue"),
+    path: '/Supplier',
+    name: 'Supplier',
+    component: () => import("@/view/Supplier.vue")
+  },
+  {
+    path: '/leave-requests',
+    name: 'leave-list',
+    component: () => import('../view/LeaveRequestListView.vue')
+  },
+  {
+    path: '/leave-requests/new',
+    name: 'leave-create',
+    component: () => import('../view/LeaveRequestFormView.vue')
+  },
+  {
+    path: '/leave-requests/:id/edit',
+    name: 'leave-edit',
+    component: () => import('../view/LeaveRequestFormView.vue')
+  },
+  {
+    path: '/leave-requests/:id',
+    name: 'leave-detail',
+    component: () => import('../view/LeaveRequestDetailView.vue')
+  },
+    {
+    path: '/pos',
+    name: 'pos',
+    component: ()=> import("@/view/pos.vue")
+  },
+    {
+    path: '/purchaseOrder',
+    name: 'purchaseOrder',
+    component: ()=> import("@/view/PurchaseOrder.vue")
   },
 ];
 
