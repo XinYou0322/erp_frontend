@@ -195,9 +195,11 @@ export const useCalendarStore = defineStore("calendar", () => {
   // =====================================================================
   // 1. 核心狀態 (State)
   // =====================================================================
+  /** @type {import("vue").Ref<any[]>} */
   const events = ref(
     StorageService.get("calendar_events_v2", INITIAL_CALENDAR_EVENTS),
   );
+  const isLoading = ref(false);
 
   const getTodayInfo = () => {
     const today = new Date();
@@ -277,12 +279,12 @@ export const useCalendarStore = defineStore("calendar", () => {
   };
 
   const buildCalendarQuery = () => ({
-    startDate: `${currentYear.value}-${String(currentMonth.value + 1).padStart(2, "0")}-01`,
-    endDate: `${currentYear.value}-${String(currentMonth.value + 1).padStart(2, "0")}-${new Date(currentYear.value, currentMonth.value + 1, 0).getDate()}`,
-    searchQuery: searchQuery.value,
-    statusFilter: statusFilter.value,
-    priorityFilter: priorityFilter.value,
-    selectedCategory: selectedCategory.value,
+    searchQuery: searchQuery.value?.trim() || null,
+    statusFilter: statusFilter.value !== "all" ? statusFilter.value : null,
+    priorityFilter:
+      priorityFilter.value !== "all" ? priorityFilter.value : null,
+    selectedCategory:
+      selectedCategory.value !== "all" ? selectedCategory.value : null,
   });
 
   const toApiPayload = (eventData) => ({
@@ -705,6 +707,7 @@ export const useCalendarStore = defineStore("calendar", () => {
   };
 
   const loadEvents = async (shouldUseLocalFallback = true) => {
+    isLoading.value = true;
     try {
       const payload = buildCalendarQuery();
       const { data } = await httpClient.post(
@@ -727,6 +730,8 @@ export const useCalendarStore = defineStore("calendar", () => {
         return events.value;
       }
       return events.value;
+    } finally {
+      isLoading.value = false;
     }
   };
 
@@ -1039,6 +1044,7 @@ export const useCalendarStore = defineStore("calendar", () => {
   return {
     // 狀態
     events,
+    isLoading,
     currentYear,
     currentMonth,
     currentDay,
@@ -1065,6 +1071,7 @@ export const useCalendarStore = defineStore("calendar", () => {
     selectedDateEvents,
     upcomingEvents,
     // 動作
+    loadEvents,
     prevPeriod,
     nextPeriod,
     goToToday,

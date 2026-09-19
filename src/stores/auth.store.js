@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { INITIAL_USERS } from "../data/initialData";
 import {
   DEFAULT_ROLE_PERMISSIONS,
   INITIAL_SECURITY_AUDIT_LOGS,
@@ -17,10 +16,10 @@ const DEFAULT_AVATAR = getDefaultAvatar();
 
 export const useAuthStore = defineStore("auth", () => {
   // --- State ---
-  const users = ref(StorageService.get("system_users", INITIAL_USERS));
-  const currentUser = ref(
-    StorageService.get("current_user", users.value[0] || INITIAL_USERS[0]),
-  );
+  /** @type {import('vue').Ref<any[]>} */
+  const users = ref(StorageService.get("system_users", []));
+  /** @type {import('vue').Ref<any>} */
+  const currentUser = ref(StorageService.get("current_user", null));
   const isAuthenticated = ref(StorageService.get("is_authenticated", false));
   const rolePermissions = ref(
     StorageService.get("role_permissions_matrix", DEFAULT_ROLE_PERMISSIONS),
@@ -30,6 +29,7 @@ export const useAuthStore = defineStore("auth", () => {
   );
 
   // 後端真實角色清單
+  /** @type {import('vue').Ref<any[]>} */
   const serverRoles = ref([]);
 
   // 刷卡打卡狀態
@@ -138,6 +138,49 @@ export const useAuthStore = defineStore("auth", () => {
     return normalized === "approved" || normalized === "active";
   }
 
+  function isValidBackendUserId(value) {
+    if (value === null || value === undefined) return false;
+    if (Number.isInteger(value)) return value >= 0;
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed) return false;
+      const parsed = Number(trimmed);
+      return Number.isInteger(parsed) && parsed >= 0;
+    }
+    return false;
+  }
+
+  function clearFrontendSession() {
+    isAuthenticated.value = false;
+    currentUser.value = null;
+    StorageService.set("is_authenticated", false);
+    StorageService.remove("current_user");
+  }
+
+  async function restoreSessionFromBackend() {
+    try {
+      const response = await httpClient.get("/api/users/now");
+      const user = response?.data;
+      if (!user || !isValidBackendUserId(user.id)) {
+        clearFrontendSession();
+        return false;
+      }
+
+      const normalizedUser = {
+        ...user,
+        id: Number(user.id),
+      };
+      currentUser.value = normalizedUser;
+      isAuthenticated.value = true;
+      StorageService.set("current_user", normalizedUser);
+      StorageService.set("is_authenticated", true);
+      return true;
+    } catch (error) {
+      clearFrontendSession();
+      return false;
+    }
+  }
+
   function login(user) {
     const status = normalizeUserStatus(user?.status);
 
@@ -162,10 +205,15 @@ export const useAuthStore = defineStore("auth", () => {
       };
     }
 
-    currentUser.value = user;
+    const normalizedUser = {
+      ...user,
+      id: isValidBackendUserId(user?.id) ? Number(user.id) : user?.id,
+    };
+
+    currentUser.value = normalizedUser;
     isAuthenticated.value = true;
 
-    const idx = users.value.findIndex((u) => u.id === user.id);
+    const idx = users.value.findIndex((u) => u.id === normalizedUser.id);
     if (idx !== -1) {
       users.value[idx].lastLogin = new Date()
         .toISOString()
@@ -187,29 +235,37 @@ export const useAuthStore = defineStore("auth", () => {
     return {
       success: true,
       message: `歡迎回來，${user.name}！`,
-      user,
+      user: normalizedUser,
     };
   }
 
-  /**
-   * 整合後的非同步憑證登入（優先走 API，失敗時可選擇是否降級走本地比對）
-   */
-  async function loginWithCredentials(email, password) {
-    const cleanEmail = email.trim();
+  async function loginWithCredentials(cleanEmail, password) {
+    const email = String(cleanEmail || "").trim();
+    const passwordValue = String(password || "");
+
+    if (!email || !passwordValue) {
+      return {
+        success: false,
+        message: "請輸入帳號與密碼。",
+      };
+    }
 
     try {
-      // 1. 呼叫後端驗證 API (Spring Boot Session 寫入)
       const response = await httpClient.post("/api/users/login", {
-        username: cleanEmail,
-        password: password,
+        username: email,
+        password: passwordValue,
       });
-      const { user, message } = response.data;
 
+      const { user, message } = response.data || {};
+      const backendUserId = user?.id;
       const authenticatedUser = {
         ...user,
-        avatar: normalizeAvatarUrl(user.avatar || DEFAULT_AVATAR),
-        role: user.role?.name || user.role,
-        roleName: user.role?.description || user.role?.name || "使用者",
+        id: isValidBackendUserId(backendUserId)
+          ? Number(backendUserId)
+          : backendUserId,
+        avatar: normalizeAvatarUrl(user?.avatar || DEFAULT_AVATAR),
+        role: user?.role?.name || user?.role,
+        roleName: user?.role?.description || user?.role?.name || "使用者",
       };
 
       const loginResult = login(authenticatedUser);
@@ -223,48 +279,8 @@ export const useAuthStore = defineStore("auth", () => {
         user: authenticatedUser,
       };
     } catch (error) {
-      // 2. API 失敗時的防禦機制：若後端掛掉，可改由本地 LocalStorage 進行緊急比對
-      const matched = users.value.find(
-        (u) =>
-          u.email.toLowerCase() === cleanEmail.toLowerCase() ||
-          u.name === cleanEmail,
-      );
-
-      if (matched) {
-        const matchedStatus = String(matched.status || "active").toLowerCase();
-        if (matchedStatus === "pending") {
-          return {
-            success: false,
-            message: "此帳號尚待管理員審核，請等待審核結果後再登入。",
-          };
-        }
-        if (matchedStatus === "rejected") {
-          return {
-            success: false,
-            message: "此帳號申請已被駁回，請重新提出申請或聯絡管理員。",
-          };
-        }
-        if (matchedStatus === "inactive" || matchedStatus === "INACTIVE") {
-          return {
-            success: false,
-            message: "該帳號已被系統管理員停用，無法登入。",
-          };
-        }
-        if (password && matched.password && matched.password === password) {
-          const loginResult = login(matched);
-          if (!loginResult.success) {
-            return loginResult;
-          }
-          return {
-            success: true,
-            message: `[本地認證] ${loginResult.message}`,
-            user: matched,
-          };
-        }
-      }
-
       const errorMsg =
-        error.response?.data?.message || "帳號或密碼錯誤，請重新確認。";
+        error?.response?.data?.message || "帳號或密碼錯誤，請重新確認。";
       return { success: false, message: errorMsg };
     }
   }
@@ -283,10 +299,7 @@ export const useAuthStore = defineStore("auth", () => {
     } catch (e) {
       console.warn("後端登出 Session 銷毀失敗:", e);
     }
-    isAuthenticated.value = false;
-    currentUser.value = null;
-    StorageService.set("is_authenticated", false);
-    StorageService.remove("current_user");
+    clearFrontendSession();
   }
 
   function switchUser(user) {
@@ -352,6 +365,25 @@ export const useAuthStore = defineStore("auth", () => {
   // 後端真實 API 串接：使用者管理 (User Management RESTful CRUD)
   // =========================================================================
 
+  function mapBackendUserToFrontend(u) {
+    return {
+      id: u.id,
+      name: u.name,
+      username: u.username,
+      email: u.email,
+      avatar: normalizeAvatarUrl(u.avatar || getDefaultAvatar()),
+      role: u.role?.name || "employee",
+      roleName: u.role?.description || u.role?.name || "一般員工",
+      roleId: u.role?.id,
+      department: u.department?.name || "門市營運部",
+      status: normalizeUserStatus(u.status || "ACTIVE"),
+      createdAt: u.createdAt
+        ? u.createdAt.slice(0, 10)
+        : new Date().toISOString().slice(0, 10),
+      lastLogin: "已連線",
+    };
+  }
+
   /** 從後端取得分頁使用者清單 */
   async function fetchUsersFromApi(keyword = "", page = 0, size = 50) {
     try {
@@ -359,30 +391,50 @@ export const useAuthStore = defineStore("auth", () => {
         params: { keyword, page, size, sortBy: "id", direction: "desc" },
       });
       if (res.data && res.data.content) {
-        // 將後端 UserResponseDTO 轉換對齊為前端使用者資料結構
-        const mappedUsers = res.data.content.map((u) => ({
-          id: u.id,
-          name: u.name,
-          username: u.username,
-          email: u.email,
-          avatar: normalizeAvatarUrl(u.avatar || getDefaultAvatar()),
-          role: u.role?.name || "employee",
-          roleName: u.role?.description || u.role?.name || "一般員工",
-          roleId: u.role?.id,
-          department: u.department?.name || "門市營運部",
-          status: normalizeUserStatus(u.status || "ACTIVE"),
-          createdAt: u.createdAt
-            ? u.createdAt.slice(0, 10)
-            : new Date().toISOString().slice(0, 10),
-          lastLogin: "已連線",
-        }));
+        const mappedUsers = res.data.content.map(mapBackendUserToFrontend);
         users.value = mappedUsers;
         StorageService.set("system_users", users.value);
         return res.data;
       }
+      if (Array.isArray(res.data)) {
+        const mappedUsers = res.data.map(mapBackendUserToFrontend);
+        users.value = mappedUsers;
+        StorageService.set("system_users", users.value);
+        return { content: mappedUsers };
+      }
     } catch (err) {
-      console.warn("從後端載入使用者列表失敗，使用本地備援資料:", err);
+      try {
+        const fallbackRes = await httpClient.get("/api/users/all");
+        if (Array.isArray(fallbackRes.data)) {
+          const mappedUsers = fallbackRes.data.map(mapBackendUserToFrontend);
+          users.value = mappedUsers;
+          StorageService.set("system_users", users.value);
+          return { content: mappedUsers };
+        }
+      } catch (fallbackErr) {
+        console.warn("從後端載入使用者列表失敗:", fallbackErr);
+      }
     }
+    users.value = [];
+    StorageService.set("system_users", users.value);
+    return { content: [] };
+  }
+
+  async function fetchPublicUsersForLogin() {
+    try {
+      const res = await httpClient.get("/api/users/all");
+      if (Array.isArray(res.data)) {
+        const mappedUsers = res.data.map(mapBackendUserToFrontend);
+        users.value = mappedUsers;
+        StorageService.set("system_users", users.value);
+        return mappedUsers;
+      }
+    } catch (err) {
+      console.warn("載入登入用後端帳號列表失敗:", err);
+    }
+    users.value = [];
+    StorageService.set("system_users", users.value);
+    return [];
   }
 
   /** 從後端取得所有角色清單 */
@@ -401,26 +453,23 @@ export const useAuthStore = defineStore("auth", () => {
 
   /** 呼叫後端新增使用者 API */
   async function createUserApi(userDto) {
-    try {
-      const res = await httpClient.post("/api/users", {
-        username: userDto.username || userDto.email.split("@")[0],
-        password: userDto.password || "Test1234!",
-        name: userDto.name,
-        email: userDto.email,
-        roleId: Number(userDto.roleId) || 1,
-        avatar: userDto.avatar || "",
-      });
-      await fetchUsersFromApi();
-      recordAuditLog(
-        "開立帳號",
-        "permissions",
-        `成功建立使用者「${userDto.name}」(${userDto.email})。`,
-      );
-      return res.data;
-    } catch (err) {
-      // 降級為本地新增
-      return addUser(userDto);
-    }
+    const payload = {
+      username: userDto.username || (userDto.email || "").split("@")[0],
+      password: userDto.password || "Test1234!",
+      name: userDto.name,
+      email: userDto.email,
+      roleId: Number(userDto.roleId) || 1,
+      avatar: userDto.avatar || "",
+    };
+
+    const res = await httpClient.post("/api/users/register", payload);
+    await fetchUsersFromApi();
+    recordAuditLog(
+      "開立帳號",
+      "permissions",
+      `成功建立使用者「${userDto.name}」(${userDto.email})。`,
+    );
+    return res.data;
   }
 
   /** 呼叫後端修改使用者 API */
@@ -746,6 +795,7 @@ export const useAuthStore = defineStore("auth", () => {
     toggleRolePermission,
     resetPermissionsToDefault,
     fetchUsersFromApi,
+    fetchPublicUsersForLogin,
     fetchRolesFromApi,
     fetchClockRecords,
     createUserApi,

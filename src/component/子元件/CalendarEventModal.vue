@@ -100,7 +100,7 @@ const applyTemplate = (tpl: (typeof quickTemplates)[0]) => {
   }
 };
 
-const handleSave = () => {
+const handleSave = async () => {
   if (!authStore.isAdmin) {
     uiStore.showToast("只有最高權限可新增或修改排程", "warning");
     return;
@@ -136,22 +136,22 @@ const handleSave = () => {
   };
 
   if (isEditMode.value && form.value.id) {
-    calendarStore.updateEvent(form.value.id, payload);
+    await calendarStore.updateEvent(form.value.id, payload);
     uiStore.showToast(`已更新排程「${payload.title}」`, "success");
   } else {
-    calendarStore.addEvent(payload);
+    await calendarStore.addEvent(payload);
     uiStore.showToast(`已建立新排程「${payload.title}」`, "success");
   }
 };
 
-const handleDelete = () => {
+const handleDelete = async () => {
   if (!authStore.isAdmin) {
     uiStore.showToast("只有最高權限可刪除排程", "warning");
     return;
   }
   if (!form.value.id) return;
   if (confirm(`確定要永久刪除此排程「${form.value.title}」嗎？`)) {
-    calendarStore.deleteEvent(form.value.id);
+    await calendarStore.deleteEvent(form.value.id);
     uiStore.showToast("已刪除排程項目", "info");
   }
 };

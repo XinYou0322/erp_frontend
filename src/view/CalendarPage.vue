@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import { useCalendarStore } from "../stores/calendar.store";
 import { useAuthStore } from "../stores/auth.store";
 import { useUIStore } from "../stores/ui.store";
@@ -9,6 +9,11 @@ import CalendarDayDetailModal from "../component/子元件/CalendarDayDetailModa
 const calendarStore = useCalendarStore();
 const authStore = useAuthStore();
 const uiStore = useUIStore();
+
+// 頁面載入時從後端資料庫取得排程資料
+onMounted(async () => {
+  await calendarStore.loadEvents();
+});
 
 type CalendarStatEvent = {
   status?: string;
@@ -177,6 +182,13 @@ const handleExportCSV = () => {
                 class="px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs font-normal"
               >
                 {{ totalEvents }} 項排程
+              </span>
+              <span
+                v-if="calendarStore.isLoading"
+                class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-medium animate-pulse"
+              >
+                <span class="size-1.5 rounded-full bg-emerald-400"></span>
+                資料庫同步中
               </span>
             </h1>
             <p class="text-xs text-slate-400">

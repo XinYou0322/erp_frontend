@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth.store";
 import { useUIStore } from "../stores/ui.store";
@@ -15,10 +15,14 @@ const router = useRouter();
 const authStore = useAuthStore();
 const uiStore = useUIStore();
 
+// 統一具備強型別之展示用使用者清單，防止 TS 推論為 never[]
+const displayUsers = computed<UserProfile[]>(() => (authStore.users || []) as UserProfile[]);
+
 // Login Modes: 'credentials' | 'quick-select'
 const activeLoginMode = ref<"credentials" | "quick-select">("credentials");
 
 // Form state
+// 後端 data.sql 內的預設測試帳號密碼皆為 "password"
 const email = ref("store.manager01@example.com");
 const password = ref("Test1234!");
 const rememberMe = ref(true);
@@ -36,6 +40,7 @@ const forgotStep = ref<"input" | "sent">("input");
 const registerForm = ref({
   name: "",
   email: "",
+  password: "",
   department: "營運與行銷部",
   requestedRole: "manager" as UserRole,
   reason: "",
@@ -48,6 +53,37 @@ const handleQuickFill = (targetEmail: string, targetPass: string) => {
   password.value = targetPass;
   errorMessage.value = "";
 };
+
+const resolveBackendRoleId = (selectedRole: UserRole) => {
+  const roles = (authStore.serverRoles || []) as any[];
+  const normalized = String(selectedRole || "").trim().toLowerCase();
+
+  const match = roles.find((role: any) => {
+    const label = String(role?.name || role?.roleName || "").trim().toUpperCase();
+    return (
+      (normalized === "admin" && label === "ADMIN") ||
+      (normalized === "manager" && label === "MANAGER") ||
+      ((normalized === "employee" || normalized === "guest") &&
+        (label === "STAFF" || label === "PURCHASING" || label === "EMPLOYEE"))
+    );
+  }) as any;
+
+  if (match?.id) return Number(match.id);
+
+  const fallbackMap: Record<string, number> = {
+    admin: 1,
+    manager: 2,
+    employee: 3,
+    guest: 3,
+  };
+
+  return fallbackMap[normalized] || 3;
+};
+
+onMounted(async () => {
+  await authStore.fetchRolesFromApi();
+  await authStore.fetchPublicUsersForLogin();
+});
 
 // Handle Form Submit
 const notifStore = useNotificationStore();
@@ -120,60 +156,74 @@ const handleAvatarPreview = (event: Event) => {
   reader.readAsDataURL(file);
 };
 
-const handleRegisterSubmit = () => {
+const handleRegisterSubmit = async () => {
   const {
     name,
     email: applicantEmail,
+    password: applicantPassword,
     department,
     requestedRole,
     reason,
     avatar,
   } = registerForm.value;
 
-  if (!name || !applicantEmail || !reason.trim()) {
-    uiStore.showToast("請填寫姓名、公司電子郵件與申請理由", "warning");
+  if (!name || !applicantEmail || !applicantPassword || !reason.trim()) {
+    uiStore.showToast("請填寫姓名、公司電子郵件、密碼與申請理由", "warning");
     return;
   }
 
   const normalizedReason = reason.trim();
+  const username = (applicantEmail.split("@")[0] || "user").trim();
 
-  authStore.addUser({
-    name: `${name} (待核准)`,
-    email: applicantEmail,
-    password: "user123",
-    role: requestedRole,
-    department,
-    reason: normalizedReason,
-    avatar: avatar || "",
-    status: "pending",
-  });
+  try {
+    const result = await authStore.createUserApi({
+      username,
+      password: applicantPassword,
+      name,
+      email: applicantEmail,
+      roleId: resolveBackendRoleId(requestedRole),
+      avatar: avatar || "",
+      department,
+      reason: normalizedReason,
+      status: "pending",
+    });
 
-  notifStore.addNotification(
-    {
-      title: "收到新的帳號申請",
-      message: `${name} 申請成為 ${requestedRole === "manager" ? "營運經理" : requestedRole === "employee" ? "現場員工" : "訪客"}，目前待管理員審核。`,
-      type: "info",
-      category: "security",
-      actionLabel: "前往權限管理",
-      actionRoute: "/permissions",
-    },
-    true,
-  );
+    notifStore.addNotification(
+      {
+        title: "新帳號申請已送出",
+        message: `${name} 已成功建立帳號，等待後台審核。`,
+        type: "info",
+        category: "security",
+        actionLabel: "前往登入",
+        actionRoute: "/login",
+      },
+      true,
+    );
 
-  uiStore.showToast(
-    "帳號申請已送出，系統已記錄申請資料並自動建立臨時測試帳號。",
-  );
-  isRegisterModalOpen.value = false;
-  email.value = applicantEmail;
-  password.value = "user123";
-  registerForm.value = {
-    name: "",
-    email: "",
-    department: "營運與行銷部",
-    requestedRole: "manager" as UserRole,
-    reason: "",
-    avatar: "",
-  };
+    uiStore.showToast("帳號已送出，請使用後端帳號登入。", "success");
+    isRegisterModalOpen.value = false;
+    email.value = applicantEmail;
+    password.value = applicantPassword;
+    registerForm.value = {
+      name: "",
+      email: "",
+      password: "",
+      department: "營運與行銷部",
+      requestedRole: "manager" as UserRole,
+      reason: "",
+      avatar: "",
+    };
+
+    await authStore.fetchPublicUsersForLogin();
+    return result;
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.message ||
+      error?.message ||
+      "註冊失敗，請確認資料是否重複或後端服務是否正常。";
+    uiStore.showToast(message, "warning");
+    return null;
+  }
 };
 </script>
 
@@ -298,7 +348,7 @@ const handleRegisterSubmit = () => {
                   : 'text-slate-400 hover:text-white'
               "
             >
-              快速體驗身分 ({{ authStore.users.length }})
+              快速體驗身分 ({{ displayUsers.length }})
             </button>
           </div>
 
@@ -414,85 +464,26 @@ const handleRegisterSubmit = () => {
             </button>
           </form>
 
-          <!-- Quick Test Accounts Ribbon -->
+          <!-- Real backend account list -->
           <div class="pt-4 border-t border-slate-800/80">
             <span
               class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2"
             >
-              快速帶入測試帳密 (點擊自動填寫)：
+              後端實際帳號列表（從資料庫讀取）：
             </span>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mb-2">
+            <div v-if="displayUsers.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-2">
               <button
-                @click="handleQuickFill('store_manager01', 'Test1234!')"
-                class="p-2 bg-slate-950 hover:bg-slate-800 border border-emerald-500/40 rounded-xl text-left transition-colors cursor-pointer"
-              >
-                <span class="font-bold text-white text-[11px] block"
-                  >後端測試：店長 (陳志明)</span
-                >
-                <span class="text-[9px] text-emerald-400 font-data-mono"
-                  >store_manager01</span
-                >
-              </button>
-
-              <button
-                @click="handleQuickFill('purchase_manager01', 'Test1234!')"
-                class="p-2 bg-slate-950 hover:bg-slate-800 border border-cyan-500/40 rounded-xl text-left transition-colors cursor-pointer"
-              >
-                <span class="font-bold text-white text-[11px] block"
-                  >後端測試：經理 (王建國)</span
-                >
-                <span class="text-[9px] text-cyan-400 font-data-mono"
-                  >purchase_manager01</span
-                >
-              </button>
-
-              <button
-                @click="handleQuickFill('admin@humanisterp.com', 'admin')"
+                v-for="user in displayUsers.slice(0, 6)"
+                :key="user.id"
+                @click="handleQuickFill(user.email, 'password')"
                 class="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/40 rounded-xl text-left transition-colors cursor-pointer"
               >
-                <span class="font-bold text-white text-[11px] block"
-                  >本地測試：管理員</span
-                >
-                <span class="text-[9px] text-slate-400 font-data-mono"
-                  >admin</span
-                >
+                <span class="font-bold text-white text-[11px] block">{{ user.name }}</span>
+                <span class="text-[9px] text-emerald-400 font-data-mono">{{ user.email }}</span>
               </button>
-
-              <button
-                @click="handleQuickFill('manager@humanisterp.com', 'manager')"
-                class="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-left transition-colors cursor-pointer"
-              >
-                <span class="font-bold text-white text-[11px] block"
-                  >營運店長</span
-                >
-                <span class="text-[9px] text-cyan-400 font-data-mono"
-                  >manager</span
-                >
-              </button>
-
-              <button
-                @click="handleQuickFill('cashier@humanisterp.com', 'employee')"
-                class="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 rounded-xl text-left transition-colors cursor-pointer"
-              >
-                <span class="font-bold text-white text-[11px] block"
-                  >門市收銀員</span
-                >
-                <span class="text-[9px] text-amber-400 font-data-mono"
-                  >employee</span
-                >
-              </button>
-
-              <button
-                @click="handleQuickFill('guest@humanisterp.com', 'guest')"
-                class="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-purple-500/40 rounded-xl text-left transition-colors cursor-pointer"
-              >
-                <span class="font-bold text-white text-[11px] block"
-                  >訪客審計</span
-                >
-                <span class="text-[9px] text-purple-400 font-data-mono"
-                  >guest</span
-                >
-              </button>
+            </div>
+            <div v-else class="text-[11px] text-slate-500">
+              正在從後端載入可登入帳號列表…
             </div>
           </div>
         </div>
@@ -504,7 +495,7 @@ const handleRegisterSubmit = () => {
           </p>
           <div class="space-y-2">
             <button
-              v-for="u in authStore.users"
+              v-for="u in displayUsers"
               :key="u.id"
               @click="handleSelectUser(u)"
               class="w-full p-3 bg-slate-950 hover:bg-slate-800/90 border border-slate-800 hover:border-emerald-500/50 rounded-2xl flex items-center justify-between text-left transition-all cursor-pointer group"
@@ -657,6 +648,19 @@ const handleRegisterSubmit = () => {
             v-model="registerForm.email"
             type="email"
             placeholder="user@humanisterp.com"
+            required
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-data-mono focus:outline-hidden focus:border-emerald-500"
+          />
+        </div>
+
+        <div>
+          <label class="block text-slate-400 mb-1 font-semibold"
+            >設定登入密碼</label
+          >
+          <input
+            v-model="registerForm.password"
+            type="password"
+            placeholder="請輸入至少 6 碼密碼"
             required
             class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-data-mono focus:outline-hidden focus:border-emerald-500"
           />
