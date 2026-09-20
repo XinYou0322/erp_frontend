@@ -13,6 +13,7 @@ import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import { StorageService } from "../service/storage.service";
 import httpClient from "@/service/httpClient";
+import { useAuthStore } from "./auth.store";
 
 /** 預設初始通知資料集 */
 const INITIAL_NOTIFICATIONS = [

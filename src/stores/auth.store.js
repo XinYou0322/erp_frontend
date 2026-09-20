@@ -177,6 +177,13 @@ export const useAuthStore = defineStore("auth", () => {
       return true;
     } catch (error) {
       clearFrontendSession();
+
+      // 💡 檢查如果是 401 錯誤，代表純粹是沒登入，用 console.log 溫和記錄即可
+      if (error?.response?.status === 401) {
+        console.log("當前處於未登入狀態，請進行登入。");
+      } else {
+        console.warn("回復 Session 時發生其他錯誤:", error);
+      }
       return false;
     }
   }
@@ -789,6 +796,9 @@ export const useAuthStore = defineStore("auth", () => {
     recordAuditLog,
     login,
     loginWithCredentials,
+    restoreSessionFromBackend,
+    isValidBackendUserId,
+    clearFrontendSession,
     logout,
     switchUser,
     switchRole,

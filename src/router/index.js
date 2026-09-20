@@ -36,6 +36,10 @@ const routes = [
     path: "/Admin",
     redirect: "/admin",
   },
+  {
+    path: "/users",
+    redirect: "/permissions", // 或者導向到 "/admin"，看您希望通知點開去哪個頁面
+  },
 
   {
     path: "/product",
@@ -60,16 +64,10 @@ const routes = [
     component: () => import("@/view/WorkflowDetail.vue"),
     props: true,
   },
-{
-  path: "/inventory",
-  name: "inventory",
-  component: () =>
-    import("@/view/InventoryPage.vue"),
-},
   {
-    path: '/material',
-    name: 'material',
-    component: () => import("@/view/MaterialManagement.vue")
+    path: "/inventory",
+    name: "inventory",
+    component: () => import("@/view/InventoryPage.vue"),
   },
   {
     path: "/inventory/logs",
@@ -96,39 +94,47 @@ const routes = [
   },
 
   {
-    path: '/Supplier',
-    name: 'Supplier',
-    component: () => import("@/view/Supplier.vue")
+    path: "/Supplier",
+    name: "Supplier",
+    component: () => import("@/view/Supplier.vue"),
   },
   {
-    path: '/leave-requests',
-    name: 'leave-list',
-    component: () => import('../view/LeaveRequestListView.vue')
+    path: "/leave",
+    redirect: "/leave-requests", // 重新導向到您真實存在的請假列表路徑
   },
   {
-    path: '/leave-requests/new',
-    name: 'leave-create',
-    component: () => import('../view/LeaveRequestFormView.vue')
+    path: "/leave-requests",
+    name: "leave-list",
+    component: () => import("../view/LeaveRequestListView.vue"),
   },
   {
-    path: '/leave-requests/:id/edit',
-    name: 'leave-edit',
-    component: () => import('../view/LeaveRequestFormView.vue')
+    path: "/leave-requests/new",
+    name: "leave-create",
+    component: () => import("../view/LeaveRequestFormView.vue"),
   },
   {
-    path: '/leave-requests/:id',
-    name: 'leave-detail',
-    component: () => import('../view/LeaveRequestDetailView.vue')
+    path: "/leave-requests/:id/edit",
+    name: "leave-edit",
+    component: () => import("../view/LeaveRequestFormView.vue"),
   },
-    {
-    path: '/pos',
-    name: 'pos',
-    component: ()=> import("@/view/pos.vue")
+  {
+    path: "/leave-requests/:id",
+    name: "leave-detail",
+    component: () => import("../view/LeaveRequestDetailView.vue"),
   },
-    {
-    path: '/purchaseOrder',
-    name: 'purchaseOrder',
-    component: ()=> import("@/view/PurchaseOrder.vue")
+  {
+    path: "/pos",
+    name: "pos",
+    component: () => import("@/view/pos.vue"),
+  },
+  {
+    path: "/purchaseOrder",
+    name: "purchaseOrder",
+    component: () => import("@/view/PurchaseOrder.vue"),
+  },
+  {
+    path: "/purchase-orders",
+    redirect: "/purchaseOrder", // 自動導向到您真實存在的採購單頁面
   },
 ];
 
