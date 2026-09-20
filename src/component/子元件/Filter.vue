@@ -561,11 +561,18 @@ function handleReset() {
   emit("update:modelValue", resetFilters);
 
   // 【我新增】明確 props 寫法按下重設時，也同步清空各個父元件變數。
-  emit("update:statusValue", "");
-  emit("update:supplierValue", "");
-  emit("update:startDate", "");
-  emit("update:endDate", "");
-  emit("update:searchValue", "");
+  // emit("update:statusValue", "");
+  // emit("update:supplierValue", "");
+  // emit("update:startDate", "");
+  // emit("update:endDate", "");
+  // emit("update:searchValue", "");
+  //從這裡修改
+  emit("update:statusValue", resetFilters.status ?? "");
+  emit("update:supplierValue", resetFilters.supplier ?? "");
+  emit("update:startDate", resetFilters.dateFrom ?? "");
+  emit("update:endDate", resetFilters.dateTo ?? "");
+  emit("update:searchValue", resetFilters.keyword ?? "");
+  //到這裡結束
   emit("reset", resetFilters);
   emit("filter-changed", resetFilters);
 }
