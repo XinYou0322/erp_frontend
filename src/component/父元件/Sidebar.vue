@@ -393,11 +393,11 @@ const navItems = [
   },
 
   {
-    id: "orders",
-    label: "門市出杯訂單中心",
+    id: "salesOrder",
+    label: "銷售單管理",
     icon: Receipt,
     badge: "出單",
-    path: "/orders",
+    path: "/SalesOrder",
   },
   {
     id: "permission",

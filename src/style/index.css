@@ -22,12 +22,12 @@
    * =================================================================== */
   :root {
     /* 主題色 (Primary - 翠綠翡翠色，代表通過、安全、啟動) */
-    --primary: #007BFF;
-    --primary-container: #71a9e6;
-    --on-primary: #04025f;
+    --primary: #10b981;
+    --primary-container: #059669;
+    --on-primary: #020617;
 
     /* 次要色 (Secondary - 科技青藍色，代表操作、分析、亮點) */
-    --secondary: #00D2FF;
+    --secondary: #06b6d4;
     --secondary-container: #0891b2;
 
     /* 輔助警示色 (Tertiary - 琥珀金橘色，代表審核中、警告、缺料) */
@@ -55,18 +55,6 @@
     --error: #f43f5e;
     --error-container: #881337;
     --on-error: #ffffff;
-    /*良好與正常*/
-    --good-container: #1aaa07;
-
-
- 
-  --font-caption: 10px;
-  --font-small: 12px;
-  --font-body: 14px;
-  --font-title: 16px;
-  --font-heading: 20px;
-  --font-display: 24px;
-
   }
 
   /* 網頁全域基礎排版與背景設定 */
@@ -892,6 +880,52 @@
   background: var(--surface-container);
 }
 
+/* =====================================================================
+ * 【我新增】HeadNavbar：每頁筆數下拉選單
+ * 功能：將瀏覽器預設的白色選單改為圖三的深色圓角樣式。
+ * color-scheme: dark 會讓展開後的原生選項清單同步使用深色介面。
+ * ===================================================================== */
+.head-navbar__page-size {
+  box-sizing: border-box;
+  width: 6.4rem;
+  min-width: 6.4rem;
+  height: 2.5rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--outline);
+  border-radius: 0.75rem;
+  outline: none;
+  color: var(--on-surface);
+  background: rgba(2, 6, 23, 0.82);
+  color-scheme: dark;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+/* 【我新增】滑鼠移入時提高邊框與背景亮度。 */
+.head-navbar__page-size:hover {
+  border-color: rgba(6, 182, 212, 0.7);
+  background: rgba(15, 23, 42, 0.92);
+}
+
+/* 【我新增】展開或聚焦時顯示圖三的翠綠色外框。 */
+.head-navbar__page-size:focus {
+  border-color: var(--primary);
+  background: var(--surface-container);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.14);
+}
+
+/* 【我新增】選項展開後維持深色背景與白色文字。 */
+.head-navbar__page-size option {
+  color: var(--on-surface);
+  background: var(--surface-container);
+  font-weight: 700;
+}
+
 /* ---------- 小螢幕：左右區塊改為上下排列 ---------- */
 @media (max-width: 820px) {
   .head-navbar {
@@ -1647,5 +1681,477 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #475569; /* 滑鼠移入時加亮滑塊 */
+}
+
+/* =====================================================================
+ * 【我新增】8. 採購單 Filter：左右分區與精簡尺寸
+ * 只新增覆寫規則，不修改上方既有的 Filter CSS。
+ * 左側：狀態／供應商／採購日期；右側：搜尋／筆數／更新。
+ * ===================================================================== */
+
+/* 其他頁面沒有 purchase-order-filter 時，新增的分區不改變原本排版。 */
+.filter-side {
+  display: contents;
+}
+
+.purchase-order-filter.filter-bar {
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  column-gap: 2rem;
+}
+
+.purchase-order-filter .filter-side {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: nowrap;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.purchase-order-filter .filter-side--left {
+  flex: 0 0 auto;
+}
+
+.purchase-order-filter .filter-side--right {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+/* 【我新增】取消原本欄位自動撐滿，改成接近圖中紅框的精簡寬度。 */
+.purchase-order-filter .filter-group,
+.purchase-order-filter .filter-select {
+  min-width: 0;
+}
+
+.purchase-order-filter .filter-group--status {
+  flex: 0 0 8.75rem;
+}
+
+.purchase-order-filter .filter-group--supplier {
+  flex: 0 0 10.25rem;
+}
+
+.purchase-order-filter .filter-group--date-range {
+  flex: 0 0 21.5rem;
+  min-width: 0;
+}
+
+.purchase-order-filter .filter-date-range {
+  grid-template-columns: minmax(0, 9.75rem) 1.25rem minmax(0, 9.75rem);
+  gap: 0.35rem;
+}
+
+.purchase-order-filter .filter-group--search,
+.purchase-order-filter .filter-group--grow {
+  flex: 0 0 20rem;
+  min-width: 0;
+}
+
+/* 【我新增】讓筆數與更新按鈕保持同一排，更新按鈕移到筆數右側。 */
+.purchase-order-filter .filter-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.purchase-order-filter .filter-select--page-size {
+  width: 6.25rem;
+  min-width: 6.25rem;
+}
+
+.purchase-order-filter .filter-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2.45rem;
+  width: 2.45rem;
+  min-height: 2.45rem;
+  padding: 0;
+  border: 1px solid var(--outline);
+  border-radius: 0.75rem;
+  color: var(--on-surface);
+  background: rgba(2, 6, 23, 0.52);
+  font: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.purchase-order-filter .filter-refresh:hover {
+  border-color: rgba(6, 182, 212, 0.46);
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.purchase-order-filter .filter-refresh:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+}
+
+/* 【我新增】螢幕不足一排時才換成左右兩列，避免欄位被壓扁。 */
+@media (max-width: 1280px) {
+  .purchase-order-filter.filter-bar {
+    flex-wrap: wrap;
+    row-gap: 0.85rem;
+  }
+
+  .purchase-order-filter .filter-side {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .purchase-order-filter .filter-side--right {
+    justify-content: flex-end;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .purchase-order-filter .filter-side {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .purchase-order-filter .filter-group--date-range,
+  .purchase-order-filter .filter-group--search,
+  .purchase-order-filter .filter-group--grow {
+    flex: 1 1 100%;
+  }
+
+  .purchase-order-filter .filter-date-range {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+}
+
+/* =====================================================================
+ * 【我新增】採購單 Filter：統一所有操作元件高度
+ * 原本使用 min-height，不同 input／select／button 仍可能產生 1～2px 差異。
+ * 這裡只新增採購單專用覆寫，不修改集合中原有的共用樣式。
+ * ===================================================================== */
+.purchase-order-filter {
+  --purchase-order-filter-control-height: 2.5rem;
+}
+
+.purchase-order-filter .filter-input,
+.purchase-order-filter .filter-select,
+.purchase-order-filter .filter-refresh {
+  box-sizing: border-box;
+  height: var(--purchase-order-filter-control-height);
+  min-height: var(--purchase-order-filter-control-height);
+  max-height: var(--purchase-order-filter-control-height);
+}
+
+/* 【我修改】更新按鈕寬度同步使用統一高度，維持正方形。 */
+.purchase-order-filter .filter-refresh {
+  flex-basis: var(--purchase-order-filter-control-height);
+  width: var(--purchase-order-filter-control-height);
+}
+
+/* =====================================================================
+ * 【我新增】9. POS 近期銷售彈窗 (RecentSalesPanel)
+ * ---------------------------------------------------------------------
+ * 集合內原有可沿用的樣式：
+ * 1. ModalWrapper 使用的 Tailwind 與設計系統色彩變數。
+ * 2. .bento-card：銷售單卡片的陰影與毛玻璃效果。
+ * 3. .font-data-mono：訂單編號及金額的等寬字體。
+ *
+ * 集合內原本沒有的樣式：
+ * 搜尋列、銷售單摘要、展開明細、空資料、分頁容器及查看全部按鈕。
+ * 因此新增下列 RecentSalesPanel 專用 class。
+ * ===================================================================== */
+
+/* 【畫面 B】ModalWrapper 內容中的近期銷售區域。 */
+.recent-sales-panel {
+  width: 100%;
+  color: var(--on-surface);
+}
+
+.recent-sales-panel *,
+.recent-sales-panel *::before,
+.recent-sales-panel *::after {
+  box-sizing: border-box;
+}
+
+/* 【畫面 C】搜尋訂單編號或商品名稱。 */
+.recent-sales-panel__search {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  height: 2.5rem;
+  padding-inline: 0.75rem;
+  margin-bottom: 1rem;
+  background: var(--surface-container-low);
+  border: 1px solid var(--outline);
+  border-radius: 0.625rem;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.recent-sales-panel__search:focus-within {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.12);
+}
+
+.recent-sales-panel__search-icon {
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  fill: none;
+  stroke: var(--on-surface-variant);
+  stroke-linecap: round;
+  stroke-width: 1.8;
+}
+
+.recent-sales-panel__search input {
+  width: 100%;
+  min-width: 0;
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 0.8125rem;
+  outline: 0;
+  background: transparent;
+  border: 0;
+}
+
+.recent-sales-panel__search input::placeholder {
+  color: var(--on-surface-variant);
+}
+
+.recent-sales-panel__search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+/* 【畫面 D】日期與搜尋後總筆數。 */
+.recent-sales-panel__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0 0.25rem 0.625rem;
+  color: var(--on-surface);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.recent-sales-panel__summary p {
+  margin: 0;
+}
+
+.recent-sales-panel__summary span,
+.recent-sales-panel__summary p:last-child {
+  color: var(--on-surface-variant);
+  font-weight: 600;
+}
+
+/* 【我修改｜畫面 E】清單不再設定 overflow-y，過長資料交給 Pagination。 */
+.recent-sales-panel__list {
+  display: grid;
+  gap: 0.5rem;
+  min-height: 0;
+}
+
+/* 【畫面 F】每張銷售單卡片；陰影與毛玻璃效果沿用 .bento-card。 */
+.sales-order-card {
+  margin: 0;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.84);
+  border-color: var(--outline);
+  border-radius: 0.75rem;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.sales-order-card:hover,
+.sales-order-card--expanded {
+  border-color: var(--secondary);
+}
+
+.sales-order-card--expanded {
+  background: rgba(8, 47, 73, 0.58);
+  box-shadow: inset 0 0 20px rgba(6, 182, 212, 0.05);
+}
+
+.sales-order-card__summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 1.125rem;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.625rem;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.sales-order-card__identity,
+.sales-order-card__amount {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1875rem;
+  min-width: 0;
+}
+
+.sales-order-card__identity strong {
+  overflow: hidden;
+  font-size: 0.875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sales-order-card__identity small,
+.sales-order-card__amount small {
+  color: var(--on-surface-variant);
+  font-size: 0.6875rem;
+}
+
+.sales-order-card__amount {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.sales-order-card__amount strong,
+.sales-order-card__total strong {
+  color: var(--secondary);
+  font-size: 0.875rem;
+}
+
+.sales-order-card__chevron {
+  width: 1.0625rem;
+  height: 1.0625rem;
+  fill: none;
+  stroke: var(--on-surface-variant);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  transition: transform 0.18s ease, stroke 0.18s ease;
+}
+
+.sales-order-card__chevron--open {
+  stroke: var(--secondary);
+  transform: rotate(90deg);
+}
+
+/* 【畫面 G】展開後的商品明細與合計。 */
+.sales-order-card__details {
+  margin: 0 0.625rem 0.625rem;
+  padding: 0.5625rem 0.5625rem 0.4375rem;
+  background: rgba(2, 6, 23, 0.48);
+  border: 1px solid var(--outline);
+  border-radius: 0.5625rem;
+}
+
+.sales-order-card__item {
+  display: grid;
+  grid-template-columns: 1.5625rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5625rem;
+  min-height: 1.8125rem;
+  font-size: 0.75rem;
+}
+
+.sales-order-card__quantity {
+  display: grid;
+  place-items: center;
+  width: 1.4375rem;
+  height: 1.4375rem;
+  color: var(--on-surface);
+  background: var(--surface-container-high);
+  border: 1px solid var(--outline);
+  border-radius: 0.375rem;
+}
+
+.sales-order-card__product-name {
+  overflow: hidden;
+  color: var(--on-surface);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sales-order-card__item-price {
+  color: var(--on-surface);
+  white-space: nowrap;
+}
+
+.sales-order-card__total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  margin-top: 0.4375rem;
+  font-size: 0.75rem;
+  border-top: 1px solid var(--outline);
+}
+
+/* 【畫面 H】沒有資料或搜尋不到時的提示。 */
+.recent-sales-panel__empty {
+  display: grid;
+  place-items: center;
+  min-height: 10rem;
+  color: var(--on-surface-variant);
+  text-align: center;
+  border: 1px dashed var(--outline);
+  border-radius: 0.75rem;
+}
+
+.recent-sales-panel__empty span {
+  font-size: 1.875rem;
+}
+
+.recent-sales-panel__empty p {
+  margin: -1.875rem 0 0;
+  font-size: 0.8125rem;
+}
+
+/* 【畫面 I】讓既有 Pagination 在窄版 Modal 內可以自動換行。 */
+.recent-sales-panel__pagination > div {
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+/* 【畫面 J】ModalWrapper footer 內的完整銷售單入口。 */
+.recent-sales-panel__view-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8125rem;
+  width: 100%;
+  min-height: 2.75rem;
+  color: var(--secondary);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  background: rgba(8, 47, 73, 0.62);
+  border: 1px solid var(--secondary-container);
+  border-radius: 0.625rem;
+  cursor: pointer;
+  transition: filter 0.18s ease, transform 0.18s ease;
+}
+
+.recent-sales-panel__view-all:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+/* 展開／收合商品明細動畫。 */
+.order-detail-enter-active,
+.order-detail-leave-active {
+  overflow: hidden;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.order-detail-enter-from,
+.order-detail-leave-to {
+  opacity: 0;
+  transform: translateY(-0.3125rem);
+}
+
+@media (max-width: 480px) {
+  .sales-order-card__summary {
+    grid-template-columns: minmax(0, 1fr) auto 1rem;
+    gap: 0.45rem;
+  }
+
+  .sales-order-card__amount strong {
+    font-size: 0.8rem;
+  }
 }
 

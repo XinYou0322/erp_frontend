@@ -130,6 +130,11 @@ const routes = [
     name: 'purchaseOrder',
     component: ()=> import("@/view/PurchaseOrder.vue")
   },
+  {
+    path: '/SalesOrder',
+    name: 'SalesOrder',
+    component: ()=> import("@/view/SalesOrder.vue")
+  },
 ];
 
 const router = createRouter({
