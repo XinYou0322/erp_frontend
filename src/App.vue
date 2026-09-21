@@ -94,38 +94,36 @@ const notifStore = useNotificationStore();
 // 當使用者登入成功或重新整理頁面時
 // 自動建立 WebSocket 連線並拉取通知
 const initNotificationConnection = () => {
+  const currentUserId = authStore.currentUser?.id;
+  const backendValid = authStore.isAuthenticated && authStore.isValidBackendUserId(currentUserId);
 
-  if (
-    authStore.isAuthenticated &&
-    authStore.currentUser?.id
-  ) {
-
-    notifStore.connectWebSocket(
-      authStore.currentUser.id
-    );
-
-    notifStore.fetchNotifications();
-
-    notifStore.fetchUnreadCount();
+  if (!backendValid) {
+    return;
   }
 
+  notifStore.connectWebSocket(currentUserId);
+  notifStore.fetchNotifications();
+  notifStore.fetchUnreadCount();
 };
 
-
-onMounted(() => {
-  initNotificationConnection();
+onMounted(async () => {
+  const sessionValid = await authStore.restoreSessionFromBackend();
+  if (sessionValid) {
+    initNotificationConnection();
+  }
 });
-
 
 watch(
   () => authStore.isAuthenticated,
-
-  (isAuth) => {
-
+  async (isAuth) => {
     if (isAuth) {
-      initNotificationConnection();
+      const backendValid = await authStore.restoreSessionFromBackend();
+      if (backendValid) {
+        initNotificationConnection();
+      }
+    } else {
+      authStore.clearFrontendSession();
     }
-
-  }
+  },
 );
 </script>

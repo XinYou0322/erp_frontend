@@ -115,15 +115,6 @@ const handleLogout = async () => {
         >
       </button>
 
-      <!-- System Logs & Sales History Drawer Toggle -->
-      <button
-        @click="uiStore.isHistoryDrawerOpen = true"
-        title="系統日誌與交易紀錄"
-        class="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 transition-colors cursor-pointer"
-      >
-        <span class="material-symbols-outlined text-[20px]">history</span>
-      </button>
-
       <!-- Notification Center Drawer Toggle -->
       <button
         @click="uiStore.isNotificationCenterOpen = true"

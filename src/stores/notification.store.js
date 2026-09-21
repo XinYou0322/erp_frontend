@@ -13,6 +13,7 @@ import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import { StorageService } from "../service/storage.service";
 import httpClient from "@/service/httpClient";
+import { useAuthStore } from "./auth.store";
 
 /** 預設初始通知資料集 */
 const INITIAL_NOTIFICATIONS = [
@@ -202,9 +203,27 @@ export const useNotificationStore = defineStore("notification", () => {
   // 4. WebSocket 即時通訊與後端 API 串接
   // =====================================================================
 
+  const isValidUserId = (userId) => {
+    if (userId === null || userId === undefined) return false;
+    if (Number.isInteger(userId)) return userId >= 0;
+    if (typeof userId === "string") {
+      const trimmed = userId.trim();
+      if (!trimmed) return false;
+      const parsed = Number(trimmed);
+      return Number.isInteger(parsed) && parsed >= 0;
+    }
+    return false;
+  };
+
   /** 連接後端 WebSocket 推播中樞 */
   function connectWebSocket(userId) {
-    if (!userId) return;
+    const normalizedUserId = Number.isInteger(userId)
+      ? userId
+      : typeof userId === "string" && /^\d+$/.test(userId.trim())
+        ? Number(userId)
+        : null;
+
+    if (!isValidUserId(normalizedUserId)) return;
     if (
       socket &&
       (socket.readyState === WebSocket.OPEN ||
@@ -217,7 +236,7 @@ export const useNotificationStore = defineStore("notification", () => {
         import.meta.env.VITE_AXIOS_HTTP_BASEURL || "http://localhost:8080";
       const wsProto = baseURL.startsWith("https") ? "wss" : "ws";
       const wsHost = baseURL.replace(/^https?:\/\//, "");
-      const wsUrl = `${wsProto}://${wsHost}/ws/notifications?userId=${userId}`;
+      const wsUrl = `${wsProto}://${wsHost}/ws/notifications?userId=${normalizedUserId}`;
 
       socket = new WebSocket(wsUrl);
 
@@ -267,6 +286,8 @@ export const useNotificationStore = defineStore("notification", () => {
 
   /** 從後端取得真實未讀通知數量 */
   async function fetchUnreadCount() {
+    const currentUserId = useAuthStore().currentUser?.id;
+    if (!isValidUserId(currentUserId)) return;
     try {
       const res = await httpClient.get("/api/notifications/unread-count");
       if (typeof res.data === "number") {
@@ -279,6 +300,8 @@ export const useNotificationStore = defineStore("notification", () => {
 
   /** 從後端拉取真實歷史通知 */
   async function fetchNotifications() {
+    const currentUserId = useAuthStore().currentUser?.id;
+    if (!isValidUserId(currentUserId)) return;
     try {
       const res = await httpClient.get("/api/notifications", {
         params: {
@@ -334,8 +357,17 @@ export const useNotificationStore = defineStore("notification", () => {
   };
 
   const triggerLowStockAlert = async (materials = []) => {
-    const userId = useAuthStore().currentUser?.id;
-    if (!Array.isArray(materials) || materials.length === 0 || !userId) {
+    const rawUserId = useAuthStore().currentUser?.id;
+    const userId = Number.isInteger(rawUserId)
+      ? rawUserId
+      : typeof rawUserId === "string" && /^\d+$/.test(rawUserId.trim())
+        ? Number(rawUserId)
+        : null;
+    if (
+      !Array.isArray(materials) ||
+      materials.length === 0 ||
+      !isValidUserId(userId)
+    ) {
       return;
     }
 
@@ -437,9 +469,17 @@ export const useNotificationStore = defineStore("notification", () => {
 
   /** 觸發後端產生一則測試通知 */
   const triggerSampleAlert = async (userId) => {
+    const normalizedUserId = Number.isInteger(userId)
+      ? userId
+      : typeof userId === "string" && /^\d+$/.test(userId.trim())
+        ? Number(userId)
+        : null;
+
     try {
-      if (userId) {
-        await httpClient.post("/api/notifications/trigger-sample", { userId });
+      if (isValidUserId(normalizedUserId)) {
+        await httpClient.post("/api/notifications/trigger-sample", {
+          userId: normalizedUserId,
+        });
         return;
       }
     } catch (err) {
