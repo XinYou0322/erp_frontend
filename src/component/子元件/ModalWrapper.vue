@@ -115,29 +115,33 @@
           </div>
 
 
-          <!-- 右上角 X -->
-          <button
-            type="button"
-            @click="requestClose"
-            class="
-              w-8
-              h-8
-              rounded-full
-              flex
-              items-center
-              justify-center
-              text-[var(--on-surface-variant)]
-              hover:text-[var(--on-surface)]
-              hover:bg-[var(--surface-container-highest)]
-              transition-colors
-              cursor-pointer
-            "
-            title="關閉"
-          >
+          <div class="flex items-center gap-2">
+            <slot name="header-actions" />
 
-            <X class="w-5 h-5" />
+            <!-- 右上角 X -->
+            <button
+              type="button"
+              @click="requestClose"
+              class="
+                w-8
+                h-8
+                rounded-full
+                flex
+                items-center
+                justify-center
+                text-[var(--on-surface-variant)]
+                hover:text-[var(--on-surface)]
+                hover:bg-[var(--surface-container-highest)]
+                transition-colors
+                cursor-pointer
+              "
+              title="關閉"
+            >
 
-          </button>
+              <X class="w-5 h-5" />
+
+            </button>
+          </div>
 
         </div>
 

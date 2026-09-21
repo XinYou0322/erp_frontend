@@ -205,26 +205,29 @@
       "
     >
 
-      <div
-     v-for="product in paginatedProducts"
+   <div
+  v-for="product in paginatedProducts"
   :key="product.id"
-        class="
-          p-5
-          rounded-2xl
-          bg-[var(--surface-container)]
-          border
-          border-[var(--outline)]
-          hover:border-[var(--primary)]/40
-          hover:bg-[var(--surface-container-high)]
-          transition-all
-          shadow-sm
-          flex
-          flex-col
-          justify-between
-          space-y-4
-          group
-        "
-      >
+  :class="
+    product.status === 'INACTIVE'
+      ? 'opacity-45 grayscale'
+      : ''
+  "
+  class="
+    p-5
+    rounded-2xl
+    bg-[var(--surface-container)]
+    border
+    border-[var(--outline)]
+    hover:border-[var(--primary)]/40
+    hover:bg-[var(--surface-container-high)]
+    transition-all
+    shadow-sm
+    flex
+    flex-col
+    justify-between
+  "
+>
 
         <!-- Card Header -->
         <div>
@@ -538,42 +541,68 @@
         </div>
 
 
-        <!-- Footer -->
-        <div
-          class="
-            pt-3
-            border-t
-            border-[var(--outline-variant)]
-            text-[length:var(--font-body)]
-            text-[var(--on-surface-variant)]
-            flex
-            items-center
-            justify-between
-          "
-        >
-
-          <span class="truncate">
-            {{ product.status === 'ACTIVE' ? '販售中' : '未啟用' }}
-          </span>
-
-          <span
+        <div class="mt-4">
+          <!-- Footer -->
+          <div
             class="
-              px-2
-              py-0.5
-              rounded
-              bg-[var(--primary)]/10
-              text-[var(--primary)]
-              border
-              border-[var(--primary)]/20
-              text-[length:var(--font-small)]
-              font-bold
-              shrink-0
-              ml-2
+              pt-3
+              border-t
+              border-[var(--outline-variant)]
+              text-[length:var(--font-body)]
+              text-[var(--on-surface-variant)]
+              flex
+              items-center
+              justify-between
             "
           >
-            {{ product.unit || '杯' }}
-          </span>
+            <span class="truncate">
+              {{ product.status === 'ACTIVE' ? '販售中' : '未啟用' }}
+            </span>
 
+            <span
+              class="
+                px-2
+                py-0.5
+                rounded
+                bg-[var(--primary)]/10
+                text-[var(--primary)]
+                border
+                border-[var(--primary)]/20
+                text-[length:var(--font-small)]
+                font-bold
+                shrink-0
+                ml-2
+              "
+            >
+              {{ product.unit || '杯' }}
+            </span>
+          </div>
+
+          <div v-if="product.imageUrl" class="mt-3">
+            <button
+              type="button"
+              class="flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold text-[var(--primary)] hover:bg-[var(--primary)]/10 transition-colors cursor-pointer"
+              :aria-expanded="Boolean(expandedImages[product.id])"
+              :aria-controls="`product-image-${product.id}`"
+              @click="toggleProductImage(product.id)"
+            >
+              <span>{{ expandedImages[product.id] ? '收起圖片' : '查看圖片' }}</span>
+              <ChevronUp v-if="expandedImages[product.id]" class="w-4 h-4" />
+              <ChevronDown v-else class="w-4 h-4" />
+            </button>
+
+            <div
+              v-if="expandedImages[product.id]"
+              :id="`product-image-${product.id}`"
+              class="mt-2"
+            >
+              <ProductImage
+                :src="product.imageUrl"
+                :alt="`${product.name}商品圖片`"
+                class="h-52 p-2"
+              />
+            </div>
+          </div>
         </div>
 
       </div>
@@ -585,12 +614,13 @@
   :total-pages="totalPages"
   @change-page="goToPage"
 />
-  <EditRecipeModal
+<EditRecipeModal
   :is-open="editRecipeModalOpen"
   :product="selectedProduct"
   :initial-bom="selectedProduct ? bomMap[selectedProduct.id] : []"
   @close="editRecipeModalOpen = false"
   @success="handleRecipeSuccess"
+  @disabled="handleProductDisabled"
 />
 
     <AddProductModal
@@ -610,23 +640,34 @@
 </template>
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue' 
-import { FlaskConical, DollarSign, Layers, CheckCircle2, Coffee, Edit3, Plus, Import } from 'lucide-vue-next'
+import { FlaskConical, DollarSign, Layers, CheckCircle2, Coffee, Edit3, Plus, Import, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import MetricCard from '@/component/子元件/MetricCard.vue'
 import httpClient from '@/service/httpClient'
 import EditRecipeModal from '@/component/父元件/EditRecipeModal.vue'
 import AddProductModal from '@/component/父元件/AddProductModal.vue'
 import ProductCategoryManagementModal from '@/component/父元件/ProductCategoryManagementModal.vue'
 import Pagination from '@/component/子元件/Pagination.vue'
+import ProductImage from '@/component/子元件/ProductImage.vue'
 
 
 const editRecipeModalOpen = ref(false)
 const addProductModalOpen = ref(false)
 const selectedProduct = ref(null)
 const showCategoryModal = ref(false)
+const expandedImages = ref({})
+
+const toggleProductImage = (productId) => {
+  expandedImages.value[productId] = !expandedImages.value[productId]
+}
 
 
 
+const handleProductDisabled = async () => {
+  editRecipeModalOpen.value = false
+  selectedProduct.value = null
 
+  await loadProducts()
+}
 const handleProductSuccess = async () => {
   await loadProducts()
 }
@@ -726,15 +767,29 @@ const loadBom = async (productId) => {
   }
 }
 const filteredProducts = computed(() => {
+  const filtered =
+    selectedCategory.value === '全部'
+      ? products.value
+      : products.value.filter(
+          product =>
+            product.categoryName === selectedCategory.value
+        )
 
-  if (selectedCategory.value === '全部') {
-    return products.value
-  }
+  return [...filtered].sort((a, b) => {
+    const aInactive =
+      a.status === 'INACTIVE' ? 1 : 0
 
-  return products.value.filter(
-    product =>
-      product.categoryName === selectedCategory.value
-  )
+    const bInactive =
+      b.status === 'INACTIVE' ? 1 : 0
+
+    // ACTIVE 排前面，INACTIVE 排後面
+    if (aInactive !== bInactive) {
+      return aInactive - bInactive
+    }
+
+    // 相同狀態時維持 ID 順序
+    return Number(a.id) - Number(b.id)
+  })
 })
 const totalPages = computed(() => {
 
