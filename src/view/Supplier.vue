@@ -75,7 +75,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import httpClient from '@/service/httpClient'
-import HeadNavBar from '@/component/子元件/HeadNavBar.vue'
+import HeadNavBar from '@/component/子元件/HeadNavbar.vue'
 import OneSupplier from '@/component/子元件/OneSupplier.vue'
 import CheckSupplier from '@/component/子元件/CheckSupplier.vue'
 import UpdateSupplier from '@/component/子元件/UpdateSupplier.vue'
@@ -93,51 +93,142 @@ const showCheckSupplier = ref(false)
 const showUpdateSupplier = ref(false)
 const selectedSupplier = ref(null)
 const addedCount = ref(0)
+const isUpdatingSupplier = ref(false)
+const updateError = ref('')
+
+
 
 function changeTab(tab) {
   activeTab.value = tab
 }
 
-function submitUpdate(updateData) {
+function changePageSize(size) {
+
+  // 改成使用者選擇的每頁筆數
+  pageSize.value = size
+
+  // 每頁筆數改變時，回到第一頁
+  currentPage.value = 0
+
+  // 重新查詢分頁 API
+  fetchData()
+
+}
+//接收 Pagination.vue 傳回的畫面頁碼
+function changePage(page) {
+
+  // Pagination.vue 的頁碼從 1 開始，後端 Spring Page 從 0 開始
+  currentPage.value = page - 1
+
+  // 使用新頁碼重新查詢後端分頁 API
+  fetchData()
+}
+async function fetchData() {
+
+  try {
+
+    const response = await httpClient({
+      method: 'get',
+      url: '/api/Supplier/page',
+
+      params: {
+        keyword: searchText.value,
+         status: selectedStatus.value || undefined,
+        page: currentPage.value,
+        size: pageSize.value
+      }
+    })
+    // Spring Page 的資料不是直接放在 response.data
+    // 真正的供應商陣列在 content
+    const responseList = Array.isArray(response.data.content)
+      ? response.data.content
+      : []
+    const normalizedList = []
+
+    for (const supplier of responseList) {
+
+      normalizedList.push(
+        normalizeSupplier(supplier)
+      )
+
+    }
+    // 當頁供應商資料
+    supplierList.value = normalizedList
+
+    // 後端 Page 額外提供的分頁資訊
+    totalElements.value = response.data.totalElements
+    totalPages.value = response.data.totalPages
+    currentPage.value = response.data.number
+  } catch (error) {
+    console.error('查詢供應商失敗：', error)
+  }
+
+}
+watch(searchText, function () {
+
+  // 每次重新搜尋時回到第一頁
+  currentPage.value = 0
+
+  // 重新向後端查詢
+  fetchData()
+
+})
+
+// 監聽供應商狀態下拉選單
+watch(selectedStatus, function () {
+
+  // 狀態改變時回到第一頁，避免原本頁碼超出篩選後的總頁數
+  currentPage.value = 0
+
+  //帶著 keyword、status、page、size 重新呼叫後端分頁 API
+  fetchData()
+
+})
+
+async function submitUpdate(updateData) {
 
   const supplierId = updateData.id
 
+  // 送出前移除文字前後空白；空白分機送 null，對應後端「清除分機」設計。
   const requestData = {
-    name: updateData.name,
-    callingCode: updateData.callingCode,
-    phone: updateData.phone,
-    extension: updateData.extension,
-    address: updateData.address,
-    email: updateData.email,
+    name: updateData.name.trim(),
+    callingCode: updateData.callingCode.trim(),
+    phone: updateData.phone.trim(),
+    extension: updateData.extension.trim() || null,
+    address: updateData.address.trim(),
+    email: updateData.email.trim(),
     status: updateData.status
   }
 
-  httpClient({
-    method: 'patch',
-    url: `/api/Supplier/update/${supplierId}`,
-    data: requestData
-  })
-    .then(response => {
-      console.log('修改成功：', response.data)
+  updateError.value = ''
+  isUpdatingSupplier.value = true
 
-      alert('供應商修改成功')
+  try {
+    const response = await httpClient.patch(
+      `/api/Supplier/update/${supplierId}`,
+      requestData
+    )
 
-      // 關閉修改視窗
-      closeUpdate()
+    console.log('修改成功：', response.data)
+    alert('供應商修改成功')
 
-      // 重新查詢，讓總覽顯示最新資料
-      fetchData()
-    })
-    .catch(error => {
-      console.error('修改供應商失敗：', error)
+    // 程式主動關閉代表已儲存成功，不需要再顯示「放棄修改」確認。
+    closeUpdate()
 
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data ||
-        '供應商修改失敗'
+    // 重新查詢，讓總覽顯示最新資料
+    await fetchData()
+  } catch (error) {
+    console.error('修改供應商失敗：', error)
 
-      alert(errorMessage)
-    })
+    // 保留修改視窗並顯示後端錯誤，讓使用者可直接修正欄位。
+    updateError.value =
+      error.response?.data?.message ||
+      error.response?.data?.detail ||
+      (typeof error.response?.data === 'string' ? error.response.data : '') ||
+      '供應商修改失敗'
+  } finally {
+    isUpdatingSupplier.value = false
+  }
 }
 
 function showDetail(oneSupplier) {
@@ -153,6 +244,7 @@ function closeDetail() {
 
 function showUpdate(oneSupplier) {
   selectedSupplier.value = oneSupplier
+  updateError.value = ''
   showUpdateSupplier.value = true
 }
 function closeUpdate() {

@@ -132,6 +132,11 @@ const routes = [
     path: "/purchase-orders",
     redirect: "/purchaseOrder", // 自動導向到您真實存在的採購單頁面
   },
+  {
+    path: '/SalesOrder',
+    name: 'SalesOrder',
+    component: ()=> import("@/view/SalesOrder.vue")
+  },
 ];
 
 const router = createRouter({
