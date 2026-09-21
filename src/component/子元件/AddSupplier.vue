@@ -63,7 +63,7 @@
       <article
         v-for="(supplier, index) in suppliers"
         :key="supplier.localId"
-        class="supplier-entry rounded-2xl border bg-[var(--surface-container)] p-5 shadow-level-1 transition"
+        class="erp-supplier-entry rounded-2xl border bg-[var(--surface-container)] p-5 shadow-level-1 transition"
         :class="{
           'border-[var(--primary)]/60': supplier.selected && !supplier.invalid,
           'border-[var(--outline)]': !supplier.selected && !supplier.invalid,
@@ -287,11 +287,14 @@
             </label>
             <textarea
               :id="`supplier-note-input-${supplier.localId}`"
-              v-model="supplier.supplierNotes.remark"
+              v-model="supplier.supplierNotes.content"
               class="w-full resize-y rounded-xl border border-[var(--outline)] bg-[var(--surface-container-low)] px-3 py-2.5 text-sm text-[var(--on-surface)] outline-none transition placeholder:text-[var(--on-surface-variant)]/60 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20"
               rows="3"
               placeholder="輸入合作條件、聯絡偏好或其他備註"
             ></textarea>
+            <span v-if="supplier.errors.remark" class="mt-1 block text-xs text-[var(--error)]">
+              {{ supplier.errors.remark }}
+            </span>
           </div>
         </div>
       </article>
@@ -309,12 +312,10 @@
 </template>
 
 <script setup>
-import axios from 'axios'
+import httpClient from '@/service/httpClient'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
-  //AddSupplier.vue 接收兩個 props：initialCount 
-  //type: Number -> 接收 Number
   initialCount: {
     type: Number,
     default: 3,
@@ -322,8 +323,6 @@ const props = defineProps({
       return Number.isInteger(value) && value > 0
     }
   },
-  //和 loginUserId
-  //type: [Number, String], -> Number/String都可
   loginUserId: {
     type: [Number, String],
     required: true
@@ -372,7 +371,7 @@ function createEmptySupplier(selected, expanded) {
     email: '',
     status: 'PENDING',
     supplierNotes: {
-      remark: ''
+      content: ''
     }
   }
 }
@@ -460,6 +459,8 @@ function validateSupplier(supplier) {
   const extension = supplier.extension.trim()
   const address = supplier.address.trim()
   const email = supplier.email.trim()
+  const remark = supplier.supplierNotes.remark.trim()
+
 
   if (!name) {
     errors.name = '供應商名稱不可為空'
@@ -495,6 +496,9 @@ function validateSupplier(supplier) {
     errors.status = '請選擇供應商狀態'
   }
 
+  if (remark.length > 200) {
+    errors.remark = '備註不可超過 200 個字'
+  }
   supplier.errors = errors
   supplier.invalid = Object.keys(errors).length > 0
 
@@ -502,7 +506,8 @@ function validateSupplier(supplier) {
 }
 
 function toCreatePayload(supplier) {
-  const noteContent = supplier.supplierNotes.content.trim()
+
+  const noteRemark = supplier.supplierNotes.remark.trim()
 
   return {
     name: supplier.name.trim(),
@@ -512,9 +517,9 @@ function toCreatePayload(supplier) {
     address: supplier.address.trim(),
     email: supplier.email.trim(),
     status: supplier.status,
-    supplierNotes: noteContent
+    supplierNotes: noteRemark
       ? {
-          content: noteContent
+          remark: noteRemark
         }
       : null
   }
@@ -559,7 +564,7 @@ async function saveSelectedSuppliers() {
     await nextTick()
 
     if (pageRoot.value) {
-      const firstInvalidCard = pageRoot.value.querySelector('.supplier-entry.is-invalid')
+      const firstInvalidCard = pageRoot.value.querySelector('.erp-supplier-entry.is-invalid')
 
       if (firstInvalidCard) {
         firstInvalidCard.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -588,15 +593,15 @@ async function saveSelectedSuppliers() {
 
     // 只選一筆時，Body 要送 SupplierCreDTO 物件。
     if (payload.length === 1) {
-      response = await axios.post(
-        `${apiBaseUrl}/api/Supplier/add`,
+      response = await httpClient.post(
+        '/api/Supplier/add',
         payload[0],
         requestConfig
       )
     } else {
       // 選兩筆以上時，Body 要送 List<SupplierCreDTO> 陣列。
-      response = await axios.post(
-        `${apiBaseUrl}/api/Suppliers/addAll`,
+      response = await httpClient.post(
+        '/api/Suppliers/addAll',
         payload,
         requestConfig
       )
@@ -617,7 +622,11 @@ async function saveSelectedSuppliers() {
     console.error("後端錯誤內容：", error.response?.data)
     console.error("HTTP 狀態碼：", error.response?.status)
     // console.error("送出的資料：", supplierData)
-    apiError.value = '新增錯誤'
+    apiError.value =
+      error.response?.data?.message ||
+      error.response?.data?.detail ||
+      (typeof error.response?.data === 'string' ? error.response.data : '') ||
+      '新增供應商失敗，請稍後再試'
   } finally {
     isSaving.value = false
   }

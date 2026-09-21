@@ -8,11 +8,14 @@
                 :show-categories="true"
                 :category-options="categoryOptionsWithCount"
                 :active-category="activeCategory"
+                :show-sales-order-record="true"
+                sales-order-record-title="近期銷售"
                 :show-search="true"
                 v-model:searchValue="searchValue"
                 search-placeholder="搜尋商品..."
                 @change-tab="changeHeadTab"
-                @change-category="changeCategory"/>
+                @change-category="changeCategory"
+                @open-sales-order-record="openRecentSales"/>
 
     <!-- POS 主內容：左側商品區 + 右側明細區 -->
     <div class="pos-layout">
@@ -32,7 +35,7 @@
           >
             {{ productError }}
         </p>
-        <!-- 【我新增】查無符合條件的商品時顯示提示 -->
+        <!-- 查無符合條件的商品時顯示提示 -->
         <p
             v-else-if="filteredProducts.length === 0"
             class="bento-card pos-product-state"
@@ -61,16 +64,37 @@
         :checkout-error="checkoutError"
         @increase="increaseProduct"
         @decrease="decreaseProduct"
+        @checkout="checkoutOrder"
         />
     </div>
+    <RecentSalesPanel
+      :is-open="showRecentSales"
+      :sales-orders="recentSalesOrders"
+      :server-pagination="true"
+      :current-page="recentCurrentPage"
+      :total-pages="recentTotalPages"
+      :total-elements="recentTotalElements"
+      :page-size="RECENT_SALES_PAGE_SIZE"
+      :date-text="recentSalesDate"
+      @close="showRecentSales = false"
+      @change-page="loadRecentSales"
+      @search="searchRecentSales"
+      @select-order="loadRecentSalesDetail"
+      @view-all="goToAllSalesOrders"
+    />
   </main>
 </template>
 <script setup>
 import { ref, computed ,onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import httpClient from '@/service/httpClient'
 import Card from '@/component/子元件/Card.vue'
-import HeadNavBar from '@/component/子元件/HeadNavBar.vue';
-import AllRightCard from '@/component/子元件/AllRightCard.vue';
+import HeadNavBar from '@/component/子元件/HeadNavbar.vue'
+import AllRightCard from '@/component/子元件/AllRightCard.vue'
+import RecentSalesPanel from '@/component/父元件/RecentSalesPanel.vue'
+
+//用於「查看全部銷售單」跳轉到完整銷售單頁面
+const router = useRouter()
 
 const categories = ref([])
 const activeCategory = ref(null)
@@ -85,12 +109,102 @@ const productError = ref('')
 const productQuantities = ref({})
 
 //需要的付款方式與畫面送出狀態
-const paymentMethod = ref('CASH')
+const paymentMethod = ref('')
 const checkoutLoading = ref(false)
 const checkoutMessage = ref('')
 const checkoutError = ref('')
 
+//近期銷售：視窗、API 分頁與搜尋狀態
+const showRecentSales = ref(false)
+const recentSalesOrders = ref([])
+const recentCurrentPage = ref(1)
+const recentTotalPages = ref(1)
+const recentTotalElements = ref(0)
+const recentSalesKeyword = ref('')
+const recentSalesDate = ref('')
+
+const RECENT_SALES_PAGE_SIZE = 5
+
 const TEST_LOGIN_USER_ID = 1
+
+//瀏覽器本地日期轉成後端
+function getTodayText() {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+//點擊 HeadNavbar 的「近期銷售」時開啟視窗並載入今日第 1 頁。
+async function openRecentSales() {
+  showRecentSales.value = true
+  recentSalesKeyword.value = ''
+  recentSalesDate.value = getTodayText()
+
+  await loadRecentSales(1)
+}
+async function loadRecentSales(page = 1) {
+  try {
+    const response = await httpClient.get('/api/SalesOrder/page', {
+      params: {
+        keyword: recentSalesKeyword.value || undefined,
+        startDate: recentSalesDate.value,
+        endDate: recentSalesDate.value,
+        page: page - 1,
+        size: RECENT_SALES_PAGE_SIZE
+      }
+    })
+
+    const pageData = response.data
+
+    // content 是目前頁資料；number 是後端從 0 開始的頁碼。
+    recentSalesOrders.value = pageData.content || []
+    recentCurrentPage.value = Number(pageData.number ?? 0) + 1
+    recentTotalPages.value = Number(pageData.totalPages ?? 0)
+    recentTotalElements.value = Number(pageData.totalElements ?? 0)
+  } catch (error) {
+    console.error('取得近期銷售失敗', error)
+
+    recentSalesOrders.value = []
+    recentCurrentPage.value = 1
+    recentTotalPages.value = 1
+    recentTotalElements.value = 0
+  }
+}
+
+async function searchRecentSales(keyword) {
+  recentSalesKeyword.value = keyword
+  await loadRecentSales(1)
+}
+
+//分頁列表 DTO 不載入 items；使用者第一次展開時才查詢完整明細。
+async function loadRecentSalesDetail(order) {
+  if (order.items?.length > 0) {
+    return
+  }
+
+  try {
+    const response = await httpClient.get(
+      `/api/SalesOrder/find/${order.id}`
+    )
+
+    const orderIndex = recentSalesOrders.value.findIndex(
+      (item) => item.id === order.id
+    )
+
+    if (orderIndex !== -1) {
+      // splice 會保留 Vue 響應式更新，展開區會立即顯示 items。
+      recentSalesOrders.value.splice(orderIndex, 1, response.data)
+    }
+  } catch (error) {
+    console.error('取得銷售單明細失敗', error)
+  }
+}
+function goToAllSalesOrders() {
+  showRecentSales.value = false
+  router.push('/SalesOrder')
+}
 
 //統計每個分類所包含的商品數量
 const categoryOptionsWithCount = computed(() => {
@@ -215,10 +329,20 @@ function getCheckoutErrorMessage(error) {
     responseData?.error ||
     '結帳失敗，請確認資料後再試一次'
 }
-
+//每次重新送出前，先清除上一次的成功或錯誤訊息。
+function clearCheckoutFeedback() {
+  checkoutMessage.value = ''
+  checkoutError.value = ''
+}
 //建立銷售單
 async function checkoutOrder(items) {
   if (checkoutLoading.value || items.length === 0) {
+    return
+  }
+  //流程固定為：加入商品 → 選擇付款方式 → 結帳。
+  if (!paymentMethod.value) {
+    checkoutMessage.value = ''
+    checkoutError.value = '請先選擇付款方式'
     return
   }
 
@@ -245,7 +369,7 @@ async function checkoutOrder(items) {
         params: {
           loginUserId: TEST_LOGIN_USER_ID
         }
-      }
+      } 
     )
 
     const orderNumber = response.data?.orderNumber
@@ -253,7 +377,7 @@ async function checkoutOrder(items) {
     checkoutMessage.value = orderNumber
       ? `結帳成功，銷售單號：${orderNumber}`
       : '結帳成功'
-
+    console.log("成功")
     // 建立銷售單成功後才清空商品；失敗時保留明細供使用者重試
     productQuantities.value = {}
   } catch (error) {
@@ -279,7 +403,7 @@ onMounted(async () => {
   text-align: center;
 }
 
-/* 【我新增】API 錯誤訊息使用警示色 */
+/* API 錯誤訊息使用警示色 */
 .pos-product-state--error {
   color: #ef4444;
 }

@@ -454,51 +454,84 @@
     <!-- =========================
          Footer
          ========================= -->
-    <template #footer="{ close }">
+<template #footer>
+  <div class="flex w-full items-center justify-between">
+    <!-- 左側：停用原物料 -->
+  <button
+  v-if="material?.status === 'ACTIVE'"
+  type="button"
+  class="
+    relative z-10 pointer-events-auto
+    px-4 py-2 rounded-xl border
+    bg-[var(--error)]/10
+    hover:bg-[var(--error)]/20
+    text-[var(--error)]
+    border-[var(--error)]/30
+    font-bold text-xs
+    transition-colors cursor-pointer
+    disabled:opacity-50
+    disabled:cursor-not-allowed
+  "
+  :disabled="disabling"
+  @click.stop="openDisableConfirm"
+>
+  停用原物料
+</button>
 
-      <!--
-        注意：
-        這裡不是 emit('close')
+    <!-- 原物料已經停用 -->
+    <span
+      v-else
+      class="
+        px-4 py-2
+        rounded-xl
+        border
+        bg-[var(--surface-container-low)]
+        text-[var(--on-surface-variant)]
+        border-[var(--outline)]
+        font-bold
+        text-xs
+        opacity-60
+      "
+    >
+      已停用
+    </span>
 
-        而是呼叫 ModalWrapper
-        提供給 slot 的 close()
+    <!-- 右側：儲存修改 -->
+    <button
+      type="submit"
+      form="edit-material-form"
+      class="
+        btn-primary
+        text-xs
+        flex
+        items-center
+        space-x-1.5
+      "
+      :disabled="disabling"
+    >
+      <Check class="w-4 h-4" />
 
-        所以會先經過 ModalWrapper
-        的關閉確認。
-      -->
-      <button
-        type="button"
-        @click="close"
-        class="btn-secondary text-xs"
-      >
-        取消
-      </button>
-
-
-      <button
-        type="submit"
-        form="edit-material-form"
-        class="
-          btn-primary
-          text-xs
-          flex
-          items-center
-          space-x-1.5
-        "
-      >
-
-        <Check class="w-4 h-4" />
-
-        <span>
-          確認修改原物料
-        </span>
-
-      </button>
-
-    </template>
-
+      <span>
+        確認修改原物料
+      </span>
+    </button>
+  </div>
+</template>
   </ModalWrapper>
 
+  <ConfirmActionModal
+    :is-open="disableConfirmOpen"
+    title="確認停用原物料"
+    :message="`確定要停用「${material?.name || ''}」嗎？`"
+    warning="停用後，此原物料將無法再加入新的 BOM 配方；已存在的 BOM 關聯會保留。"
+    :loading="disabling"
+    :error-message="disableError"
+    confirm-text="確認停用"
+    cancel-text="返回"
+    loading-text="停用中..."
+    @confirm="confirmDisableMaterial"
+    @cancel="closeDisableConfirm"
+  />
 </template>
 
 
@@ -518,6 +551,9 @@ import {
 
 import ModalWrapper
   from '../子元件/ModalWrapper.vue'
+
+import ConfirmActionModal
+  from '../子元件/ConfirmActionModal.vue'
 
 import httpClient
   from '@/service/httpClient'
@@ -548,8 +584,77 @@ const props = defineProps({
 
 const emit = defineEmits([
   'close',
-  'success'
+  'success',
+  'disabled'
 ])
+
+
+// ==============================
+// 停用原物料
+// ==============================
+
+const disableConfirmOpen = ref(false)
+const disabling = ref(false)
+const disableError = ref('')
+
+const openDisableConfirm = () => {
+  
+  if (
+    !props.material ||
+    props.material.status !== 'ACTIVE' ||
+    disabling.value
+  ) {
+    return
+  }
+
+  disableError.value = ''
+  disableConfirmOpen.value = true
+}
+
+const closeDisableConfirm = () => {
+  if (disabling.value) return
+
+  disableConfirmOpen.value = false
+  disableError.value = ''
+}
+
+const confirmDisableMaterial = async () => {
+  console.log(
+    '[EditMaterialModal] 收到確認停用事件',
+    {
+      materialId: props.material?.id,
+      materialCode: props.material?.code,
+      disabling: disabling.value
+    }
+  )
+
+  if (props.material?.id == null || disabling.value) {
+    console.warn('[EditMaterialModal] 確認停用被條件阻擋')
+    return
+  }
+
+  disabling.value = true
+  disableError.value = ''
+
+  try {
+    await httpClient.patch(
+      `/api/material/${props.material.id}/status`,
+      null,
+      { params: { status: 'INACTIVE' } }
+    )
+
+    disableConfirmOpen.value = false
+    emit('disabled', props.material.id)
+    emit('close')
+  } catch (error) {
+    console.error('停用原物料失敗：', error)
+    disableError.value =
+      error?.response?.data?.message ||
+      '停用原物料失敗，請稍後再試。'
+  } finally {
+    disabling.value = false
+  }
+}
 
 
 // ==============================
@@ -582,6 +687,10 @@ watch(
   (isOpen) => {
 
     if (isOpen && props.material) {
+
+      disableConfirmOpen.value = false
+      disableError.value = ''
+      disabling.value = false
 
       code.value =
         props.material.code ?? ''

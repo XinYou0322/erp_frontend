@@ -91,7 +91,7 @@
 <script setup>
 import { ref, watch,onMounted } from 'vue'
 import httpClient from '@/service/httpClient'
-import HeadNavBar from '@/component/子元件/HeadNavBar.vue'
+import HeadNavBar from '@/component/子元件/HeadNavbar.vue'
 import OneSupplier from '@/component/子元件/OneSupplier.vue'
 import CheckSupplier from '@/component/子元件/CheckSupplier.vue'
 import UpdateSupplier from '@/component/子元件/UpdateSupplier.vue'
@@ -144,6 +144,9 @@ const showCheckSupplier = ref(false)
 const showUpdateSupplier = ref(false)
 const selectedSupplier = ref(null)
 const addedCount = ref(0)
+const isUpdatingSupplier = ref(false)
+const updateError = ref('')
+
 
 
 function changeTab(tab) {
@@ -233,46 +236,50 @@ watch(selectedStatus, function () {
 
 })
 
-function submitUpdate(updateData) {
+async function submitUpdate(updateData) {
 
   const supplierId = updateData.id
 
+  // 送出前移除文字前後空白；空白分機送 null，對應後端「清除分機」設計。
   const requestData = {
-    name: updateData.name,
-    callingCode: updateData.callingCode,
-    phone: updateData.phone,
-    extension: updateData.extension,
-    address: updateData.address,
-    email: updateData.email,
+    name: updateData.name.trim(),
+    callingCode: updateData.callingCode.trim(),
+    phone: updateData.phone.trim(),
+    extension: updateData.extension.trim() || null,
+    address: updateData.address.trim(),
+    email: updateData.email.trim(),
     status: updateData.status
   }
 
-  httpClient({
-    method: 'patch',
-    url: `/api/Supplier/update/${supplierId}`,
-    data: requestData
-  })
-    .then(response => {
-      console.log('修改成功：', response.data)
+  updateError.value = ''
+  isUpdatingSupplier.value = true
 
-      alert('供應商修改成功')
+  try {
+    const response = await httpClient.patch(
+      `/api/Supplier/update/${supplierId}`,
+      requestData
+    )
 
-      // 關閉修改視窗
-      closeUpdate()
+    console.log('修改成功：', response.data)
+    alert('供應商修改成功')
 
-      // 重新查詢，讓總覽顯示最新資料
-      fetchData()
-    })
-    .catch(error => {
-      console.error('修改供應商失敗：', error)
+    // 程式主動關閉代表已儲存成功，不需要再顯示「放棄修改」確認。
+    closeUpdate()
 
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data ||
-        '供應商修改失敗'
+    // 重新查詢，讓總覽顯示最新資料
+    await fetchData()
+  } catch (error) {
+    console.error('修改供應商失敗：', error)
 
-      alert(errorMessage)
-    })
+    // 保留修改視窗並顯示後端錯誤，讓使用者可直接修正欄位。
+    updateError.value =
+      error.response?.data?.message ||
+      error.response?.data?.detail ||
+      (typeof error.response?.data === 'string' ? error.response.data : '') ||
+      '供應商修改失敗'
+  } finally {
+    isUpdatingSupplier.value = false
+  }
 }
 
 function showDetail(oneSupplier) {
@@ -288,6 +295,7 @@ function closeDetail() {
 
 function showUpdate(oneSupplier) {
   selectedSupplier.value = oneSupplier
+  updateError.value = ''
   showUpdateSupplier.value = true
 }
 function closeUpdate() {

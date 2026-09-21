@@ -175,7 +175,7 @@ const props = defineProps({
   //由 pos.vue 管理並送給銷售單 API 的付款方式
   paymentMethod: {
     type: String,
-    default: 'CASH'
+    default: ''
   },
   //防止 API 尚未回應時重複送出
   checkingOut: {
@@ -235,13 +235,64 @@ function increaseItem(item) {
 function decreaseItem(item) {
   emit('decrease', item)
 }
-function changePaymentMethod(event) {
-  emit('update:paymentMethod', event.target.value)
+function changePaymentMethod(method) {
+  emit('update:paymentMethod', method)
 }
 
 function checkout() {
+  // 避免沒有商品、沒有付款方式或重複點擊時送出事件。
+  if (
+    props.items.length === 0 ||
+    !props.paymentMethod ||
+    props.checkingOut
+  ) {
+    return
+  }
+
   emit('checkout', props.items)
 }
 </script>
-<style >
+<style scoped>
+/* 【我新增】讓提示文字以付款按鈕為定位基準。 */
+.pos-detail__payment-btn {
+  position: relative;
+  overflow: visible;
+}
+
+/* 【我新增】停用全域 data-tooltip 的偽元素，避免出現重複提示框。 */
+.pos-detail__payment-btn::after {
+  display: none;
+}
+
+/* 【我新增】付款方式提示文字預設隱藏。 */
+.pos-detail__payment-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 30;
+  padding: 6px 8px;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  color: #f8fafc;
+  background: #334155;
+  box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.8);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 4px);
+  transition: opacity 0.16s ease, visibility 0.16s ease,
+    transform 0.16s ease;
+}
+
+/* 【我新增】滑鼠移入或鍵盤聚焦時顯示提示文字。 */
+.pos-detail__payment-btn:hover .pos-detail__payment-tooltip,
+.pos-detail__payment-btn:focus-visible .pos-detail__payment-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
 </style>

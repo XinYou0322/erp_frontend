@@ -1,10 +1,11 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import WorkflowFilter from "@/component/子元件/WorkflowFilter.vue";
+//import WorkflowFilter from "@/component/子元件/WorkflowFilter.vue";
 import WorkflowTable from "@/component/父元件/WorkflowTable.vue";
 import WorkflowEmpty from "@/component/子元件/WorkflowEmpty.vue";
 import { getWorkflows } from "@/service/workflowService";
 import { useAuthStore } from "@/stores/auth.store";
+import Filter from '@/component/子元件/Filter.vue'
 
 // TODO: 之後接上登入機制後，改成從登入狀態取得目前使用者 id
 //const CURRENT_APPROVER_ID = 2;
@@ -24,6 +25,27 @@ const filters = ref({
   dateFrom: "",
   dateTo: "",
 });
+
+const workflowStatusOptions = [
+  { label: "全部", value: "all" },
+  { label: "待審核", value: "pending" },
+  { label: "已核准", value: "approved" },
+  { label: "已駁回", value: "rejected" },
+];
+
+const filterFields = [
+  {
+    key: "type",
+    type: "select",
+    label: "類型",
+    options: [
+      { label: "全部", value: "all" },
+      { label: "採購", value: "ORDER" },
+      { label: "請假", value: "LEAVE" },
+      { label: "其他", value: "other" },
+    ],
+  },
+];
 
 async function loadWorkflows() {
   if (!currentApproverId.value) {
@@ -111,9 +133,9 @@ const stats = computed(() => ({
   total: visibleWorkflows.value.length,
 }));
 
-function handleFilterChanged(newFilters) {
-  filters.value = newFilters;
-}
+// function handleFilterChanged(newFilters) {
+//   filters.value = newFilters;
+// }
 
 onMounted(loadWorkflows);
 </script>
@@ -148,9 +170,41 @@ onMounted(loadWorkflows);
       </div>
     </section>
 
-    <WorkflowFilter
+    <Filter
       class="dashboard__filter"
-      @filter-changed="handleFilterChanged"
+      id-prefix="workflow"
+
+      v-model="filters"
+      :fields="filterFields"
+
+      :show-status="true"
+      status-label="狀態"
+      status-default-text="全部狀態"
+      :status-options="workflowStatusOptions"
+      v-model:status-value="filters.status"
+
+      :show-date-range="true"
+      date-label="申請日期"
+      v-model:start-date="filters.dateFrom"
+      v-model:end-date="filters.dateTo"
+
+      :show-search="true"
+      search-label="搜尋"
+      search-placeholder="搜尋單號、申請人或摘要..."
+      v-model:search-value="filters.keyword"
+
+      :show-supplier="false"
+      :show-page-size="false"
+      :show-refresh="false"
+      :show-reset="true"
+
+      :reset-values="{
+        type: 'all',
+        status: 'all',
+        keyword: '',
+        dateFrom: '',
+        dateTo: ''
+      }"
     />
 
     <p v-if="loading" class="dashboard__status">讀取中…</p>

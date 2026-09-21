@@ -415,40 +415,6 @@
 
           </div>
 
-<div class="flex justify-center">
-          <!-- 停用按鈕：停用後不提供重新啟用 -->
-          <button
-            v-if="material.status === 'ACTIVE'"
-            type="button"
-            @click="openDisableConfirm(material)"
-            class="
-              mt-3 w-1/3 px-3 py-2 rounded-xl border
-              text-[length:var(--font-body)] font-bold
-              transition-colors cursor-pointer
-              bg-[var(--error)]/10
-              hover:bg-[var(--error)]/20
-              text-[var(--error)]
-              border-[var(--error)]/30
-            "
-          >
-            停用原物料
-          </button>
-
-          <div
-            v-else
-            class="
-              mt-3 w-full px-3 py-2 rounded-xl border
-              text-center text-[length:var(--font-body)] font-bold
-              bg-[var(--surface-container-low)]
-              text-[var(--on-surface-variant)]
-              border-[var(--outline)]
-              opacity-60
-            "
-          >
-            已停用
-          </div>
-</div>
-
           <!-- =========================
                編輯模式
                ========================= -->
@@ -467,11 +433,12 @@
       @change-page="goToPage"
     />
 
-          <EditMaterialModal
+ <EditMaterialModal
   :is-open="editMaterialModalOpen"
   :material="selectedMaterial"
   @close="handleCloseEditMaterial"
   @success="handleEditSuccess"
+  @disabled="handleMaterialDisabled"
 />
     <!-- =========================
          Add Material Modal
@@ -481,80 +448,6 @@
       @close="handleCloseAddMaterial"
       @success="handleMaterialSuccess"
     />
-
-    <!-- 停用原物料確認視窗 -->
-    <Teleport to="body">
-      <div
-        v-if="disableConfirmOpen"
-        class="
-          fixed inset-0 z-[100]
-          flex items-center justify-center
-          bg-black/60 backdrop-blur-sm
-          p-4
-        "
-        @click.self="closeDisableConfirm"
-      >
-        <div
-          class="
-            w-full max-w-md rounded-2xl
-            bg-[var(--surface-container)]
-            border border-[var(--outline)]
-            shadow-2xl p-6
-          "
-        >
-          <h3
-            class="
-              text-[length:var(--font-heading)]
-              font-bold text-[var(--on-surface)]
-            "
-          >
-            確認停用原物料
-          </h3>
-
-          <p
-            class="
-              mt-3 text-[length:var(--font-body)]
-              text-[var(--on-surface-variant)]
-              leading-6
-            "
-          >
-            確定要停用
-            <span class="font-bold text-[var(--on-surface)]">
-              {{ materialToDisable?.name }}
-            </span>
-            嗎？停用後此頁不提供重新啟用功能。
-          </p>
-
-          <div class="mt-6 flex justify-end gap-2">
-            <button
-              type="button"
-              class="btn-secondary px-4 py-2"
-              :disabled="statusUpdatingId !== null"
-              @click="closeDisableConfirm"
-            >
-              取消
-            </button>
-
-            <button
-              type="button"
-              class="
-                px-4 py-2 rounded-xl border
-                bg-[var(--error)]/10
-                hover:bg-[var(--error)]/20
-                text-[var(--error)]
-                border-[var(--error)]/30
-                font-bold transition-colors
-                disabled:opacity-50 disabled:cursor-not-allowed
-              "
-              :disabled="statusUpdatingId !== null"
-              @click="confirmDisableMaterial"
-            >
-              {{ statusUpdatingId !== null ? '處理中...' : '確認停用' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
 
   </div>
 </template>
@@ -620,11 +513,6 @@ const addMaterialModalOpen = ref(false);
 
 const editMaterialModalOpen = ref(false)
 const selectedMaterial = ref(null)
-
-// 正在切換狀態的原物料 ID，避免連續重複點擊
-const statusUpdatingId = ref(null)
-const disableConfirmOpen = ref(false)
-const materialToDisable = ref(null)
 
 
 // ==============================
@@ -773,57 +661,14 @@ const handleCloseEditMaterial = () => {
   selectedMaterial.value = null
 }
 
+const handleMaterialDisabled = async () => {
+  await Promise.all([
+    loadMaterials(),
+    loadMaterialSummary()
+  ])
+}
 
 
-// ==============================
-// 停用原物料確認視窗
-// ==============================
-const openDisableConfirm = (material) => {
-  materialToDisable.value = material;
-  disableConfirmOpen.value = true;
-};
-
-const closeDisableConfirm = () => {
-  if (statusUpdatingId.value !== null) return;
-
-  disableConfirmOpen.value = false;
-  materialToDisable.value = null;
-};
-
-const confirmDisableMaterial = async () => {
-  const material = materialToDisable.value;
-
-  if (!material) return;
-
-  statusUpdatingId.value = material.id;
-  errorMessage.value = "";
-
-  try {
-    await httpClient.patch(
-      `/api/material/${material.id}/status`,
-      null,
-      {
-        params: {
-          status: "INACTIVE"
-        }
-      }
-    );
-
-    disableConfirmOpen.value = false;
-    materialToDisable.value = null;
-
-    await Promise.all([
-      loadMaterials(),
-      loadMaterialSummary()
-    ]);
-
-  } catch (error) {
-    console.error("停用原物料失敗：", error);
-    errorMessage.value = "停用原物料失敗";
-  } finally {
-    statusUpdatingId.value = null;
-  }
-};
 
 
 // ==============================

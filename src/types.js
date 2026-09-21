@@ -288,24 +288,6 @@
  * @property {BOMTreeNode} rootNode - 根總成節點
  */
 
-/**
- * @typedef {Object} CalendarEvent
- * @property {string} id - 事件識別碼
- * @property {string} title - 事件標題
- * @property {string} [description] - 詳細說明
- * @property {'procurement' | 'production' | 'meeting' | 'leave' | 'maintenance' | 'marketing'} category - 事件分類
- * @property {string} date - 日期 (YYYY-MM-DD)
- * @property {string} startTime - 開始時間 (HH:mm)
- * @property {string} endTime - 結束時間 (HH:mm)
- * @property {string} [location] - 地點或會議連結
- * @property {string} [organizer] - 發起人 / 主辦人
- * @property {string[]} [attendees] - 參與成員
- * @property {'high' | 'medium' | 'low'} priority - 急迫性與優先級
- * @property {'pending' | 'in_progress' | 'completed' | 'cancelled'} status - 執行狀態
- * @property {string} [relatedRef] - 關聯單據編號 (如 PO, BOM, 假單)
- * @property {number} [reminderMinutes] - 到期提醒分鐘數
- */
-
 // =====================================================================
 // 導出型別常數占位符以滿足 ESM 模組引入規格
 // =====================================================================
@@ -332,4 +314,3 @@ export const HistoryEvent = {};
 export const BOMNodeType = {};
 export const BOMTreeNode = {};
 export const BOMAssemblyPreset = {};
-export const CalendarEvent = {};

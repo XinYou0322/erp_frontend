@@ -37,8 +37,19 @@
     + {{ addTitle }}
   </button>
   
+     
+  
   </div>
   <div class="head-navbar__right">
+
+     <button
+      v-if="showSalesOrderRecord"
+      type="button"
+      class="head-navbar__button"
+      @click="openSalesOrderRecord"
+    >
+      {{ salesOrderRecordTitle }}
+    </button>
 
     <!-- 搜尋 -->
     <div
@@ -92,7 +103,7 @@
     :key="size"
     :value="size"
   >
-    每頁 {{ size }} 筆
+ {{ size }} 筆
   </option>
   </select>
 
@@ -155,6 +166,15 @@ defineProps({
    addTitle: {
     type: String,
     default: '新增'
+  },
+  //是否顯示「銷售單紀錄」按鈕
+  showSalesOrderRecord: {
+    type: Boolean,
+    default: false
+  },
+  salesOrderRecordTitle: {
+    type: String,
+    default: '銷售單紀錄'
   },
   //Tab
   activeTab: {
@@ -235,14 +255,17 @@ const emit = defineEmits([
   'update:pageSize',
 
   // 按下更新
-  'refresh'
+  'refresh',
+
+  'open-sales-order-record'
+
 ])
 // 切換頁面
 function changeTab(tab) {
 
   emit('change-tab', tab)
 }
-// 【新增】點擊總覽
+// 點擊總覽
 function clickOverview() {
 
   // POS 有啟用種類功能
@@ -259,7 +282,7 @@ function clickOverview() {
 }
 
 
-// 【新增】點擊某一個商品種類
+// 點擊某一個商品種類
 function changeCategory(categoryId) {
 
   emit('change-category', categoryId)
@@ -297,7 +320,10 @@ console.log('有按到刷新按鈕')
   emit('refresh')
 
 }
-
+//HeadNavbar 只負責發出事件，由 pos.vue 決定要開哪個視窗。
+function openSalesOrderRecord() {
+  emit('open-sales-order-record')
+}
 
 </script>
 

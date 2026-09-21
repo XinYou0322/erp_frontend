@@ -1,6 +1,7 @@
 <template>
   <div class="supplier-page">
     <Filter
+      class="purchase-order-filter"
       id-prefix="purchase-order"
 
       :show-status="true"
@@ -192,12 +193,40 @@ async function fetchSupplierOptions() {
   try {
     const response = await httpClient({
       method: 'get',
-      url: '/api/Supplier/findAll'
+      url: '/api/Supplier/page',
+      params: {
+        keyword: '',
+        page: 0,
+        size: 50
+      }
     })
 
-    const responseList = Array.isArray(response.data)
-      ? response.data
+    const responseList = Array.isArray(response.data.content)
+      ? response.data.content
       : []
+
+    //如果供應商超過 50 筆，繼續取得後面的頁面，避免下拉選單缺資料。
+    const supplierTotalPages = Number(response.data.totalPages) || 0
+    
+        for (let page = 1; page < supplierTotalPages; page++) {
+      const nextResponse = await httpClient({
+        method: 'get',
+        url: '/api/Supplier/page',
+        params: {
+          keyword: '',
+          page: page,
+          size: 50
+        }
+      })
+
+      const nextSupplierList = Array.isArray(nextResponse.data.content)
+        ? nextResponse.data.content
+        : []
+
+      for (const supplier of nextSupplierList) {
+        responseList.push(supplier)
+      }
+    }
 
     const options = []
 
@@ -283,7 +312,7 @@ async function refreshData() {
 function submitUpdate(updateData) {
   const purchaseOrderId = updateData.id
 
-  // 【我新增】id 放在 URL，不重複放進 RequestBody。
+  //id 放在 URL，不重複放進 RequestBody。
   const requestData = {
     ...updateData
   }

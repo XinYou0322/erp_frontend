@@ -5,12 +5,45 @@
     subtitle="設定飲品單杯標準製程配方，連結原物料庫存並自動核算單杯物料成本"
     max-width="3xl"
     :icon="FlaskConical"
-    @close="emit('close')"
+    @close="handleClose"
   >
+    <template #header-actions>
+      <button
+        v-if="product"
+        type="button"
+        class="px-3 py-1.5 rounded-lg border border-[var(--primary)]/30 bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/20 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        :disabled="saving || disabling"
+        @click="openImagePicker"
+      >
+        <ImagePlus class="w-4 h-4" />
+        <span>{{ displayedImageUrl ? '更換圖片' : '新增圖片' }}</span>
+      </button>
+    </template>
+
     <div
       v-if="product"
       class="space-y-5"
     >
+      <input
+        ref="imageInput"
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        class="sr-only"
+        @change="handleImageChange"
+      />
+
+      <div v-if="displayedImageUrl" class="flex justify-center">
+        <ProductImage
+          :src="displayedImageUrl"
+          :alt="`${product.name}圖片預覽`"
+          class="max-w-md h-52 p-2"
+        />
+      </div>
+
+      <p v-if="imageError" class="text-xs font-semibold text-[var(--error)]">
+        {{ imageError }}
+      </p>
+
       <!-- 商品資訊 -->
       <div
         class="
@@ -463,58 +496,86 @@
           BOM 成本連動
         </span>
       </div>
+
+      <p v-if="saveError" class="text-xs font-semibold text-[var(--error)]">
+        {{ saveError }}
+      </p>
     </div>
 
     <!-- Footer -->
-   <template #footer="{ close }">
-      <button
-        type="button"
-        class="btn-secondary text-xs"
-            @click="close"
-      >
-        取消
-      </button>
+  <template #footer>
+  <div class="flex w-full items-center justify-between">
+    <button
+      v-if="product?.status === 'ACTIVE'"
+      type="button"
+      class="
+        px-4 py-2 rounded-xl border
+        bg-[var(--error)]/10
+        hover:bg-[var(--error)]/20
+        text-[var(--error)]
+        border-[var(--error)]/30
+        font-bold text-xs
+        transition-colors cursor-pointer
+        disabled:opacity-50
+        disabled:cursor-not-allowed
+      "
+      :disabled="disabling || saving"
+      @click.stop="openDisableConfirm"
+    >
+      停用商品
+    </button>
 
-      <button
-        type="button"
-        class="
-          btn-primary
-          flex
-          items-center
-          gap-1.5
-          text-xs
-        "
-        @click="handleSaveRecipe"
-      >
-        <Save class="h-4 w-4" />
+    <span
+      v-else
+      class="
+        px-4 py-2 rounded-xl border
+        border-[var(--outline)]
+        text-[var(--on-surface-variant)]
+        font-bold text-xs opacity-60
+      "
+    >
+      已停用
+    </span>
 
-        <span>
-          儲存配方與更新成本
-        </span>
-      </button>
-    </template>
+    <button
+      type="button"
+      class="btn-primary flex items-center gap-1.5 text-xs"
+      :disabled="disabling || saving"
+      @click="handleSaveRecipe"
+    >
+      <Save class="h-4 w-4" />
+      <span>{{ saving ? '儲存中...' : '儲存配方與更新成本' }}</span>
+    </button>
+  </div>
+</template>
   </ModalWrapper>
+  <ConfirmActionModal
+  :is-open="disableConfirmOpen"
+  title="確認停用商品"
+  :message="`確定要停用「${product?.name || ''}」嗎？`"
+  warning="停用後，商品將標示為未啟用；原本的 BOM 配方資料仍會保留。"
+  :loading="disabling"
+  :error-message="disableError"
+  confirm-text="確認停用"
+  cancel-text="返回"
+  loading-text="停用中..."
+  @confirm="confirmDisableProduct"
+  @cancel="closeDisableConfirm"
+/>
 </template>
 
 <script setup>
-
-import {
-  ref,
-  computed,
-  watch
-} from 'vue'
-
-import {
-  FlaskConical,
-  Plus,
-  Trash2,
-  Layers,
-  Save
-} from 'lucide-vue-next'
+import { computed, ref, watch } from 'vue'
+import { FlaskConical, ImagePlus, Layers, Plus, Save, Trash2 } from 'lucide-vue-next'
 
 import ModalWrapper from '../子元件/ModalWrapper.vue'
+import ConfirmActionModal from '../子元件/ConfirmActionModal.vue'
+import ProductImage from '../子元件/ProductImage.vue'
 import httpClient from '@/service/httpClient'
 
+// ==============================
+// Props / Emits
+// ==============================
 const props = defineProps({
   isOpen: {
     type: Boolean,
@@ -534,22 +595,68 @@ const props = defineProps({
 
 const emit = defineEmits([
   'close',
-  'success'
+  'success',
+  'disabled'
 ])
 
+// ==============================
+// State
+// ==============================
 const materials = ref([])
 const ingredientsList = ref([])
 const loading = ref(false)
+const disableConfirmOpen = ref(false)
+const disabling = ref(false)
+const disableError = ref('')
+const imageInput = ref(null)
+const imageFile = ref(null)
+const imagePreviewUrl = ref('')
+const imageError = ref('')
+const saving = ref(false)
+const saveError = ref('')
+
+// ==============================
+// Computed
+// ==============================
+const calculatedTotalCost = computed(() => {
+  return ingredientsList.value.reduce(
+    (sum, item) => sum + computeIngredientCost(item),
+    0
+  )
+})
+
+const calculatedMargin = computed(() => {
+  const sellingPrice = Number(props.product?.sellingPrice || 0)
+
+  if (sellingPrice <= 0) {
+    return 0
+  }
+
+  const margin = (
+    (sellingPrice - calculatedTotalCost.value) /
+    sellingPrice
+  ) * 100
+
+  return Math.max(0, Math.round(margin))
+})
+
+const displayedImageUrl = computed(() =>
+  imagePreviewUrl.value || props.product?.imageUrl || ''
+)
+
+// ==============================
+// 資料載入與初始化
+// ==============================
 const loadMaterials = () => {
   return httpClient({
     method: 'get',
     url: '/api/material',
     data: {}
+  }).then((response) => {
+    materials.value = response.data
   })
-    .then((response) => {
-      materials.value = response.data
-    })
 }
+
 const setIngredients = (bomList = []) => {
   ingredientsList.value = bomList.map((bom) => ({
     bomId: bom.id,
@@ -568,11 +675,10 @@ watch(
     props.product?.id,
     props.initialBom
   ],
-
   async ([isOpen, productId, initialBom]) => {
-  if (!isOpen || productId == null) {
-  return
-}
+    if (!isOpen || productId == null) {
+      return
+    }
 
     loading.value = true
     ingredientsList.value = []
@@ -581,21 +687,153 @@ watch(
       await loadMaterials()
       setIngredients(initialBom)
     } catch (error) {
-      console.error(
-        '載入 BOM 編輯資料失敗：',
-        error
-      )
+      console.error('載入 BOM 編輯資料失敗：', error)
     } finally {
       loading.value = false
     }
   },
-
   {
     immediate: true,
     deep: true
   }
 )
 
+// ==============================
+// 商品圖片
+// ==============================
+const resetImageSelection = () => {
+  if (imagePreviewUrl.value) {
+    URL.revokeObjectURL(imagePreviewUrl.value)
+  }
+
+  imageFile.value = null
+  imagePreviewUrl.value = ''
+  imageError.value = ''
+
+  if (imageInput.value) {
+    imageInput.value.value = ''
+  }
+}
+
+const handleClose = () => {
+  if (saving.value || disabling.value) return
+
+  resetImageSelection()
+  saveError.value = ''
+  emit('close')
+}
+
+const openImagePicker = () => {
+  imageInput.value?.click()
+}
+
+const handleImageChange = (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+    imageError.value = '圖片格式只支援 PNG、JPEG 或 WebP。'
+    event.target.value = ''
+    return
+  }
+
+  if (file.size > 8 * 1024 * 1024) {
+    imageError.value = '商品圖片不可超過 8MB。'
+    event.target.value = ''
+    return
+  }
+
+  if (imagePreviewUrl.value) {
+    URL.revokeObjectURL(imagePreviewUrl.value)
+  }
+
+  imageFile.value = file
+  imagePreviewUrl.value = URL.createObjectURL(file)
+  imageError.value = ''
+}
+
+const uploadProductImage = async () => {
+  const formData = new FormData()
+  formData.append('file', imageFile.value)
+
+  const response = await httpClient.post('/api/product/upload-image', formData)
+  return response.data.imageUrl
+}
+
+watch(
+  () => [props.isOpen, props.product?.id],
+  () => {
+    resetImageSelection()
+    saveError.value = ''
+  },
+  { immediate: true }
+)
+
+// ==============================
+// 停用商品
+// ==============================
+const openDisableConfirm = () => {
+  if (
+    props.product?.id == null ||
+    props.product.status !== 'ACTIVE' ||
+    disabling.value ||
+    saving.value
+  ) {
+    return
+  }
+
+  disableError.value = ''
+  disableConfirmOpen.value = true
+}
+
+const closeDisableConfirm = () => {
+  if (disabling.value) return
+
+  disableConfirmOpen.value = false
+  disableError.value = ''
+}
+
+const confirmDisableProduct = async () => {
+  // 使用 == null，避免 ID 為 0 時被錯誤阻擋
+  if (
+    props.product?.id == null ||
+    disabling.value
+  ) {
+    return
+  }
+
+  disabling.value = true
+  disableError.value = ''
+
+  try {
+    await httpClient.patch(
+      `/api/product/${props.product.id}/status`,
+      null,
+      {
+        params: {
+          status: 'INACTIVE'
+        }
+      }
+    )
+
+    disableConfirmOpen.value = false
+
+    emit('disabled', props.product.id)
+    emit('close')
+  } catch (error) {
+    console.error('停用商品失敗：', error)
+
+    disableError.value =
+      error?.response?.data?.message ||
+      '停用商品失敗，請稍後再試。'
+  } finally {
+    disabling.value = false
+  }
+}
+
+// ==============================
+// BOM 明細操作
+// ==============================
 const addIngredientRow = () => {
   ingredientsList.value.push({
     bomId: null,
@@ -627,11 +865,9 @@ const getSelectableMaterials = (item) => {
 }
 
 const onMaterialChange = (item) => {
-  const target =
-    materials.value.find(
-      material =>
-        material.id === item.materialId
-    )
+  const target = materials.value.find(
+    material => material.id === item.materialId
+  )
 
   if (!target) {
     return
@@ -643,11 +879,9 @@ const onMaterialChange = (item) => {
 }
 
 const getMaterialUnitCost = (materialId) => {
-  const target =
-    materials.value.find(
-      material =>
-        material.id === materialId
-    )
+  const target = materials.value.find(
+    material => material.id === materialId
+  )
 
   if (!target) {
     return '0'
@@ -656,12 +890,13 @@ const getMaterialUnitCost = (materialId) => {
   return `${Number(target.cost || 0).toFixed(2)}/${target.unit}`
 }
 
+// ==============================
+// 成本計算
+// ==============================
 const computeIngredientCost = (item) => {
-  const target =
-    materials.value.find(
-      material =>
-        material.id === item.materialId
-    )
+  const target = materials.value.find(
+    material => material.id === item.materialId
+  )
 
   if (!target) {
     return 0
@@ -673,44 +908,15 @@ const computeIngredientCost = (item) => {
   return cost * quantity
 }
 
-const calculatedTotalCost = computed(() => {
-  return ingredientsList.value.reduce(
-    (sum, item) =>
-      sum + computeIngredientCost(item),
-    0
-  )
-})
-
-const calculatedMargin = computed(() => {
-  const sellingPrice =
-    Number(
-      props.product?.sellingPrice || 0
-    )
-
-  if (sellingPrice <= 0) {
-    return 0
-  }
-
-  const cost =
-    calculatedTotalCost.value
-
-  const margin =
-    (
-      (sellingPrice - cost)
-      /
-      sellingPrice
-    ) * 100
-
-  return Math.max(
-    0,
-    Math.round(margin)
-  )
-})
-
-const handleSaveRecipe = () => {
-  if (!props.product) {
+// ==============================
+// 儲存 BOM
+// ==============================
+const handleSaveRecipe = async () => {
+  if (!props.product || saving.value || disabling.value) {
     return
   }
+
+  saveError.value = ''
 
   // 前端再做一次防呆：停用原物料只能保留在原本的 BOM 關聯，
   // 不允許被新增或改選成新的 BOM 原料。
@@ -732,55 +938,54 @@ const handleSaveRecipe = () => {
 
   if (hasInvalidInactiveMaterial) {
     console.error('停用原物料不可新增至 BOM')
+    saveError.value = '停用原物料不可新增至 BOM。'
     return
   }
 
-  const items =
-    ingredientsList.value
-      .filter(
-        item =>
-          item.materialId &&
-          Number(item.quantity) >= 0
-      )
-      .map(
-        item => ({
-          materialId:
-            Number(item.materialId),
+  const items = ingredientsList.value
+    .filter(
+      item =>
+        item.materialId &&
+        Number(item.quantity) >= 0
+    )
+    .map((item) => ({
+      materialId: Number(item.materialId),
+      quantity: Number(item.quantity)
+    }))
 
-          quantity:
-            Number(item.quantity)
-        })
-      )
+  const data = { items }
 
-  const data = {
-    items
+  console.log('準備儲存整份 BOM：', data)
+
+  saving.value = true
+  let bomSaved = false
+
+  try {
+    const response = await httpClient({
+      method: 'put',
+      url: `/api/bom/product/${props.product.id}`,
+      data
+    })
+    bomSaved = true
+      console.log('整份 BOM 儲存成功：', response.data)
+
+    if (imageFile.value) {
+      const imageUrl = await uploadProductImage()
+      await httpClient.patch(`/api/product/${props.product.id}/image`, {
+        imageUrl
+      })
+    }
+
+    resetImageSelection()
+    emit('success')
+    emit('close')
+  } catch (error) {
+    console.error('儲存配方或商品圖片失敗：', error)
+    saveError.value = bomSaved
+      ? '配方已儲存，但圖片更新失敗，請重試儲存。'
+      : '儲存配方失敗，請稍後再試。'
+  } finally {
+    saving.value = false
   }
-
-  console.log(
-    '準備儲存整份 BOM：',
-    data
-  )
-
- httpClient({
-  method: 'put',
-  url: `/api/bom/product/${props.product.id}`,
-  data: data
-})
-  .then((response) => {
-      console.log(
-        '整份 BOM 儲存成功：',
-        response.data
-      )
-
-      emit('success')
-      emit('close')
-    })
-    .catch((error) => {
-      console.error(
-        '整份 BOM 儲存失敗：',
-        error
-      )
-    })
 }
-
 </script>
