@@ -137,6 +137,19 @@ const routes = [
     name: 'SalesOrder',
     component: ()=> import("@/view/SalesOrder.vue")
   },
+
+    {
+    path: "/calendar",
+    name: "calendar",
+    component: () => import("@/view/CalendarPage.vue"),
+    meta: { requiresAuth: true },
+  },
+    {
+    path: "/attendance",
+    name: "attendance",
+    component: () => import("@/view/AttendanceRecordPage.vue"),
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({
@@ -144,15 +157,23 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, from) => {
   const authStore = useAuthStore();
+
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next("/login");
-  } else if (to.meta.guestOnly && authStore.isAuthenticated) {
-    next("/permissions");
-  } else {
-    next();
+    return "/login";
+  }
+
+  if (to.meta.guestOnly && authStore.isAuthenticated) {
+    return "/permissions";
+  }
+
+  if (to.meta.adminOnly) {
+    const isAdminUser =
+      authStore.isAdmin || authStore.hasPermission("users.manage");
+    if (!isAdminUser) {
+      return "/permissions";
+    }
   }
 });
-
 export default router;
