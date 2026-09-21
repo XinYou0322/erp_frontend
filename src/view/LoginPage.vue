@@ -7,9 +7,6 @@ import { UserProfile, UserRole } from "../types";
 import BaseBadge from "../component/子元件/BaseBadge.vue";
 import BaseModal from "../component/子元件/BaseModal.vue";
 import { useNotificationStore } from "../stores/notification.store";
-import { getDefaultAvatar } from "../data/defaultAvatars";
-
-const defaultAvatar = getDefaultAvatar();
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -44,7 +41,6 @@ const registerForm = ref({
   department: "營運與行銷部",
   requestedRole: "manager" as UserRole,
   reason: "",
-  avatar: "",
 });
 
 // Quick Credentials Auto Fill
@@ -121,14 +117,8 @@ const handleFormLogin = async () => {
 const handleSelectUser = (user: UserProfile) => {
   isLoading.value = true;
   setTimeout(() => {
-    const loginResult = authStore.login(user);
+    authStore.login(user);
     isLoading.value = false;
-
-    if (!loginResult.success) {
-      uiStore.showToast(loginResult.message, "warning");
-      return;
-    }
-
     uiStore.showToast(`已登入為：${user.name} (${user.roleName})`);
     router.push("/overview");
   }, 300);

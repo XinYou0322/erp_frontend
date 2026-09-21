@@ -546,7 +546,6 @@ export const useNotificationStore = defineStore("notification", () => {
     hasUrgentNotification,
     filteredNotifications,
     addNotification,
-    triggerLowStockAlert,
     markAsRead,
     toggleRead,
     markAllAsRead,

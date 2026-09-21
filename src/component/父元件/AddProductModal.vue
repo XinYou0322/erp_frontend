@@ -5,63 +5,91 @@
     subtitle="建立商品基本資料，配方可於商品建立後另外設定"
     max-width="2xl"
     :icon="Plus"
-    @close="emit('close')"
+    @close="handleClose"
   >
 
-    <form
-      id="add-product-form"
-      @submit.prevent="handleSubmit"
-      class="space-y-4"
-    >
+    <template #header-actions>
+      <button
+        type="button"
+        class="
+          px-3
+          py-1.5
+          rounded-lg
+          border
+          border-[var(--primary)]/30
+          bg-[var(--primary)]/10
+          text-[var(--primary)]
+          hover:bg-[var(--primary)]/20
+          text-xs
+          font-bold
+          flex
+          items-center
+          gap-1.5
+          transition-colors
+          cursor-pointer
+          disabled:opacity-50
+          disabled:cursor-not-allowed
+        "
+        :disabled="submitting || uploadingImage"
+        @click="openImagePicker"
+      >
+        <ImagePlus class="w-4 h-4" />
+        <span>{{ imageFile ? '更換圖片' : '新增圖片' }}</span>
+      </button>
+    </template>
+
+    <form id="add-product-form" @submit.prevent="handleSubmit" class="space-y-4">
+      <input
+        ref="imageInput"
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        class="sr-only"
+        @change="handleImageChange"
+      />
+
+      <div
+        v-if="imagePreviewUrl"
+        class="flex justify-center"
+      >
+        <ProductImage
+          :src="imagePreviewUrl"
+          :alt="name ? `${name}圖片預覽` : '商品圖片預覽'"
+          class="max-w-md h-52 p-2"
+        />
+      </div>
 
       <!-- SKU / 商品名稱 -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
         <div>
-          <label
-            class="
+          <label class="
               block
               font-bold
               text-[var(--on-surface)]
               text-xs
               mb-1
-            "
-          >
+            ">
             商品編號 SKU
             <span class="text-[var(--error)]">*</span>
           </label>
 
-          <input
-            v-model.trim="sku"
-            type="text"
-            required
-            placeholder="例如：DRINK-008"
-            class="input-field"
-          />
+          <input v-model.trim="sku" type="text" required placeholder="例如：DRINK-008" class="input-field" />
         </div>
 
 
         <div>
-          <label
-            class="
+          <label class="
               block
               font-bold
               text-[var(--on-surface)]
               text-xs
               mb-1
-            "
-          >
+            ">
             商品名稱
             <span class="text-[var(--error)]">*</span>
           </label>
 
-          <input
-            v-model.trim="name"
-            type="text"
-            required
-            placeholder="例如：珍珠奶茶"
-            class="input-field"
-          />
+          <input v-model.trim="name" type="text" required placeholder="例如：珍珠奶茶" class="input-field" />
         </div>
 
       </div>
@@ -71,36 +99,23 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
         <div>
-          <label
-            class="
+          <label class="
               block
               font-bold
               text-[var(--on-surface)]
               text-xs
               mb-1
-            "
-          >
+            ">
             商品分類
             <span class="text-[var(--error)]">*</span>
           </label>
 
-          <select
-            v-model="categoryId"
-            class="input-field"
-            required
-          >
-            <option
-              :value="null"
-              disabled
-            >
+          <select v-model="categoryId" class="input-field" required>
+            <option :value="null" disabled>
               請選擇商品分類
             </option>
 
-            <option
-              v-for="category in categories"
-              :key="category.id"
-              :value="category.id"
-            >
+            <option v-for="category in categories" :key="category.id" :value="category.id">
               {{ category.name }}
             </option>
           </select>
@@ -108,27 +123,18 @@
 
 
         <div>
-          <label
-            class="
+          <label class="
               block
               font-bold
               text-[var(--on-surface)]
               text-xs
               mb-1
-            "
-          >
+            ">
             售價 (NT$)
             <span class="text-[var(--error)]">*</span>
           </label>
 
-          <input
-            v-model.number="sellingPrice"
-            type="number"
-            min="0"
-            step="1"
-            required
-            class="input-field"
-          />
+          <input v-model.number="sellingPrice" type="number" min="0" step="1" required class="input-field" />
         </div>
 
       </div>
@@ -138,22 +144,17 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
         <div>
-          <label
-            class="
+          <label class="
               block
               font-bold
               text-[var(--on-surface)]
               text-xs
               mb-1
-            "
-          >
+            ">
             單位
           </label>
 
-          <select
-            v-model="unit"
-            class="input-field"
-          >
+          <select v-model="unit" class="input-field">
             <option value="杯">杯</option>
             <option value="瓶">瓶</option>
             <option value="份">份</option>
@@ -162,22 +163,17 @@
 
 
         <div>
-          <label
-            class="
+          <label class="
               block
               font-bold
               text-[var(--on-surface)]
               text-xs
               mb-1
-            "
-          >
+            ">
             狀態
           </label>
 
-          <select
-            v-model="status"
-            class="input-field"
-          >
+          <select v-model="status" class="input-field">
             <option value="ACTIVE">啟用</option>
             <option value="INACTIVE">停用</option>
           </select>
@@ -187,8 +183,7 @@
 
 
       <!-- BOM 說明 -->
-      <div
-        class="
+      <div class="
           rounded-xl
           border
           border-[var(--outline)]
@@ -196,99 +191,110 @@
           p-3.5
           text-xs
           text-[var(--on-surface-variant)]
-        "
-      >
+        ">
         商品成本不在這裡手動輸入。新增商品後，再到 BOM 配方設定原物料與用量，後端會重新計算商品成本。
       </div>
 
 
       <!-- 錯誤訊息 -->
-      <p
-        v-if="errorMessage"
-        class="
+      <p v-if="errorMessage" class="
           text-xs
           font-semibold
           text-[var(--error)]
-        "
-      >
+        ">
         {{ errorMessage }}
       </p>
 
     </form>
 
 
-<template #footer="{ close }">
+    <template #footer>
 
       <button
         type="button"
-        @click="close"
         class="btn-secondary text-xs"
+        :disabled="submitting || uploadingImage"
+        @click="handleClose"
       >
         取消
       </button>
 
 
-      <button
-        type="submit"
-        form="add-product-form"
-        class="
+      <button type="submit" form="add-product-form" class="
           btn-primary
           text-xs
           flex
           items-center
           space-x-1.5
-        "
-        :disabled="submitting"
-      >
+        " :disabled="submitting || uploadingImage">
         <Check class="w-4 h-4" />
 
         <span>
-          {{ submitting ? '新增中...' : '新增產品' }}
+          {{
+            uploadingImage
+              ? '圖片上傳中...'
+              : submitting
+                ? '新增中...'
+                : '新增產品'
+          }}
         </span>
       </button>
-
     </template>
+
+
+
 
   </ModalWrapper>
 </template>
 
 
-<script setup lang="ts">
+<script setup>
 
 import {
   ref,
-  watch
+  watch,
+
 } from 'vue'
 
 import {
   Plus,
-  Check
+  Check,
+  ImagePlus
 } from 'lucide-vue-next'
 
 import ModalWrapper
   from '../子元件/ModalWrapper.vue'
+import ProductImage from '../子元件/ProductImage.vue'
 
 import httpClient
   from '@/service/httpClient.js'
 
 
-const props = defineProps<{
-  isOpen: boolean
-}>()
+const props = defineProps({
+  isOpen: {
+    type: Boolean,
+    required: true
+  }
+})
+
+const emit = defineEmits([
+  'close',
+  'success'
+])
+//圖片用變數
+const imageFile = ref(null)
+const imagePreviewUrl = ref('')
+const uploadingImage = ref(false)
+const imageInput = ref(null)
 
 
-const emit = defineEmits<{
-  (e: 'close'): void
-  (e: 'success'): void
-}>()
 
-
-const categories = ref<any[]>([])
+const categories = ref([])
 
 const sku = ref('')
 const name = ref('')
-const categoryId = ref<number | null>(null)
-const sellingPrice = ref<number>(0)
+const categoryId = ref(null)
+const sellingPrice = ref(0)
 const unit = ref('杯')
 const status = ref('ACTIVE')
 
@@ -338,85 +344,153 @@ watch(
   }
 )
 
-
 const resetForm = () => {
+  if (imagePreviewUrl.value) {
+    URL.revokeObjectURL(imagePreviewUrl.value)
+  }
+
+  imageFile.value = null
+  imagePreviewUrl.value = ''
+
+  if (imageInput.value) {
+    imageInput.value.value = ''
+  }
 
   sku.value = ''
-
   name.value = ''
-
   categoryId.value = null
-
   sellingPrice.value = 0
-
   unit.value = '杯'
-
   status.value = 'ACTIVE'
-
   errorMessage.value = ''
+}
 
+const handleClose = () => {
+  if (submitting.value || uploadingImage.value) {
+    return
+  }
+
+  resetForm()
+  emit('close')
+}
+
+const openImagePicker = () => {
+  imageInput.value?.click()
 }
 
 
 const handleSubmit = async () => {
 
   if (
-    !sku.value.trim()
-    ||
-    !name.value.trim()
-    ||
-    !categoryId.value
+    !sku.value.trim() ||
+    !name.value.trim() ||
+    categoryId.value == null
   ) {
+    errorMessage.value = '請填寫商品編號、商品名稱與分類。'
     return
   }
 
-  submitting.value = true
-
   errorMessage.value = ''
 
+  submitting.value = true
+
   try {
+    let uploadedImageUrl = ''
+
+    if (imageFile.value) {
+      uploadingImage.value = true
+
+      uploadedImageUrl =
+        await uploadProductImage()
+
+      uploadingImage.value = false
+    }
 
     await httpClient.post(
       '/api/product/add',
       {
         sku: sku.value,
-
         name: name.value,
-
-        categoryId:
-          Number(categoryId.value),
-
-        sellingPrice:
-          Number(sellingPrice.value),
-
+        categoryId: Number(categoryId.value),
+        sellingPrice: Number(sellingPrice.value),
         unit: unit.value,
-
-        status: status.value
+        status: status.value,
+        imageUrl: uploadedImageUrl
       }
     )
 
     emit('success')
-
     emit('close')
-
     resetForm()
-
   } catch (error) {
-
-    console.error(
-      '新增產品失敗：',
-      error
-    )
+    console.error('新增產品失敗：', error)
 
     errorMessage.value =
-      '新增產品失敗，請確認 SKU、分類或後端是否正常。'
-
+      error?.response?.data?.message ||
+      '新增產品失敗，請確認 SKU、分類、圖片或後端是否正常。'
   } finally {
-
     submitting.value = false
-
+    uploadingImage.value = false
   }
-
 }
 
+const handleImageChange = (event) => {
+  const file = event.target.files?.[0] || null
+
+  // 清除上一張圖片的預覽網址
+  if (imagePreviewUrl.value) {
+    URL.revokeObjectURL(imagePreviewUrl.value)
+  }
+
+  if (!file) {
+    imageFile.value = null
+    imagePreviewUrl.value = ''
+    return
+  }
+
+  const allowedTypes = [
+    'image/png',
+    'image/jpeg',
+    'image/webp'
+  ]
+
+  if (!allowedTypes.includes(file.type)) {
+    imageFile.value = null
+    imagePreviewUrl.value = ''
+    event.target.value = ''
+    errorMessage.value = '圖片格式只支援 PNG、JPEG 或 WebP。'
+    return
+  }
+
+  const maxFileSize = 8 * 1024 * 1024
+
+  if (file.size > maxFileSize) {
+    imageFile.value = null
+    imagePreviewUrl.value = ''
+    event.target.value = ''
+    errorMessage.value = '商品圖片不可超過 8MB。'
+    return
+  }
+
+  imageFile.value = file
+  errorMessage.value = ''
+  imagePreviewUrl.value =
+    URL.createObjectURL(file)
+}
+
+const uploadProductImage = async () => {
+  if (!imageFile.value) {
+    return ''
+  }
+
+  const formData = new FormData()
+  formData.append('file', imageFile.value)
+
+  const response = await httpClient.post(
+    '/api/product/upload-image',
+    formData
+  )
+
+  return response.data.imageUrl
+}
 </script>

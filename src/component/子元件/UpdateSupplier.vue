@@ -2,54 +2,51 @@
   <Teleport to="body">
     <div
       v-if="visible"
-      class="supplier-modal-backdrop"
+      class="erp-modal-layer erp-modal-layer--supplier"
       @click.self="closeModal"
     >
-      <div class="supplier-modal supplier-modal--form bento-card shadow-level-2">
-        <div class="supplier-modal__header">
-          <div>
-            <p class="supplier-modal__eyebrow">EDIT SUPPLIER</p>
-            <h2 class="supplier-modal__title">修改供應商</h2>
-          </div>
+      <div class="erp-modal erp-modal--supplier-form">
+        <div class="erp-modal__head erp-modal__head--supplier">
+          <h2 class="erp-modal__title">修改供應商</h2>
           <button
             type="button"
-            class="supplier-icon-button supplier-modal__close"
+            class="erp-icon-btn erp-modal__close"
             aria-label="關閉"
             @click="closeModal"
           >×</button>
         </div>
-        <div class="supplier-modal__body supplier-form-grid">
-          <div class="supplier-field supplier-field--half">
-            <label class="supplier-field__label">ID</label>
-            <input v-model="form.id" class="supplier-input input-glow" type="text" disabled>
+        <div class="erp-modal__body erp-modal__body--supplier-form erp-form-grid erp-form-grid--supplier">
+          <div class="erp-field erp-field--half">
+            <label class="erp-field__label">ID</label>
+            <input v-model="form.id" class="erp-input" type="text" disabled>
           </div>
-          <div class="supplier-field supplier-field--half">
-            <label class="supplier-field__label">供應商名稱</label>
-            <input v-model="form.name" class="supplier-input input-glow" type="text">
+          <div class="erp-field erp-field--half">
+            <label class="erp-field__label">供應商名稱</label>
+            <input v-model="form.name" class="erp-input" type="text">
           </div>
-          <div class="supplier-field supplier-field--narrow">
-            <label class="supplier-field__label">國際碼</label>
-            <input v-model="form.callingCode" class="supplier-input input-glow" type="text">
+          <div class="erp-field erp-field--narrow">
+            <label class="erp-field__label">國際碼</label>
+            <input v-model="form.callingCode" class="erp-input" type="text">
           </div>
-          <div class="supplier-field supplier-field--wide">
-            <label class="supplier-field__label">電話</label>
-            <input v-model="form.phone" class="supplier-input input-glow" type="text">
+          <div class="erp-field erp-field--wide">
+            <label class="erp-field__label">電話</label>
+            <input v-model="form.phone" class="erp-input" type="text">
           </div>
-          <div class="supplier-field supplier-field--narrow">
-            <label class="supplier-field__label">分機</label>
-            <input v-model="form.extension" class="supplier-input input-glow" type="text">
+          <div class="erp-field erp-field--narrow">
+            <label class="erp-field__label">分機</label>
+            <input v-model="form.extension" class="erp-input" type="text">
           </div>
-          <div class="supplier-field supplier-field--full">
-            <label class="supplier-field__label">地址</label>
-            <input v-model="form.address" class="supplier-input input-glow" type="text">
+          <div class="erp-field erp-field--full">
+            <label class="erp-field__label">地址</label>
+            <input v-model="form.address" class="erp-input" type="text">
           </div>
-          <div class="supplier-field supplier-field--half">
-            <label class="supplier-field__label">Email</label>
-            <input v-model="form.email" class="supplier-input input-glow" type="email">
+          <div class="erp-field erp-field--half">
+            <label class="erp-field__label">Email</label>
+            <input v-model="form.email" class="erp-input" type="email">
           </div>
-          <div class="supplier-field supplier-field--half">
-            <label class="supplier-field__label">狀態</label>
-            <select v-model="form.status" class="supplier-select input-glow">
+          <div class="erp-field erp-field--half">
+            <label class="erp-field__label">狀態</label>
+            <select v-model="form.status" class="erp-select">
               <option value="PENDING">PENDING</option>
               <option value="ACTIVE">ACTIVE</option>
               <option value="INACTIVE">INACTIVE</option>
@@ -58,9 +55,9 @@
             </select>
           </div>
         </div>
-        <div class="supplier-modal__footer supplier-modal__footer--form">
-          <button type="button" class="supplier-btn supplier-btn--secondary" @click="closeModal">取消</button>
-          <button type="button" class="supplier-btn supplier-btn--primary" @click="submitUpdate">送出修改</button>
+        <div class="erp-modal__footer erp-modal__footer--supplier">
+          <button type="button" class="erp-btn erp-btn--soft" @click="closeModal">取消</button>
+          <button type="button" class="erp-btn erp-btn--primary" @click="submitUpdate">送出修改</button>
         </div>
       </div>
     </div>
