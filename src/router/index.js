@@ -23,6 +23,12 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: "/dashboard",
+    name: "dashboard",
+    component: () => import("@/view/DashboardView.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
     path: "/admin",
     name: "admin",
     component: () => import("@/view/PermissionPage.vue"),
@@ -60,12 +66,12 @@ const routes = [
     component: () => import("@/view/WorkflowDetail.vue"),
     props: true,
   },
-{
-  path: "/inventory",
-  name: "inventory",
-  component: () =>
-    import("@/view/InventoryPage.vue"),
-},
+  {
+    path: "/inventory",
+    name: "inventory",
+    component: () =>
+      import("@/view/InventoryPage.vue"),
+  },
   {
     path: '/material',
     name: 'material',
@@ -120,15 +126,15 @@ const routes = [
     name: 'leave-detail',
     component: () => import('../view/LeaveRequestDetailView.vue')
   },
-    {
+  {
     path: '/pos',
     name: 'pos',
-    component: ()=> import("@/view/pos.vue")
+    component: () => import("@/view/pos.vue")
   },
-    {
+  {
     path: '/purchaseOrder',
     name: 'purchaseOrder',
-    component: ()=> import("@/view/PurchaseOrder.vue")
+    component: () => import("@/view/PurchaseOrder.vue")
   },
 ];
 

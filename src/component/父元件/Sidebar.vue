@@ -283,6 +283,8 @@ import {
   FlaskConical,
   Receipt,
   ShieldUser,
+  ClipboardList,
+  CalendarCheck,
 } from "lucide-vue-next";
 
 
@@ -421,13 +423,13 @@ const navItems = [
   {
     id: "workflow",
     label: "簽核系統",
-    icon: Sliders,
+    icon: ClipboardList,
     path: "/workflows",
   },
   {
     id: "leave",
     label: "請假系統",
-    icon: Sliders,
+    icon: CalendarCheck,
     path: "/leave-requests",
   },
 ];

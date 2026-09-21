@@ -355,6 +355,12 @@ textarea:focus {
   border-color: var(--primary);
 }
 
+.input-glow[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);  
+  opacity: 1;
+  cursor: pointer;
+}
+
 textarea {
   resize: vertical;
   font-family: inherit;
