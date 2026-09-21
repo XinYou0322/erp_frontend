@@ -1,19 +1,32 @@
 <template>
 
 
-  <nav class="erp-category-nav erp-category-nav--pills">
-    <button class="erp-category-nav__item " 
-            :class="{ active: activeTab === 'overview' }"
-             @click="changeTab('overview')">
-       {{ title }}
-      <span class="erp-category-nav__count"> {{ total }}</span>
+  <nav class="head-navbar">
+    <div class="head-navbar__left">
+
+      <button class="head-navbar__button" 
+      :class="{ 'is-active': activeTab === 'overview' }"
+      @click="changeTab('overview')">
+      {{ title }}
+      <span v-if="showTotal" class="head-navbar__count"> {{ total }}</span>
     </button>
     
-    <button class="erp-category-nav__item" 
-            :class="{ active: activeTab === 'add' }"
-            @click="changeTab('add')">
-       {{ title2 }}  
-      <span class="erp-category-nav__count">{{ total2 }}</span>
+      <!-- 【新增】POS 商品種類 -->
+    <button
+      v-if="showCategories"
+      v-for="category in categoryOptions"
+      :key="category.id"
+      class="head-navbar__button"
+      :class="{
+      'is-active': activeCategory === category.id
+    }"
+     @click="changeCategory(category.id)"
+    >
+    {{ category.name }}
+
+    <span class="head-navbar__count">
+      {{ category.count }}
+    </span>
     </button>
 
     <button 
@@ -113,22 +126,35 @@
 
 <script setup>
 defineProps({
+  //左一按鈕 
   title: {
     type: String,
-    default: '列表'
+    default: '總覽'
   },
-  title2: {
-    type: String,
-    default: '列表'
-  },
-
   total: {
     type: Number,
     default: 0
   },
-  total2: {
-    type: Number,
-    default: 0
+    showTotal: {
+    type: Boolean,
+    default: true
+  },
+  //商品種類
+  // 是否顯示種類按鈕
+  showCategories: {
+  type: Boolean,
+  default: false
+  },
+  // 後端取得的商品種類
+  categoryOptions: {
+    type: Array,
+    default: () => []
+  },
+  // 目前選擇的種類 id
+  // null = 總覽
+  activeCategory: {
+    type: [Number, String, null],
+    default: null
   },
 
   //新增
@@ -154,7 +180,65 @@ defineProps({
   activeTab: {
   type: String,
   default: 'overview'
-}
+},
+//------搜尋
+// 是否顯示搜尋框
+  showSearch: {
+    type: Boolean,
+    default: false
+  },
+ // 搜尋框目前的值
+  searchValue: {
+    type: String,
+    default: ''
+  },
+// 搜尋框提示文字
+  searchPlaceholder: {
+    type: String,
+    default: '搜尋...'
+  },
+
+//-------狀態
+// 是否顯示狀態篩選
+  showStatus: {
+    type: Boolean,
+    default: false
+  },
+ // 目前選擇的狀態
+  statusValue: {
+    type: String,
+    default: ''
+  },
+// 狀態選項
+  statusOptions: {
+    type: Array,
+    default: () => []
+  },
+// 預設選項文字
+  statusDefaultText: {
+    type: String,
+    default: '全部狀態'
+  },
+
+  showPageSize: {
+  type: Boolean,
+  default: false
+},
+// 目前一頁幾筆
+pageSize: {
+  type: Number,
+  default: 10
+},
+// 可以選擇的筆數
+pageSizeOptions: {
+  type: Array,
+  default: () => [10, 30, 50]
+},
+ // 是否顯示更新按鈕
+  showRefresh: {
+    type: Boolean,
+    default: false
+  }
 })
 
 const emit = defineEmits([
@@ -176,7 +260,7 @@ const emit = defineEmits([
   'open-sales-order-record'
 
 ])
-
+// 切換頁面
 function changeTab(tab) {
 
   emit('change-tab', tab)

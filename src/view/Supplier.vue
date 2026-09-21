@@ -1,19 +1,30 @@
 <template>
-  <div class="erp-page">
+  <div class="supplier-page">
     <HeadNavBar
-      title="總覽"
-      :total="supplierList.length"
-      title2="新增"
-      :total2="addedCount"
+       title="總覽"
+      :total="totalElements"
+      add-title="新增供應商"
       :active-tab="activeTab"
       @change-tab="changeTab"
+      :show-search="true"
+      search-placeholder="搜尋供應商名稱、電話、Email..."
+      v-model:search-value="searchText"
+      :show-status="true"
+      status-default-text="全部狀態"
+      :status-options="supplierStatusOptions"
+      v-model:status-value="selectedStatus"
+      :show-page-size="true"
+      :page-size="pageSize"
+      @update:page-size="changePageSize"
+      :show-refresh="true"
+      @refresh="fetchData"
     />
     <section
       v-if="activeTab === 'overview'"
-      class="erp-card erp-card--flat"
+      class="supplier-overview bento-card"
     >
-      <div class="erp-table-wrap">
-        <table class="erp-table">
+      <div class="supplier-table-wrap">
+        <table class="supplier-table">
           <thead>
             <tr>
               <th>ID</th>
@@ -29,8 +40,7 @@
             <OneSupplier
               v-for="(oneSupplier, index) in supplierList"
               :key="oneSupplier.id"
-              :serial-number="index + 1"
-
+              :serial-number="currentPage * pageSize + index + 1"
 
               :id="oneSupplier.id"
               :name="oneSupplier.name"
@@ -47,6 +57,12 @@
           </tbody>
         </table>
       </div>
+      <!-- currentPage 是後端從 0 開始的頁碼，所以顯示時要加 1 -->
+      <Pagination
+        :current-page="currentPage + 1"
+        :total-pages="totalPages"
+        @change-page="changePage"
+      />
     </section>
 
     <AddSupplier
@@ -73,21 +89,56 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watch,onMounted } from 'vue'
 import httpClient from '@/service/httpClient'
 import HeadNavBar from '@/component/子元件/HeadNavbar.vue'
 import OneSupplier from '@/component/子元件/OneSupplier.vue'
 import CheckSupplier from '@/component/子元件/CheckSupplier.vue'
 import UpdateSupplier from '@/component/子元件/UpdateSupplier.vue'
 import AddSupplier from '@/component/子元件/AddSupplier.vue'
+import Pagination from '@/component/子元件/Pagination.vue'
+
 
 onMounted(() => {
   fetchData()
 })
-
+//登入者
+const loginUserId = ref(1)
+//HeadNavBar
 const supplierList = ref([])    
 const activeTab = ref('overview')
-const loginUserId = ref(1)
+const searchText = ref('')
+const selectedStatus = ref('')
+
+const supplierStatusOptions = [
+  {
+    label: '待審核',
+    value: 'PENDING'
+  },
+  {
+    label: '合作中',
+    value: 'ACTIVE'
+  },
+  {
+    label: '暫停合作',
+    value: 'INACTIVE'
+  },
+  {
+    label: '暫停交易',
+    value: 'SUSPENDED'
+  },
+  {
+    label: '黑名單',
+    value: 'BLACKLISTED'
+  }
+]
+const pageSize = ref(10)
+const currentPage = ref(0)
+// 總筆數
+const totalElements = ref(0)
+// 總頁數
+const totalPages = ref(0)
+
 
 const showCheckSupplier = ref(false)
 const showUpdateSupplier = ref(false)
@@ -252,28 +303,7 @@ function closeUpdate() {
   selectedSupplier.value = null
 }
 
-async function fetchData() {
-  try {
-    const response = await httpClient({
-      method: 'get',
-      url: '/api/Supplier/All'
-    })
 
-    const responseList = Array.isArray(response.data)
-      ? response.data
-      : []
-
-    const normalizedList = []
-
-    for (const supplier of responseList) {
-      normalizedList.push(normalizeSupplier(supplier))
-    }
-
-    supplierList.value = normalizedList
-  } catch (error) {
-    console.error('查詢供應商失敗：', error)
-  }
-}
 
 function normalizeSupplier(supplier) {
   return {
