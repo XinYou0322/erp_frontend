@@ -11,6 +11,7 @@ import {
   getDefaultAvatar,
   normalizeAvatarUrl,
 } from "../data/defaultAvatars";
+import { useNotificationStore } from "./notification.store";
 
 const DEFAULT_AVATAR = getDefaultAvatar();
 
@@ -750,6 +751,20 @@ export const useAuthStore = defineStore("auth", () => {
         note,
         nextState ? "success" : "warning",
       );
+      const notifStore = useNotificationStore();
+      const userName = currentUser.value?.name || "同仁";
+      const shortTime = new Date(serverClockTime).toLocaleTimeString("zh-TW", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      if (nextState) {
+        // nextState 為 true 代表切換到了上班狀態
+        notifStore.triggerCheckInAlert(userName, shortTime);
+      } else {
+        // nextState 為 false 代表切換到了下班狀態
+        notifStore.triggerCheckOutAlert(userName, shortTime);
+      }
 
       return {
         success: true,

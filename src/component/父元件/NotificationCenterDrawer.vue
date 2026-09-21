@@ -27,7 +27,8 @@ const categories = [
   { key: "inventory", label: "庫存預警", icon: "inventory_2" },
   { key: "workflow", label: "簽核審批", icon: "assignment" },
   { key: "supplier", label: "採購供鏈", icon: "local_shipping" },
-  { key: "security", label: "資安稽核", icon: "shield" },
+  { key: "security", label: "資安考勤", icon: "shield" },
+  { key: "system", label: "系統通知", icon: "ad_units" },
 ] as const;
 
 // 是否展開偏好設定面板
@@ -85,7 +86,7 @@ const getCategoryLabel = (cat: string) => {
     case "supplier":
       return "採購供鏈";
     case "security":
-      return "資安日誌";
+      return "資安考勤";
     case "system":
       return "系統公告";
     default:
