@@ -57,6 +57,16 @@ function toggle(key) {
         />
         熱門商品
       </label>
+      
+      <label>
+        <input
+          type="checkbox"
+          :checked="widgets.hourPeak"
+          @change="toggle('hourPeak')"
+        />
+        全日出杯尖峰
+      </label>
+      
 
     </div>
   </details>

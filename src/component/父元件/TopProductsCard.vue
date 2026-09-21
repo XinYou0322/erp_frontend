@@ -1,9 +1,38 @@
 <script setup>
-defineProps({
-  products: {
+import { ref, computed } from "vue";
+
+const props = defineProps({
+  allProducts: {
     type: Array,
     default: () => [],
   },
+  recentProducts: {
+    type: Array,
+    default: () => [],
+  },
+  allRevenue: {
+    type: Array,
+    default: () => [],
+  },
+  recentRevenue: {
+    type: Array,
+    default: () => [],
+  },
+});
+
+const period = ref("recent");   // recent / all
+const sortBy = ref("quantity"); // quantity / revenue
+
+const products = computed(() => {
+  if (sortBy.value === "quantity") {
+    return period.value === "recent"
+      ? props.recentProducts
+      : props.allProducts;
+  }
+
+  return period.value === "recent"
+    ? props.recentRevenue
+    : props.allRevenue;
 });
 
 function getRankColor(index) {
@@ -18,6 +47,14 @@ function getRankColor(index) {
       return "#475569";
   }
 }
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat("zh-TW", {
+    style: "currency",
+    currency: "TWD",
+    maximumFractionDigits: 0,
+  }).format(value || 0);
+}
 </script>
 
 <template>
@@ -25,10 +62,42 @@ function getRankColor(index) {
     <div class="top-card__header">
       <div>
         <h3>熱門商品</h3>
-        <p>銷售排行榜 Top 5</p>
+        <p>{{ period === "recent" ? "最近 7 天 Top 5" : "長銷排行 Top 5" }}</p>
       </div>
 
       <span class="material-symbols-outlined">local_cafe</span>
+    </div>
+
+    <div class="top-card__switch">
+      <button
+        :class="{ active: period === 'recent' }"
+        @click="period = 'recent'"
+      >
+        最近熱門
+      </button>
+
+      <button
+        :class="{ active: period === 'all' }"
+        @click="period = 'all'"
+      >
+        長銷排行
+      </button>
+    </div>
+
+    <div class="top-card__switch">
+        <button
+            :class="{ active: sortBy === 'quantity' }"
+            @click="sortBy = 'quantity'"
+        >
+            杯數
+        </button>
+
+        <button
+            :class="{ active: sortBy === 'revenue' }"
+            @click="sortBy = 'revenue'"
+        >
+            營收
+        </button>
     </div>
 
     <div v-if="products.length === 0" class="empty">
@@ -50,7 +119,12 @@ function getRankColor(index) {
 
         <div class="ranking-info">
           <span class="name">{{ item.productName }}</span>
-          <span class="quantity">{{ item.quantity }} 杯</span>
+          <span class="quantity">
+            {{ sortBy === "quantity"
+                ? `${item.quantity} 杯`
+                : formatCurrency(item.revenue)
+            }}
+        </span>
         </div>
 
         <span
@@ -66,88 +140,98 @@ function getRankColor(index) {
 </template>
 
 <style scoped>
-.top-card {
-  background: var(--surface-container);
-  border: 1px solid var(--outline);
-  border-radius: 20px;
-  padding: 20px;
-  height: 100%;
-  box-sizing: border-box;
+.top-card{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
 }
 
-.top-card__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
+.top-card__header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
-.top-card__header h3 {
-  margin: 0;
-  font-size: 1.1rem;
+.top-card__header h3{
+  margin:0;
 }
 
-.top-card__header p {
-  margin: 4px 0 0;
-  font-size: .82rem;
-  color: var(--on-surface-variant);
+.top-card__header p{
+  margin:4px 0 0;
+  color:var(--on-surface-variant);
+  font-size:13px;
 }
 
-.top-card__header .material-symbols-outlined {
-  font-size: 30px;
-  color: var(--primary);
+.top-card__switch{
+  display:flex;
+  background:var(--surface-container-low);
+  border-radius:12px;
+  padding:4px;
 }
 
-.empty {
-  text-align: center;
-  color: var(--on-surface-variant);
-  padding: 30px 0;
+.top-card__switch button{
+  flex:1;
+  border:none;
+  background:transparent;
+  color:var(--on-surface-variant);
+  padding:8px;
+  border-radius:8px;
+  cursor:pointer;
+  transition:.2s;
 }
 
-.ranking {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.top-card__switch button.active{
+  background:var(--primary);
+  color:var(--on-primary);
 }
 
-.ranking-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--outline-variant);
+.ranking{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
 }
 
-.ranking-item:last-child {
-  border-bottom: none;
+.ranking-item{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px;
+  border-radius:12px;
+  background:var(--surface-container-low);
 }
 
-.rank-badge {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-weight: 700;
+.rank-badge{
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
 }
 
-.ranking-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+.ranking-info{
+  flex:1;
+  display:flex;
+  flex-direction:column;
 }
 
-.name {
-  font-weight: 600;
+.name{
+  font-weight:600;
 }
 
-.quantity {
-  font-size: .82rem;
-  color: var(--on-surface-variant);
+.quantity{
+  font-size:13px;
+  color:var(--on-surface-variant);
 }
 
-.medal {
-  font-size: 22px;
+.medal{
+  font-size:24px;
+}
+
+.empty{
+  text-align:center;
+  padding:30px;
+  color:var(--on-surface-variant);
 }
 </style>

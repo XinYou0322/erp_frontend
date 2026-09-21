@@ -10,6 +10,7 @@ import RevenueChart from "@/component/父元件/RevenueChart.vue";
 import TopProductsCard from "@/component/父元件/TopProductsCard.vue";
 import WorkflowTable from "@/component/父元件/WorkflowTable.vue";
 import DashboardCustomize from "@/component/子元件/DashboardCustomize.vue";
+import HourPeakChart from "@/component/父元件/HourPeakChart.vue";
 
 const authStore = useAuthStore();
 
@@ -22,7 +23,7 @@ const widgets = ref({
   stats: true,
   revenueChart: true,
   topProducts: true,
-  approvals: true,
+  hourPeak: true,
 });
 
 const userName = computed(() => authStore.currentUser?.name ?? "使用者");
@@ -84,18 +85,28 @@ onMounted(() => {
 
       <div class="dashboard-grid">
 
-        <div
-          v-if="widgets.revenueChart"
-          class="card span-2"
-        >
-          <RevenueChart :data="dashboard.weeklyRevenue"/>
-        </div>
 
         <div
           v-if="widgets.topProducts"
           class="card"
         >
-          <TopProductsCard :products="dashboard.topProducts"/>
+          <TopProductsCard
+            :all-products="dashboard.topProducts"
+            :recent-products="dashboard.recentTopProducts"
+            :all-revenue="dashboard.topRevenueProducts"
+            :recent-revenue="dashboard.recentTopRevenueProducts"
+            />
+        </div>
+
+        <div v-if="widgets.hourPeak" class="card">
+            <HourPeakChart :data="dashboard.hourlySales" />
+        </div>
+
+        <div
+          v-if="widgets.revenueChart"
+          class="card span-2"
+        >
+          <RevenueChart :data="dashboard.weeklyRevenue"/>
         </div>
 
         <!--
@@ -159,7 +170,7 @@ onMounted(() => {
 
 .dashboard-grid{
   display:grid;
-  grid-template-columns:repeat(3,1fr);
+  grid-template-columns:repeat(2,1fr);
   gap:18px;
 }
 

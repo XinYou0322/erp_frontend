@@ -30,12 +30,20 @@ const props = defineProps({
   },
 });
 
+// 今天日期 (YYYY-MM-DD)
+const today = new Date().toISOString().slice(0, 10);
+
+// 去掉今天
+const filteredData = computed(() =>
+  props.data.filter(item => item.date !== today)
+);
+
 const chartData = computed(() => ({
-  labels: props.data.map(d => d.date.slice(5).replace("-", "/")),
+  labels: filteredData.value.map(d => d.date.slice(5).replace("-", "/")),
   datasets: [
     {
       label: "營收",
-      data: props.data.map((d) => Number(d.revenue)),
+      data: filteredData.value.map((d) => Number(d.revenue)),
       borderColor: "#10b981",
       backgroundColor: "rgba(16,185,129,0.12)",
       fill: true,
@@ -108,7 +116,7 @@ const chartOptions = {
       </span>
     </div>
 
-    <div v-if="data.length === 0" class="empty">
+    <div v-if="filteredData.length === 0" class="empty">
       尚無營收資料
     </div>
 
@@ -155,11 +163,11 @@ const chartOptions = {
 }
 
 .chart-container {
-  height: 280px;
+  height: 200px;
 }
 
 .empty {
-  height: 280px;
+  height: 200px;
   display: flex;
   justify-content: center;
   align-items: center;
