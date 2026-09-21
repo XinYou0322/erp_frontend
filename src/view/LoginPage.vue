@@ -7,6 +7,7 @@ import { UserProfile, UserRole } from "../types";
 import BaseBadge from "../component/子元件/BaseBadge.vue";
 import BaseModal from "../component/子元件/BaseModal.vue";
 import { useNotificationStore } from "../stores/notification.store";
+import { getDefaultAvatar } from "../data/defaultAvatars";
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -33,6 +34,7 @@ const isRegisterModalOpen = ref(false);
 
 const forgotEmail = ref("");
 const forgotStep = ref<"input" | "sent">("input");
+const defaultAvatar = getDefaultAvatar(); 
 
 const registerForm = ref({
   name: "",
@@ -41,6 +43,7 @@ const registerForm = ref({
   department: "營運與行銷部",
   requestedRole: "manager" as UserRole,
   reason: "",
+  avatar: "",
 });
 
 // Quick Credentials Auto Fill
@@ -114,14 +117,21 @@ const handleFormLogin = async () => {
 };
 
 // Handle Quick Role Select
-const handleSelectUser = (user: UserProfile) => {
-  isLoading.value = true;
-  setTimeout(() => {
-    authStore.login(user);
-    isLoading.value = false;
-    uiStore.showToast(`已登入為：${user.name} (${user.roleName})`);
-    router.push("/overview");
-  }, 300);
+const handleSelectUser =  async(user: UserProfile) => {
+   isLoading.value = true;
+  
+  // 💡 改呼叫 loginQuickly，確保前後端 Session 同步建立
+  const res = await authStore.loginQuickly(user); 
+  
+  isLoading.value = false;
+  uiStore.showToast(`已快速登入為：${user.name} (${user.roleName})`);
+  
+  // 登入成功後啟動 WebSocket 監聽
+  if (user.id) {
+    notifStore.connectWebSocket(user.id);
+  }
+  
+  router.push("/overview");
 };
 
 // Forgot Password

@@ -613,6 +613,7 @@ export const useNotificationStore = defineStore("notification", () => {
     triggerCheckOutAlert,
     triggerMaterialCreatedAlert,
     triggerMaterialImportedAlert,
+    triggerLowStockAlert,
     addNotification,
     markAsRead,
     toggleRead,
