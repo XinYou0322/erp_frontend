@@ -1,8 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/auth.store";
 
-
-
 const routes = [
   {
     path: "/",
@@ -62,31 +60,31 @@ const routes = [
   },
 
   {
-    path: '/workflows',
-    name: 'workflow-dashboard',
-    component: () => import('@/view/WorkflowDashboard.vue')
+    path: "/workflows",
+    name: "workflow-dashboard",
+    component: () => import("@/view/WorkflowDashboard.vue"),
   },
   {
-    path: '/workflows/:id',
-    name: 'workflow-detail',
-    component: () => import('@/view/WorkflowDetail.vue'),
-    props: true
+    path: "/workflows/:id",
+    name: "workflow-detail",
+    component: () => import("@/view/WorkflowDetail.vue"),
+    props: true,
   },
   {
     path: "/inventory",
     name: "inventory",
     component: () => import("@/view/InventoryPage.vue"),
   },
- {
-    path: '/inventory/logs',
-    name: 'inventorylogs',
-    component: ()=> import("@/view/InventoryLogManagement.vue")
+  {
+    path: "/inventory/logs",
+    name: "inventorylogs",
+    component: () => import("@/view/InventoryLogManagement.vue"),
   },
 
-   {
-    path: '/ComponentShowcase',
-    name: 'ComponentShowcase',
-    component: ()=> import("@/view/ComponentShowcase.vue")
+  {
+    path: "/ComponentShowcase",
+    name: "ComponentShowcase",
+    component: () => import("@/view/ComponentShowcase.vue"),
   },
 
   {
@@ -96,7 +94,7 @@ const routes = [
   },
   {
     path: "/leave",
-    redirect: "/leave-requests", // 重新導向到您真實存在的請假列表路徑
+    redirect: "/workflows", // 重新導向到您真實存在的請假列表路徑
   },
   {
     path: "/leave-requests",
@@ -133,18 +131,18 @@ const routes = [
     redirect: "/purchaseOrder", // 自動導向到您真實存在的採購單頁面
   },
   {
-    path: '/SalesOrder',
-    name: 'SalesOrder',
-    component: ()=> import("@/view/SalesOrder.vue")
+    path: "/SalesOrder",
+    name: "SalesOrder",
+    component: () => import("@/view/SalesOrder.vue"),
   },
 
-    {
+  {
     path: "/calendar",
     name: "calendar",
     component: () => import("@/view/CalendarPage.vue"),
     meta: { requiresAuth: true },
   },
-    {
+  {
     path: "/attendance",
     name: "attendance",
     component: () => import("@/view/AttendanceRecordPage.vue"),
