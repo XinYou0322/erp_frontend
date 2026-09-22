@@ -1,32 +1,15 @@
 <template>
   <aside
     id="app-sidebar"
-    class="
-      w-64 h-screen fixed left-0 top-0 z-30
-      flex flex-col justify-between
-      p-4
-      bg-[var(--surface-container-low)]
-      border-r border-[var(--outline)]
-      transition-all
-    "
+    class="w-64 h-screen fixed left-0 top-0 z-30 flex flex-col justify-between p-4 bg-[var(--surface-container-low)] border-r border-[var(--outline)] transition-all"
   >
     <div class="space-y-6">
-
       <!-- ============================== -->
       <!-- Logo -->
       <!-- ============================== -->
       <div class="flex items-center space-x-3 px-2 pt-2">
         <div
-          class="
-            w-10 h-10
-            rounded-2xl
-            bg-gradient-to-br
-            from-[var(--primary)]
-            to-[var(--secondary)]
-            flex items-center justify-center
-            text-[var(--surface)]
-            shadow-lg shadow-black/20
-          "
+          class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] flex items-center justify-center text-[var(--surface)] shadow-lg shadow-black/20"
         >
           <CupSoda class="w-6 h-6" />
         </div>
@@ -39,7 +22,7 @@
           </h1>
 
           <p
-            class="text-[10px] font-semibold text-[var(--primary)] tracking-widest mt-1"          
+            class="text-[10px] font-semibold text-[var(--primary)] tracking-widest mt-1"
           >
             BEVERAGE CONTROL
           </p>
@@ -48,26 +31,13 @@
 
       <!-- 主選單 -->
       <!-- ============================== -->
-      <nav
-        class="space-y-1.5"
-        aria-label="系統主要功能選單"
-      >
-
+      <nav class="space-y-1.5" aria-label="系統主要功能選單">
         <button
           v-for="item in navItems"
           :key="item.id"
           type="button"
           @click="handleNavClick(item)"
-          class="
-            w-full
-            flex items-center justify-between
-            px-3.5 py-2.5
-            rounded-xl
-            text-xs
-            font-bold
-            transition-all
-            cursor-pointer
-          "
+          class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
           :class="
             isMainItemActive(item)
               ? `
@@ -84,31 +54,19 @@
                 `
           "
         >
-
           <!-- 左邊：Icon + 名稱 -->
           <div class="flex items-center space-x-3">
-
-            <component
-              :is="item.icon"
-              class="w-4 h-4"
-            />
+            <component :is="item.icon" class="w-4 h-4" />
 
             <span>
               {{ item.label }}
             </span>
-
           </div>
-
 
           <!-- 右邊 Badge -->
           <span
             v-if="item.badge"
-            class="
-              px-1.5 py-0.5
-              rounded-full
-              text-[10px]
-              font-bold
-            "
+            class="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
             :class="
               isMainItemActive(item)
                 ? `
@@ -123,11 +81,8 @@
           >
             {{ item.badge }}
           </span>
-
         </button>
-
       </nav>
-
 
       <!-- ============================== -->
       <!-- 快捷功能 -->
@@ -137,33 +92,15 @@
         <button
           type="button"
           @click="router.push('/pos')"
-          class="
-            w-full
-            py-2.5 px-3
-            rounded-xl
-            bg-gradient-to-r
-            from-[var(--primary)]
-            to-[var(--secondary)]
-            hover:opacity-95
-            text-[var(--surface)]
-            text-xs
-            font-bold
-            flex items-center justify-center
-            space-x-2
-            transition-all
-            cursor-pointer
-            shadow-md shadow-black/20
-          "
+          class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] hover:opacity-95 text-[var(--surface)] text-xs font-bold flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-md shadow-black/20"
         >
           <CupSoda class="w-4 h-4" />
 
           <span> 門市點餐開單 (POS) </span>
         </button>
-
-       
       </div>
     </div>
- <!-- Bottom Widget: Punch Clock & Settings -->
+    <!-- Bottom Widget: Punch Clock & Settings -->
     <div class="space-y-3 pt-4 border-t border-slate-800/80">
       <!-- Punch Clock Badge Widget -->
       <div
@@ -253,23 +190,14 @@
           </ul>
         </div>
       </div>
-
-     
     </div>
-
-   
   </aside>
 </template>
 
-
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import {
-  useRoute,
-  useRouter
-} from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth.store";
-
 
 import {
   CupSoda,
@@ -283,8 +211,9 @@ import {
   FlaskConical,
   Receipt,
   ShieldUser,
+  ReceiptText,
+  CalendarCheck,
 } from "lucide-vue-next";
-
 
 // ==============================
 // Router
@@ -310,33 +239,27 @@ const latestClockRecords = computed(() => {
 // ==============================
 
 const emit = defineEmits<{
-
   (e: "openReport"): void;
 
   (e: "openProfile"): void;
   //(e: "openPos"): void;
 }>();
 
-
 // ==============================
 // 點擊 Sidebar
 // ==============================
 
 const handleNavClick = (item: any) => {
-
   if (item.path) {
     router.push(item.path);
   }
-
 };
-
 
 // ==============================
 // 判斷目前 Sidebar 哪個項目 Active
 // ==============================
 
 const isMainItemActive = (item: any) => {
-
   // 庫存底下未來可能有很多功能
   // 例如：
   // /inventory
@@ -346,22 +269,17 @@ const isMainItemActive = (item: any) => {
   // 都讓「原物料進銷存」保持亮起來
 
   if (item.id === "inventory") {
-
     return route.path.startsWith("/inventory");
-
   }
 
   return route.path === item.path;
-
 };
-
 
 // ==============================
 // Sidebar 選單
 // ==============================
 
 const navItems = [
-
   {
     id: "dashboard",
     label: "門市營運儀表板",
@@ -411,25 +329,24 @@ const navItems = [
     label: "供應商管理",
     icon: Sliders,
     path: "/Supplier",
-},
-{
- id: "PurchaseOrder",
+  },
+  {
+    id: "PurchaseOrder",
     label: "採購單管理",
     icon: Sliders,
     path: "/PurchaseOrder",
-},
+  },
   {
     id: "workflow",
     label: "簽核系統",
-    icon: Sliders,
+    icon: ReceiptText,
     path: "/workflows",
   },
   {
     id: "leave",
     label: "請假系統",
-    icon: Sliders,
+    icon: CalendarCheck,
     path: "/leave-requests",
   },
 ];
-
 </script>
