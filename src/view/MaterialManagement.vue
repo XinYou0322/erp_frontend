@@ -1,46 +1,5 @@
 <template>
-  <div class="space-y-6 pb-12">
 
-    <!-- =========================
-         KPI Cards
-         ========================= -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-      <MetricCard
-        title="原物料建檔品項"
-        :value="`${materialSummary.totalMaterials} 種`"
-        growth="即時資料"
-        subtitle="目前系統已建立的原物料主檔"
-        :icon="Package"
-      />
-
-      <MetricCard
-        title="平均原物料成本"
-        :value="`NT$ ${Number(materialSummary.averageCost).toFixed(1)}`"
-        growth="依目前主檔計算"
-        variant="cyan"
-        subtitle="所有原物料成本平均值"
-        :icon="DollarSign"
-      />
-
-      <MetricCard
-        title="已設定安全庫存"
-        :value="`${materialSummary.safetyStockCount} 項`"
-        growth="安全庫存管理"
-        variant="emerald"
-        subtitle="已有設定安全庫存水位的原物料"
-        :icon="ShieldCheck"
-      />
-
-      <MetricCard
-        title="計量單位種類"
-        :value="`${materialSummary.unitCount} 種`"
-        growth="主檔規格"
-        subtitle="目前使用中的不同計量單位"
-        :icon="Scale"
-      />
-
-    </div>
 
 
     <!-- =========================
@@ -449,7 +408,7 @@
       @success="handleMaterialSuccess"
     />
 
-  </div>
+
 </template>
 
 <script setup>

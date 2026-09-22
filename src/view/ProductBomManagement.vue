@@ -115,6 +115,33 @@
           </span>
         </button>
 
+        <!-- 商品狀態捷徑，不屬於資料庫分類 -->
+        <button
+          type="button"
+          @click="selectedCategory = null"
+          class="
+            px-3.5 py-1.5 rounded-xl text-[length:var(--font-body)]
+            font-bold transition-all shrink-0 cursor-pointer border
+          "
+          :class="
+            selectedCategory === null
+              ? 'bg-[var(--primary)] text-[var(--surface)] border-[var(--primary)]'
+              : 'bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] border-[var(--outline)]'
+          "
+        >
+          已停用
+          <span
+            class="ml-1.5 px-1.5 py-0.5 rounded-full text-[length:var(--font-small)]"
+            :class="
+              selectedCategory === null
+                ? 'bg-[var(--surface)]/15 text-[var(--surface)]'
+                : 'bg-[var(--surface-container-highest)] text-[var(--on-surface-variant)]'
+            "
+          >
+            {{ inactiveProductCount }}
+          </span>
+        </button>
+
       </div>
 
 
@@ -157,6 +184,15 @@
       </div>
     </div>
 
+    <Filter
+      id-prefix="product-bom"
+      :show-search="true"
+      search-label="搜尋商品"
+      search-placeholder="搜尋商品名稱或料號..."
+      v-model:search-value="searchText"
+      :reset-values="{ keyword: '' }"
+    />
+
 
     <!-- Loading -->
     <div
@@ -192,6 +228,13 @@
       {{ errorMessage }}
     </div>
 
+
+    <div
+      v-else-if="filteredProducts.length === 0"
+      class="rounded-2xl border border-[var(--outline)] bg-[var(--surface-container)] p-8 text-center text-[var(--on-surface-variant)]"
+    >
+      找不到符合條件的商品
+    </div>
 
     <!-- Recipe Cards Grid -->
     <div
@@ -648,6 +691,7 @@ import AddProductModal from '@/component/父元件/AddProductModal.vue'
 import ProductCategoryManagementModal from '@/component/父元件/ProductCategoryManagementModal.vue'
 import Pagination from '@/component/子元件/Pagination.vue'
 import ProductImage from '@/component/子元件/ProductImage.vue'
+import Filter from '@/component/子元件/Filter.vue'
 
 
 const editRecipeModalOpen = ref(false)
@@ -701,6 +745,10 @@ const loading = ref(false)
 const errorMessage = ref('')
 const categories = ref([])
 const selectedCategory = ref('全部')
+const searchText = ref('')
+const inactiveProductCount = computed(() =>
+  products.value.filter(product => product.status === 'INACTIVE').length
+)
 
 const currentPage = ref(1)
 const pageSize = 6
@@ -767,13 +815,23 @@ const loadBom = async (productId) => {
   }
 }
 const filteredProducts = computed(() => {
-  const filtered =
+  const keyword = searchText.value.trim().toLocaleLowerCase()
+  const categoryProducts =
     selectedCategory.value === '全部'
       ? products.value
+      : selectedCategory.value === null
+        ? products.value.filter(product => product.status === 'INACTIVE')
       : products.value.filter(
           product =>
             product.categoryName === selectedCategory.value
         )
+  const filtered = keyword
+    ? categoryProducts.filter(product =>
+        [product.name, product.sku].some(value =>
+          String(value ?? '').toLocaleLowerCase().includes(keyword)
+        )
+      )
+    : categoryProducts
 
   return [...filtered].sort((a, b) => {
     const aInactive =
@@ -798,7 +856,7 @@ const totalPages = computed(() => {
   )
 
 })
-watch(selectedCategory, () => {
+watch([selectedCategory, searchText], () => {
 
   currentPage.value = 1
 

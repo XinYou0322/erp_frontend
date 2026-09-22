@@ -370,20 +370,11 @@ const navItems = [
   },
   {
     id: "bom",
-    label: "原料配方 BOM 管理",
+    label: "商品BOM 管理",
     icon: FlaskConical,
     badge: "SOP",
     path: "/product",
   },
-
-  {
-    id: "materials",
-    label: "原物料主檔管理",
-    icon: PackageOpen,
-    badge: "主檔",
-    path: "/material",
-  },
-
   {
     id: "inventory",
     label: "原物料進銷存",
