@@ -9,6 +9,7 @@ import {
   deleteLeaveRequest,
 } from "../service/leaveRequestApi";
 import { useAuthStore } from "@/stores/auth.store";
+import httpClient from "@/service/httpClient";
 
 const route = useRoute();
 const router = useRouter();
@@ -33,6 +34,7 @@ const form = reactive({
 });
 
 const approverId = ref("");
+const approvers = ref([]);
 const saving = ref(false);
 const submitting = ref(false);
 const deleting = ref(false);
@@ -56,6 +58,23 @@ async function loadExisting() {
     form.reason = leave.reason ?? "";
   } catch (e) {
     errorMessage.value = "無法載入請假單內容";
+  }
+}
+
+async function loadApprovers() {
+  try {
+    const res = await httpClient.get("/api/users/all");
+
+    // 如果目前全部都能選，就直接使用
+    approvers.value = res.data;
+
+    // 如果之後要限制只有主管能簽核，可以改成：
+    // approvers.value = res.data.filter(u =>
+    //   ["HEADQUARTERS_ADMIN", "STORE_MANAGER", "FRANCHISE_OWNER"]
+    //     .includes(u.role?.name)
+    // );
+  } catch (e) {
+    console.error("載入簽核人失敗", e);
   }
 }
 
@@ -177,19 +196,21 @@ async function submitForApproval() {
 // 刪除草稿
 async function deleteDraft() {
   // 防呆：只有編輯既有草稿時才能刪除
-  if (!isEdit.value) return; 
+  if (!isEdit.value) return;
 
-  const isConfirmed = window.confirm("確定要刪除此請假草稿嗎？此動作無法復原。");
+  const isConfirmed = window.confirm(
+    "確定要刪除此請假草稿嗎？此動作無法復原。",
+  );
   if (!isConfirmed) return;
 
   deleting.value = true;
   try {
     await deleteLeaveRequest(leaveId.value);
     successMessage.value = "草稿已成功刪除！即將返回列表...";
-    
+
     // 稍微延遲 1.5 秒讓使用者看到成功訊息，然後跳轉回列表
     setTimeout(() => {
-      router.push({ name: "leave-list" }); 
+      router.push({ name: "leave-list" });
     }, 1000);
   } catch (e) {
     errorMessage.value = e.response?.data?.message || e.message || "刪除失敗";
@@ -198,7 +219,10 @@ async function deleteDraft() {
   }
 }
 
-onMounted(loadExisting);
+onMounted(async () => {
+  await loadExisting();
+  await loadApprovers();
+});
 </script>
 
 <template>
@@ -254,27 +278,29 @@ onMounted(loadExisting);
 
       <div class="field">
         <label>簽核人（送出簽核時必填）</label>
-        <input
-          v-model="approverId"
-          type="number"
-          class="input-glow font-data-mono"
-          placeholder="輸入簽核人 ID"
-        />
+
+        <select v-model="approverId" class="input-glow">
+          <option value="">請選擇簽核人</option>
+
+          <option v-for="user in approvers" :key="user.id" :value="user.id">
+            {{ user.name }}（{{ user.role.description }}）
+          </option>
+        </select>
       </div>
 
       <p v-if="successMessage" class="success-text">{{ successMessage }}</p>
       <p v-if="errorMessage" class="error-text">{{ errorMessage }}</p>
 
       <div class="actions">
-        <button 
-            v-if="isEdit" 
-            class="btn-danger-outline" 
-            style="margin-right: auto;" 
-            :disabled="deleting || saving || submitting" 
-            @click="deleteDraft"
-          >
-            <span class="material-symbols-outlined">delete</span>
-            {{ deleting ? "刪除中..." : "刪除草稿" }}
+        <button
+          v-if="isEdit"
+          class="btn-danger-outline"
+          style="margin-right: auto"
+          :disabled="deleting || saving || submitting"
+          @click="deleteDraft"
+        >
+          <span class="material-symbols-outlined">delete</span>
+          {{ deleting ? "刪除中..." : "刪除草稿" }}
         </button>
         <button class="btn-outline" :disabled="saving" @click="saveDraft">
           <span class="material-symbols-outlined">save</span>
@@ -356,7 +382,7 @@ textarea:focus {
 }
 
 .input-glow[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);  
+  filter: invert(1);
   opacity: 1;
   cursor: pointer;
 }
@@ -455,7 +481,7 @@ textarea {
 .btn-danger-outline {
   background-color: transparent;
   border: 1px solid #ef4444; /* 紅色邊框 */
-  color: #ef4444;            /* 紅色文字 */
+  color: #ef4444; /* 紅色文字 */
   display: flex;
   align-items: center;
   gap: 6px;
