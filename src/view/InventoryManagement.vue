@@ -1,44 +1,7 @@
 <template>
   <div class="space-y-6 pb-12">
 
-    <!-- KPI Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-      <MetricCard
-        title="原物料建檔品項"
-        :value="`${inventory.length} 種`"
-        growth="即時資料"
-        subtitle="目前資料庫中的原物料"
-        :icon="Package"
-      />
-
-      <MetricCard
-        title="效期異常批次"
-        :value="`${expiredBatchTotal + expiringSoonBatchTotal} 批`"
-        growth="需優先處理"
-        :subtitle="`已過期 ${expiredBatchTotal} 批 / 7天內到期 ${expiringSoonBatchTotal} 批`"
-        :icon="Clock"
-      />
-
-      <MetricCard
-        title="總庫存數量"
-        :value="totalQuantityText"
-        variant="amber"
-        growth="所有品項加總"
-        subtitle="僅供目前測試"
-        :icon="Boxes"
-      />
-
-      <MetricCard
-        title="在庫物料資產估值"
-        :value="`NT$ ${totalStockValue.toLocaleString()}`"
-        variant="emerald"
-        growth="即時計算"
-        subtitle="庫存量 × 成本"
-        :icon="DollarSign"
-      />
-
-    </div>
+  
 
 
     <!-- Toolbar -->

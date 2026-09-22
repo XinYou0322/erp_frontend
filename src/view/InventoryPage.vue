@@ -53,6 +53,9 @@
 <MaterialIssueManagement
 v-else-if="activeTab === 'MaterialIssue'"
 />
+<MaterialManagement
+v-else-if="activeTab === 'Material'"
+/>
 
 
 
@@ -77,12 +80,17 @@ import InventoryManagement from "@/view/InventoryManagement.vue";
 
 import InventoryLogManagement from "@/view/InventoryLogManagement.vue";
 import MaterialIssueManagement from "./MaterialIssueManagement.vue";
-
+import MaterialManagement from "./MaterialManagement.vue";
 
 const activeTab = ref("inventory");
 
 
 const inventoryTabs = [
+  {
+    value: "Material",
+    label: "原物料主檔",
+    icon: Boxes,
+  },
   {
     value: "inventory",
     label: "庫存總覽",
