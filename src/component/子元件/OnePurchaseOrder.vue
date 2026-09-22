@@ -7,7 +7,12 @@
     <td>{{ formatDate(createdAt) }}</td>
     <td>{{ formatDate(expectedDeliveryDate)}}</td>
     <td >{{ formattedTotal }}</td>
-    <td >{{ statusInfo.label }}</td>
+   <td>
+      <span
+        class="purchase-order-status"
+        :class="statusInfo.className"
+      >{{ statusInfo.label }}</span>
+    </td>
 
     <td>
       <div class="erp-u-flex erp-u-gap-8">
@@ -16,10 +21,6 @@
           "
           @click="showDetail"
         >查看</button>
-        <button
-          class="erp-btn erp-btn--soft"
-          @click="showUpdate"
-        >修改</button>
   
       </div>
     </td>
@@ -101,7 +102,6 @@ const props = defineProps({
 // 宣告要傳給父元件的事件
 const emit = defineEmits([
   'show-detail',
-  'update-purchase-order',
 ])
 // 將採購單總額格式化，例如：12500 -> NT$12,500
 const formattedTotal = computed(() => {
@@ -124,7 +124,10 @@ const statusInfo = computed(() => {
       label: '草稿',
       className: 'purchase-order-status--draft'
     },
-
+    // PENDING: {
+    //   label: '待簽核',
+    //   className: 'purchase-order-status--pending'
+    // },
     PENDING_APPROVAL: {
       label: '待簽核',
       className: 'purchase-order-status--pending'
@@ -178,7 +181,4 @@ function showDetail() {
   emit('show-detail', props.id)
 }
 
-function showUpdate() {
-  emit('update-purchase-order', props.id)
-}
 </script>

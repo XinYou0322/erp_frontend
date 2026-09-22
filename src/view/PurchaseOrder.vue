@@ -1,105 +1,108 @@
 <template>
   <div class="supplier-page">
-    <Filter
-      class="purchase-order-filter"
-      id-prefix="purchase-order"
-
-      :show-status="true"
-      status-label="狀態"
-      status-default-text="全部狀態"
-      :status-options="purchaseOrderStatusOptions"
-      v-model:status-value="selectedStatus"
-
-      :show-supplier="true"
-      supplier-label="供應商"
-      supplier-default-text="全部供應商"
-      :supplier-options="supplierOptions"
-      v-model:supplier-value="selectedSupplierId"
-
-      :show-date-range="true"
-      date-label="採購日期"
-      v-model:start-date="startDate"
-      v-model:end-date="endDate"
-
-      :show-search="true"
-      search-label="搜尋"
-      search-placeholder="搜尋採購單號、供應商名稱..."
-      v-model:search-value="searchText"
-
-      :show-page-size="true"
-      :page-size="pageSize"
-      @update:page-size="changePageSize"
-
-      :show-refresh="true"
-      refresh-title="更新採購單資料"
-      @refresh="refreshData"
-
-      :show-reset="false"
-      />
-    <section
-      class="supplier-overview bento-card"
-    >
-      <div class="supplier-table-wrap">
-        <table class="supplier-table">
-          <thead>
-            <tr>
-              <th>採購單號</th>
-              <th>供應商名稱</th>
-              <th>建立人</th>
-              <th>建立日期</th>
-              <th>預計到貨日</th>
-              <th>總金額</th>
-              <th>狀態</th>
-              <!-- <th>簽核進度</th> -->
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <OnePurchaseOrder
-              v-for="onePurchaseOrder in purchaseOrderList"
-              :key="onePurchaseOrder.id"
-
-              :id="onePurchaseOrder.id"
-              :order-number="onePurchaseOrder.orderNumber"
-              :supplier-id="onePurchaseOrder.supplierId"
-              :supplier-name="onePurchaseOrder.supplierName"
-              :status="onePurchaseOrder.status"
-              :created-by-user-id="onePurchaseOrder.createdByUserId"
-              :created-by-name="onePurchaseOrder.createdByName"
-              :approved-by-user-id="onePurchaseOrder.approvedByUserId"
-              :approved-by-name="onePurchaseOrder.approvedByName"
-              :total="onePurchaseOrder.total"
-              :created-at="onePurchaseOrder.createdAt"
-              :updated-at="onePurchaseOrder.updatedAt"
-              :expected-delivery-date="onePurchaseOrder.expectedDeliveryDate"
-              :received-at="onePurchaseOrder.receivedAt"
-              :received-by-user-id="onePurchaseOrder.receivedByUserId"
-              :received-by-name="onePurchaseOrder.receivedByName"
-              :receipt-url="onePurchaseOrder.receiptUrl"
-              :decision-remark="onePurchaseOrder.decisionRemark"
-
-              @show-detail="showDetail(onePurchaseOrder)"
-              @update-purchase-order="showUpdate(onePurchaseOrder)"
-            />
-          </tbody>
-        </table>
-      </div>
-      <!-- currentPage 是後端從 0 開始的頁碼，所以顯示時要加 1 -->
-      <Pagination
-        :current-page="currentPage + 1"
-        :total-pages="totalPages"
-        @change-page="changePage"
-      />
-    </section>
-
-    
-    <CheckPurchaseOrder
-      v-if="showCheckPurchaseOrder"
-      :visible="showCheckPurchaseOrder"
-      :PurchaseOrder="selectedPurchaseOrder"
-      @close="closeDetail"
+    <PurchaseOrderDetail
+      v-if="showPurchaseOrderDetail && selectedPurchaseOrder"
+      :key="`${selectedPurchaseOrder.id}-${detailRefreshKey}`"
+      :purchase-order-id="selectedPurchaseOrder.id"
+      :purchase-order="selectedPurchaseOrder"
+      :cancelling="isCancelling"
+      @back="closeDetail"
+      @edit="showUpdate"
+      @cancel="cancelPurchaseOrder"
     />
+
+    <template v-else>
+      <Filter
+        class="purchase-order-filter"
+        id-prefix="purchase-order"
+
+        :show-status="true"
+        status-label="狀態"
+        status-default-text="全部狀態"
+        :status-options="purchaseOrderStatusOptions"
+        v-model:status-value="selectedStatus"
+
+        :show-supplier="true"
+        supplier-label="供應商"
+        supplier-default-text="全部供應商"
+        :supplier-options="supplierOptions"
+        v-model:supplier-value="selectedSupplierId"
+
+        :show-date-range="true"
+        date-label="採購日期"
+        v-model:start-date="startDate"
+        v-model:end-date="endDate"
+
+        :show-search="true"
+        search-label="搜尋"
+        search-placeholder="搜尋採購單號、供應商名稱..."
+        v-model:search-value="searchText"
+
+        :show-page-size="true"
+        :page-size="pageSize"
+        @update:page-size="changePageSize"
+
+        :show-refresh="true"
+        refresh-title="更新採購單資料"
+        @refresh="refreshData"
+
+        :show-reset="false"
+      />
+      <section class="supplier-overview bento-card">
+        <div class="supplier-table-wrap">
+          <table class="supplier-table">
+            <thead>
+              <tr>
+                <th>採購單號</th>
+                <th>供應商名稱</th>
+                <th>建立人</th>
+                <th>建立日期</th>
+                <th>預計到貨日</th>
+                <th>總金額</th>
+                <th>狀態</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <OnePurchaseOrder
+                v-for="onePurchaseOrder in purchaseOrderList"
+                :key="onePurchaseOrder.id"
+
+                :id="onePurchaseOrder.id"
+                :order-number="onePurchaseOrder.orderNumber"
+                :supplier-id="onePurchaseOrder.supplierId"
+                :supplier-name="onePurchaseOrder.supplierName"
+                :status="onePurchaseOrder.status"
+                :created-by-user-id="onePurchaseOrder.createdByUserId"
+                :created-by-name="onePurchaseOrder.createdByName"
+                :approved-by-user-id="onePurchaseOrder.approvedByUserId"
+                :approved-by-name="onePurchaseOrder.approvedByName"
+                :total="onePurchaseOrder.total"
+                :created-at="onePurchaseOrder.createdAt"
+                :updated-at="onePurchaseOrder.updatedAt"
+                :expected-delivery-date="onePurchaseOrder.expectedDeliveryDate"
+                :received-at="onePurchaseOrder.receivedAt"
+                :received-by-user-id="onePurchaseOrder.receivedByUserId"
+                :received-by-name="onePurchaseOrder.receivedByName"
+                :receipt-url="onePurchaseOrder.receiptUrl"
+                :decision-remark="onePurchaseOrder.decisionRemark"
+
+                @show-detail="showDetail(onePurchaseOrder)"
+              />
+            </tbody>
+          </table>
+        </div>
+
+        <!-- currentPage 是後端從 0 開始的頁碼，所以顯示時要加 1 -->
+        <Pagination
+          :current-page="currentPage + 1"
+          :total-pages="totalPages"
+          @change-page="changePage"
+        />
+      </section>
+    </template>
     
+    <!-- 修改視窗只會從 PurchaseOrderDetail.vue 的「修改」按鈕開啟。 -->
     <UpdatePurchaseOrder
       v-if="showUpdatePurchaseOrder"
       :visible="showUpdatePurchaseOrder"
@@ -115,9 +118,9 @@ import { ref, watch, onMounted } from 'vue'
 import httpClient from '@/service/httpClient'
 import Filter from '@/component/子元件/Filter.vue'
 import OnePurchaseOrder from '@/component/子元件/OnePurchaseOrder.vue'
-import CheckPurchaseOrder from '@/component/子元件/CheckPurchaseOrder.vue'
 import UpdatePurchaseOrder from '@/component/子元件/UpdatePurchaseOrder.vue'
 import Pagination from '@/component/子元件/Pagination.vue'
+import PurchaseOrderDetail from '@/view/PurchaseOrderDetail.vue'
 
 onMounted(() => {
   fetchSupplierOptions()
@@ -174,9 +177,11 @@ const totalPages = ref(0)
 
 // ---------- 採購單列表與彈出視窗 ----------
 const purchaseOrderList = ref([])
-const showCheckPurchaseOrder = ref(false)
+const showPurchaseOrderDetail = ref(false)
 const showUpdatePurchaseOrder = ref(false)
 const selectedPurchaseOrder = ref(null)
+const detailRefreshKey = ref(0)
+const isCancelling = ref(false)
 
 function changePageSize(size) {
   pageSize.value = size
@@ -309,7 +314,7 @@ async function refreshData() {
 }
 
 
-function submitUpdate(updateData) {
+async function submitUpdate(updateData) {
   const purchaseOrderId = updateData.id
 
   //id 放在 URL，不重複放進 RequestBody。
@@ -318,35 +323,45 @@ function submitUpdate(updateData) {
   }
   delete requestData.id
 
-  httpClient({
-    method: 'put',
-    url: `/api/purchaseOrder/${purchaseOrderId}`,
-    params: {
-      loginUserId: loginUserId.value
-    },
-    data: requestData
-  })
-    .then(response => {
-      console.log('採購單修改成功：', response.data)
-      alert('採購單修改成功')
-      closeUpdate()
-      fetchData()
+  try {
+    const response = await httpClient({
+      method: 'put',
+      url: `/api/purchaseOrder/${purchaseOrderId}`,
+      params: {
+        loginUserId: loginUserId.value
+      },
+      data: requestData
     })
-    .catch(error => {
-      console.error('修改採購單失敗：', error)
 
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data ||
-        '採購單修改失敗'
+    console.log('採購單修改成功：', response.data)
+    alert('採購單修改成功')
 
-      alert(errorMessage)
-    })
+    // 【我新增】保留目前選取的採購單，關閉修改視窗後仍停留在詳細頁。
+    const responseData = response.data?.data ?? response.data
+    const updatedPurchaseOrder =
+      responseData && typeof responseData === 'object'
+        ? { ...updateData, ...responseData }
+        : updateData
+
+    selectedPurchaseOrder.value = normalizePurchaseOrder(updatedPurchaseOrder)
+    closeUpdate()
+    detailRefreshKey.value += 1
+    await fetchData()
+  } catch (error) {
+    console.error('修改採購單失敗：', error)
+
+    const errorMessage =
+      error.response?.data?.message ||
+      error.response?.data ||
+      '採購單修改失敗'
+
+    alert(errorMessage)
+  }
 }
 
 function showDetail(onePurchaseOrder) {
   selectedPurchaseOrder.value = onePurchaseOrder
-  showCheckPurchaseOrder.value = true
+  showPurchaseOrderDetail.value = true
 }
 
 function closeDetail() {
@@ -362,6 +377,43 @@ function showUpdate(onePurchaseOrder) {
 function closeUpdate() {
   showUpdatePurchaseOrder.value = false
   selectedPurchaseOrder.value = null
+}
+
+async function cancelPurchaseOrder(onePurchaseOrder) {
+  if (!onePurchaseOrder?.id || isCancelling.value) {
+    return
+  }
+
+  isCancelling.value = true
+
+  try {
+    await httpClient({
+      method: 'put',
+      url: `/api/purchaseOrder/${onePurchaseOrder.id}/cancel`,
+      params: {
+        loginUserId: loginUserId.value
+      }
+    })
+
+    selectedPurchaseOrder.value = normalizePurchaseOrder({
+      ...onePurchaseOrder,
+      status: 'CANCELLED'
+    })
+    alert('採購單已取消')
+    detailRefreshKey.value += 1
+    await fetchData()
+  } catch (error) {
+    console.error('取消採購單失敗：', error)
+
+    const errorMessage =
+      error.response?.data?.message ||
+      error.response?.data ||
+      '採購單取消失敗'
+
+    alert(errorMessage)
+  } finally {
+    isCancelling.value = false
+  }
 }
 
 // 補上 DTO 可能為 null 的預設值，避免子元件畫面出現 undefined。
@@ -385,7 +437,14 @@ function normalizePurchaseOrder(purchaseOrder) {
     receivedByName: purchaseOrder.receivedByName ?? '',
     receiptUrl: purchaseOrder.receiptUrl ?? '',
     decisionRemark: purchaseOrder.decisionRemark ?? '',
-    approvalProgress: purchaseOrder.approvalProgress ?? ''
+    approvalProgress: purchaseOrder.approvalProgress ?? '',
+
+    items: purchaseOrder.items ?? purchaseOrder.purchaseOrderItems ?? [],
+    workflowId:
+      purchaseOrder.workflowId
+      ?? purchaseOrder.approvalWorkflowId
+      ?? purchaseOrder.workflow?.id
+      ?? null
   }
 }
 
