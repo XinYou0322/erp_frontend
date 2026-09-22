@@ -11,6 +11,7 @@ import {
   getDefaultAvatar,
   normalizeAvatarUrl,
 } from "../data/defaultAvatars";
+import { useNotificationStore } from "./notification.store";
 
 const DEFAULT_AVATAR = getDefaultAvatar();
 
@@ -161,15 +162,15 @@ export const useAuthStore = defineStore("auth", () => {
     try {
       const response = await httpClient.get("/api/users/now");
       const user = response?.data;
-      if (!user || !isValidBackendUserId(user.id)) {
+
+      if (!user || !user.name) {
         clearFrontendSession();
         return false;
       }
 
-      const normalizedUser = {
-        ...user,
-        id: Number(user.id),
-      };
+      // 💡 修正點：使用你原本就寫好的對應轉換函式，把後端 role 物件拍平成前端要的欄位
+      const normalizedUser = mapBackendUserToFrontend(user);
+
       currentUser.value = normalizedUser;
       isAuthenticated.value = true;
       StorageService.set("current_user", normalizedUser);
@@ -177,8 +178,6 @@ export const useAuthStore = defineStore("auth", () => {
       return true;
     } catch (error) {
       clearFrontendSession();
-
-      // 💡 檢查如果是 401 錯誤，代表純粹是沒登入，用 console.log 溫和記錄即可
       if (error?.response?.status === 401) {
         console.log("當前處於未登入狀態，請進行登入。");
       } else {
@@ -309,15 +308,57 @@ export const useAuthStore = defineStore("auth", () => {
     clearFrontendSession();
   }
 
-  function switchUser(user) {
-    currentUser.value = user;
-    StorageService.set("current_user", user);
-    recordAuditLog(
-      "切換身分",
-      "auth",
-      `身分快速切換至「${user.name}」(${user.roleName || user.role})。`,
-      "success",
-    );
+  async function loginQuickly(user) {
+    try {
+      // 1. 先去後端成功建立 Session
+      await httpClient.post(`/api/users/switch-test-user/${user.id}`);
+
+      // 2. 💡 確保格式一致（user 傳進來時已經是前端格式，但補強對齊）
+      currentUser.value = user;
+      isAuthenticated.value = true;
+
+      StorageService.set("current_user", user);
+      StorageService.set("is_authenticated", true);
+
+      // 💡 觸發一次更新最後登入時間，維持系統使用者狀態同步
+      const idx = users.value.findIndex((u) => u.id === user.id);
+      if (idx !== -1) {
+        users.value[idx].lastLogin = new Date()
+          .toISOString()
+          .replace("T", " ")
+          .slice(0, 16);
+        StorageService.set("system_users", users.value);
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("後端快速登入同步失敗:", error);
+      return { success: false };
+    }
+  }
+
+  async function switchUser(user) {
+    try {
+      // 發請求告訴後端，我們要切換 Session 裡的角色
+      await httpClient.post(`/api/users/switch-test-user/${user.id}`);
+
+      // 後端切換成功後，前端同步更新狀態
+      currentUser.value = user;
+      StorageService.set("current_user", user);
+
+      // 💡 確保登入標記也是 true
+      isAuthenticated.value = true;
+      StorageService.set("is_authenticated", true);
+
+      recordAuditLog(
+        "切換身分",
+        "auth",
+        `身分快速切換至「${user.name}」(${user.roleName || user.role})。`,
+        "success",
+      );
+    } catch (err) {
+      console.error("後端身分切換失敗:", err);
+    }
   }
 
   function switchRole(role) {
@@ -750,6 +791,20 @@ export const useAuthStore = defineStore("auth", () => {
         note,
         nextState ? "success" : "warning",
       );
+      const notifStore = useNotificationStore();
+      const userName = currentUser.value?.name || "同仁";
+      const shortTime = new Date(serverClockTime).toLocaleTimeString("zh-TW", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      if (nextState) {
+        // nextState 為 true 代表切換到了上班狀態
+        notifStore.triggerCheckInAlert(userName, shortTime);
+      } else {
+        // nextState 為 false 代表切換到了下班狀態
+        notifStore.triggerCheckOutAlert(userName, shortTime);
+      }
 
       return {
         success: true,
@@ -791,6 +846,7 @@ export const useAuthStore = defineStore("auth", () => {
     isEmployee,
     isGuest,
     userPermissions,
+    loginQuickly,
     hasPermission,
     canAccessModule,
     recordAuditLog,

@@ -21,8 +21,8 @@ const uiStore = useUIStore();
 
 const isUserMenuOpen = ref(false);
 
-const handleUserSelect = (u: UserProfile) => {
-  authStore.switchUser(u);
+const handleUserSelect = async (u: UserProfile) => {
+  await authStore.switchUser(u);
   isUserMenuOpen.value = false;
   uiStore.showToast(`已切換身分為：${u.name} (${u.roleName})`);
 };

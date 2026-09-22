@@ -159,6 +159,70 @@ export const useNotificationStore = defineStore("notification", () => {
       );
   });
 
+  /** =====================================================================
+   * 新增：考勤與原物料相關通知 Action
+   * ===================================================================== */
+
+  // 1. 打卡簽到通知
+  const triggerCheckInAlert = (userName, time) => {
+    addNotification(
+      {
+        title: "員工簽到成功",
+        message: `同仁【${userName}】已於 ${time} 完成今日上班打卡簽到。`,
+        type: "success",
+        category: "security", // 歸類在資安考勤
+        actionLabel: "檢視考勤報表",
+        actionRoute: "/attendance", // 你的考勤路由
+      },
+      true,
+    );
+  };
+
+  // 2. 打卡簽退通知
+  const triggerCheckOutAlert = (userName, time) => {
+    addNotification(
+      {
+        title: "員工簽退成功",
+        message: `同仁【${userName}】已於 ${time} 完成今日下班打卡簽退。`,
+        type: "info",
+        category: "security",
+        actionLabel: "檢視考勤報表",
+        actionRoute: "/attendance",
+      },
+      true,
+    );
+  };
+
+  // 3. 新增原物料通知
+  const triggerMaterialCreatedAlert = (materialName, creator) => {
+    addNotification(
+      {
+        title: "成功建立新原物料項目",
+        message: `由【${creator}】新增了原物料：${materialName}，已建檔至物料清單。`,
+        type: "success",
+        category: "inventory", // 歸類在庫存物料
+        actionLabel: "前往物料清單",
+        actionRoute: "/material",
+      },
+      true,
+    );
+  };
+
+  // 4. 進貨原物料通知
+  const triggerMaterialImportedAlert = (materialName, quantity, batchNo) => {
+    addNotification(
+      {
+        title: "原物料進貨入庫通知",
+        message: `原物料【${materialName}】已成功進貨入庫 ${quantity} kg！批號：${batchNo}。`,
+        type: "success",
+        category: "supplier", // 歸類在採購供鏈
+        actionLabel: "查看庫存流水帳",
+        actionRoute: "/bom",
+      },
+      true,
+    );
+  };
+
   // =====================================================================
   // 3. 提示音效 (Audio Notification)
   // =====================================================================
@@ -545,6 +609,11 @@ export const useNotificationStore = defineStore("notification", () => {
     unreadCountsByCategory,
     hasUrgentNotification,
     filteredNotifications,
+    triggerCheckInAlert,
+    triggerCheckOutAlert,
+    triggerMaterialCreatedAlert,
+    triggerMaterialImportedAlert,
+    triggerLowStockAlert,
     addNotification,
     markAsRead,
     toggleRead,
