@@ -55,9 +55,27 @@
         </template>
         </div>
       </section>
-
-      <AllRightCard class="pos-layout__detail" 
-         :items="orderItems"
+      <RecentSalesPanel
+        v-if="showRecentSales"
+        class="pos-layout__detail"
+        :is-open="showRecentSales"
+        :sales-orders="recentSalesOrders"
+        :server-pagination="true"
+        :current-page="recentCurrentPage"
+        :total-pages="recentTotalPages"
+        :total-elements="recentTotalElements"
+        :page-size="RECENT_SALES_PAGE_SIZE"
+        :date-text="recentSalesDate"
+        @close="closeRecentSales"
+        @change-page="loadRecentSales"
+        @search="searchRecentSales"
+        @select-order="loadRecentSalesDetail"
+        @view-all="goToAllSalesOrders"
+      />
+      <AllRightCard
+        v-else
+        class="pos-layout__detail"
+        :items="orderItems"
         v-model:payment-method="paymentMethod"
         :checking-out="checkoutLoading"
         :checkout-message="checkoutMessage"
@@ -65,23 +83,9 @@
         @increase="increaseProduct"
         @decrease="decreaseProduct"
         @checkout="checkoutOrder"
-        />
+      />
     </div>
-    <RecentSalesPanel
-      :is-open="showRecentSales"
-      :sales-orders="recentSalesOrders"
-      :server-pagination="true"
-      :current-page="recentCurrentPage"
-      :total-pages="recentTotalPages"
-      :total-elements="recentTotalElements"
-      :page-size="RECENT_SALES_PAGE_SIZE"
-      :date-text="recentSalesDate"
-      @close="showRecentSales = false"
-      @change-page="loadRecentSales"
-      @search="searchRecentSales"
-      @select-order="loadRecentSalesDetail"
-      @view-all="goToAllSalesOrders"
-    />
+
   </main>
 </template>
 <script setup>
@@ -144,6 +148,11 @@ async function openRecentSales() {
 
   await loadRecentSales(1)
 }
+
+function closeRecentSales() {
+  showRecentSales.value = false
+}
+
 async function loadRecentSales(page = 1) {
   try {
     const response = await httpClient.get('/api/SalesOrder/page', {
@@ -202,7 +211,7 @@ async function loadRecentSalesDetail(order) {
   }
 }
 function goToAllSalesOrders() {
-  showRecentSales.value = false
+  closeRecentSales()
   router.push('/SalesOrder')
 }
 

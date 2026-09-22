@@ -1,13 +1,30 @@
 <template>
-
-  <ModalWrapper
-    :is-open="isOpen"
-    title="近期銷售"
-    subtitle="今日的銷售單紀錄，點選可查看明細"
-    max-width="sm"
-    :confirm-close="false"
-    @close="emit('close')"
+  <aside
+    v-if="isOpen"
+    class="recent-sales-side-panel bento-card"
+    aria-labelledby="recent-sales-title"
   >
+    <!-- 【右側面板標題】顯示標題、說明與關閉按鈕。 -->
+    <header class="recent-sales-side-panel__header">
+      <div class="recent-sales-side-panel__heading">
+        <h2 id="recent-sales-title" class="recent-sales-side-panel__title">
+          近期銷售
+        </h2>
+        <p class="recent-sales-side-panel__subtitle">
+          今日的銷售單紀錄，點選可查看明細
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="recent-sales-side-panel__close"
+        aria-label="關閉近期銷售"
+        @click="emit('close')"
+      >
+        <span aria-hidden="true">×</span>
+      </button>
+    </header>
+    <div class="recent-sales-side-panel__body">
     <section class="recent-sales-panel" aria-label="近期銷售清單">
       <!-- 【搜尋框】輸入訂單編號或商品名稱。 -->
       <label class="recent-sales-panel__search">
@@ -36,7 +53,7 @@
         <p>共 {{ displayTotalElements }} 筆</p>
       </div>
 
-      <!-- 【畫面 E】API 模式只顯示後端 Page.content 的當頁資料。 -->
+      <!-- API 模式只顯示後端 Page.content 的當頁資料。 -->
       <div class="recent-sales-panel__list">
         <article
           v-for="order in displayedOrders"
@@ -89,6 +106,7 @@
               v-if="expandedOrderKey === getOrderKey(order)"
               class="sales-order-card__details"
             >
+            <div class="sales-order-card__items-scroll">
               <div
                 v-for="(item, itemIndex) in getItems(order)"
                 :key="item.id ?? item.productId ?? itemIndex"
@@ -103,6 +121,7 @@
                 <span class="sales-order-card__item-price font-data-mono">
                   {{ currencyText }} {{ formatMoney(getItemSubtotal(item)) }}
                 </span>
+              </div>
               </div>
 
               <div class="sales-order-card__total">
@@ -123,7 +142,7 @@
       </div>
 
       <!--
-        【畫面 I】數字分頁。
+       數字分頁。
         Pagination 只有 totalPages > 1 時才會自己顯示。
       -->
       <div class="recent-sales-panel__pagination">
@@ -134,9 +153,10 @@
         />
       </div>
     </section>
+    </div>
 
-    <!-- 【ModalWrapper footer】完整銷售單頁面的入口。 -->
-    <template #footer>
+    <!-- 【右側面板底部】不再使用 ModalWrapper 的 footer slot。 -->
+    <footer class="recent-sales-side-panel__footer">
       <button
         type="button"
         class="recent-sales-panel__view-all"
@@ -146,17 +166,16 @@
         查看全部銷售單
         <span aria-hidden="true">→</span>
       </button>
-    </template>
-  </ModalWrapper>
+    </footer>
+  </aside>
 </template>
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import ModalWrapper from '@/component/子元件//ModalWrapper.vue'
 import Pagination from '@/component/子元件//Pagination.vue'
 
 //父層資料傳入
 const props = defineProps({
-  // 交給 ModalWrapper 控制彈窗顯示或隱藏。
+
   isOpen: {
     type: Boolean,
     default: false
@@ -219,6 +238,14 @@ const emit = defineEmits([
   'change-page',
   'search'
 ])
+//通知 pos.vue 關閉近期銷售
+function handleClose() {
+  emit('close')
+}
+//通知 pos.vue 前往完整銷售單管理頁面
+function handleViewAll() {
+  emit('view-all')
+}
 
 // 搜尋文字、目前展開的銷售單、目前頁碼。
 const searchKeyword = ref('')
