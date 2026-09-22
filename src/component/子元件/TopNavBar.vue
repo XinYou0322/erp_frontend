@@ -87,7 +87,7 @@ const handleLogout = async () => {
         "
         class="hidden sm:flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-xl text-amber-400 text-xs font-bold font-data-mono cursor-pointer transition-colors"
         @click="
-          notifStore.triggerLowStockAlert(inventoryStore.lowStockMaterials);
+          // 📢 修正：點擊時不再重複呼叫前端模擬，而是直接切換到庫存分類並拉開面板
           notifStore.activeCategory = 'inventory';
           uiStore.isNotificationCenterOpen = true;
         "
