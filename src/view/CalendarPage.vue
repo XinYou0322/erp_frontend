@@ -536,7 +536,7 @@ const handleExportCSV = () => {
               class="px-1.5 py-0.5 rounded text-[11px] font-medium truncate flex items-center gap-1 border transition-all cursor-pointer shadow-2xs"
               :class="[
                 getCategoryMeta(evt.category).badgeClass,
-                evt.status === 'completed' ? 'opacity-60 line-through' : '',
+                evt.status === 'completed' ? 'opacity-40 line-through !text-slate-500 !border-slate-800 !bg-slate-950/40' : '',
               ]"
               :title="`${evt.startTime} ${evt.title}`"
             >
@@ -723,6 +723,7 @@ const handleExportCSV = () => {
           v-for="evt in calendarStore.selectedDateEvents"
           :key="evt.id"
           class="p-5 bg-slate-900 border border-slate-800 rounded-2xl hover:border-slate-700 transition-all flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+          :class="evt.status === 'completed' ? 'opacity-40 text-slate-500' : ''" 
         >
           <div class="space-y-2 flex-1">
             <div class="flex items-center gap-2 flex-wrap">
@@ -846,16 +847,18 @@ const handleExportCSV = () => {
         v-for="evt in calendarStore.filteredEvents"
         :key="evt.id"
         class="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl hover:border-slate-700 transition-all flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+        :class="evt.status === 'completed' ? 'opacity-40 text-slate-500 bg-slate-950/40 border-slate-900' : ''"
       >
         <div class="flex items-start gap-3.5">
           <!-- Date & Time Box -->
           <div
             class="w-20 p-2 rounded-xl bg-slate-950 border border-slate-800 text-center shrink-0"
+             :class="evt.status === 'completed' ? 'border-slate-900/60' : ''"
           >
             <p class="text-[10px] text-slate-400 font-semibold uppercase">
               {{ evt.date.slice(5) }}
             </p>
-            <p class="text-sm font-extrabold text-white font-data-mono">
+            <p class="text-sm font-extrabold font-data-mono">
               {{ evt.startTime }}
             </p>
             <p class="text-[9px] text-slate-500 font-data-mono">
@@ -892,10 +895,8 @@ const handleExportCSV = () => {
             </div>
 
             <h4
-              class="text-sm font-bold text-white"
-              :class="
-                evt.status === 'completed' ? 'line-through text-slate-400' : ''
-              "
+              class="text-sm font-bold"
+              :class="evt.status === 'completed' ? 'line-through text-slate-500 font-normal' : 'text-white'"
             >
               {{ evt.title }}
             </h4>

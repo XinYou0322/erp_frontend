@@ -320,6 +320,15 @@ export const useCalendarStore = defineStore("calendar", () => {
     { flush: "post" },
   );
 
+  watch(selectedDate, (newDate) => {
+    if (newDate) {
+      const parts = newDate.split("-");
+      currentYear.value = parseInt(parts[0], 10);
+      currentMonth.value = parseInt(parts[1], 10) - 1;
+      currentDay.value = parseInt(parts[2], 10);
+    }
+  });
+
   // =====================================================================
   // 2. 分類定義與色彩語義 (Category Metadata)
   // =====================================================================
@@ -622,52 +631,54 @@ export const useCalendarStore = defineStore("calendar", () => {
   /** 切換上一個月份/週期 */
   const prevPeriod = () => {
     if (currentView.value === "month") {
-      if (currentMonth.value === 0) {
-        currentMonth.value = 11;
-        currentYear.value--;
-      } else {
-        currentMonth.value--;
-      }
+      // ✨ 修正點：利用原生 Date 自動安全地減去一個月
+      const d = new Date(
+        currentYear.value,
+        currentMonth.value,
+        currentDay.value,
+      );
+      d.setMonth(d.getMonth() - 1);
+
+      // 格式化為標準的 YYYY-MM-DD
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+      // 直接調用 selectDate 刷新全域焦點與輸入框日期
+      selectDate(dateStr);
     } else if (currentView.value === "week") {
       const d = new Date(selectedDate.value);
       d.setDate(d.getDate() - 7);
-      selectedDate.value = d.toISOString().slice(0, 10);
-      currentYear.value = d.getFullYear();
-      currentMonth.value = d.getMonth();
-      currentDay.value = d.getDate();
+      selectDate(d.toISOString().slice(0, 10));
     } else {
       const d = new Date(selectedDate.value);
       d.setDate(d.getDate() - 1);
-      selectedDate.value = d.toISOString().slice(0, 10);
-      currentYear.value = d.getFullYear();
-      currentMonth.value = d.getMonth();
-      currentDay.value = d.getDate();
+      selectDate(d.toISOString().slice(0, 10));
     }
   };
 
   /** 切換下一個月份/週期 */
   const nextPeriod = () => {
     if (currentView.value === "month") {
-      if (currentMonth.value === 11) {
-        currentMonth.value = 0;
-        currentYear.value++;
-      } else {
-        currentMonth.value++;
-      }
+      // ✨ 修正點：利用原生 Date 自動安全地加上一個月
+      const d = new Date(
+        currentYear.value,
+        currentMonth.value,
+        currentDay.value,
+      );
+      d.setMonth(d.getMonth() + 1);
+
+      // 格式化為標準的 YYYY-MM-DD
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+      // 直接調用 selectDate 刷新全域焦點與輸入框日期
+      selectDate(dateStr);
     } else if (currentView.value === "week") {
       const d = new Date(selectedDate.value);
       d.setDate(d.getDate() + 7);
-      selectedDate.value = d.toISOString().slice(0, 10);
-      currentYear.value = d.getFullYear();
-      currentMonth.value = d.getMonth();
-      currentDay.value = d.getDate();
+      selectDate(d.toISOString().slice(0, 10));
     } else {
       const d = new Date(selectedDate.value);
       d.setDate(d.getDate() + 1);
-      selectedDate.value = d.toISOString().slice(0, 10);
-      currentYear.value = d.getFullYear();
-      currentMonth.value = d.getMonth();
-      currentDay.value = d.getDate();
+      selectDate(d.toISOString().slice(0, 10));
     }
   };
 
