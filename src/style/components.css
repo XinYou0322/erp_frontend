@@ -287,6 +287,87 @@
    color: var( --color-text-primary);
 }
 
+/* =========================================================
+   Data Table / 共用資料表
+   ---------------------------------------------------------
+   使用於庫存總覽、庫存異動紀錄與當日領料等資料列表。
+   ========================================================= */
+
+.data-table-card {
+  overflow: hidden;
+  border: 1px solid var(--outline);
+  border-radius: 1rem;
+  background: var(--surface-container);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.data-table-scroll {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.data-table--fixed {
+  min-width: 1100px;
+  table-layout: fixed;
+}
+
+.data-table__head-row {
+  border-bottom: 1px solid var(--outline);
+  color: var(--on-surface-variant);
+  background: var(--surface-container-high);
+  font-size: var(--font-body);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.data-table__header {
+  padding: 0.75rem 1rem;
+}
+
+.data-table__body {
+  color: var(--on-surface);
+  font-size: var(--font-body);
+}
+
+.data-table__body > tr + tr {
+  border-top: 1px solid var(--outline-variant);
+}
+
+.data-table__row {
+  transition: background-color 0.18s ease;
+}
+
+.data-table__row:hover {
+  background: var(--surface-container-high);
+}
+
+.data-table__cell {
+  padding: 0.875rem 1rem;
+}
+
+.data-table__header--nowrap,
+.data-table__cell--nowrap {
+  white-space: nowrap;
+}
+
+.data-table__header--right,
+.data-table__cell--right {
+  padding-right: 1.5rem;
+  text-align: right;
+}
+
+.data-table__empty {
+  padding: 3rem 1rem;
+  color: var(--on-surface-variant);
+  text-align: center;
+}
+
 /* Chrome、Edge、Safari */
 .no-number-spinner::-webkit-inner-spin-button,
 .no-number-spinner::-webkit-outer-spin-button,

@@ -5,207 +5,51 @@
 
 
 
-    <!-- Toolbar -->
-    <div
-      class="
-        p-4
-        rounded-2xl
-        flex
-        flex-col
-        gap-4
-        bg-[var(--surface-container)]
-        border
-        border-[var(--outline)]
-      "
+    <!-- 與銷售單管理共用的查詢工具列 -->
+    <Filter
+      class="purchase-order-filter inventory-log-filter"
+      id-prefix="inventory-log"
+      :show-status="true"
+      status-label="異動類型"
+      status-default-text="全部異動類型"
+      :status-options="actionFilterOptions"
+      v-model:status-value="selectedAction"
+      :show-supplier="true"
+      supplier-label="原物料"
+      supplier-default-text="全部原物料"
+      :supplier-options="materialFilterOptions"
+      v-model:supplier-value="selectedMaterialId"
+      :show-date-range="true"
+      date-label="異動日期"
+      v-model:start-date="startDate"
+      v-model:end-date="endDate"
+      :show-search="true"
+      search-label="搜尋原物料"
+      search-placeholder="輸入原物料名稱或料號"
+      v-model:search-value="searchQuery"
+      :show-refresh="false"
+      :show-reset="false"
     >
+      <template #actions>
+        <button
+          type="button"
+          class="btn-secondary text-[length:var(--font-body)] px-3 py-1.5 inline-flex items-center space-x-1.5"
+          title="重新整理庫存異動紀錄"
+          @click="loadLogs"
+        >
+          <RefreshCw class="w-3.5 h-3.5" />
+          <span>重新整理</span>
+        </button>
 
-      <div
-        class="
-          flex
-          flex-col
-          lg:flex-row
-          lg:items-center
-          justify-between
-          gap-3
-        "
-      >
-        <div>
-
-          <div
-            class="
-              font-bold
-              text-[length:var(--font-heading)]
-              text-[var(--on-surface)]
-            "
-          >
-            庫存異動紀錄
-          </div>
-
-          <div
-            class="
-              text-[length:var(--font-body)]
-              text-[var(--on-surface-variant)]
-              mt-1
-            "
-          >
-            查詢原物料進貨、銷售扣減、耗損與盤點調整歷程
-          </div>
-
-        </div>
-
-
-        <div class="flex items-center space-x-2">
-
-          <button
-            type="button"
-            @click="loadLogs"
-            class="
-              btn-secondary
-              text-[length:var(--font-body)]
-              px-3
-              py-1.5
-              flex
-              items-center
-              space-x-1.5
-            "
-          >
-            <RefreshCw class="w-3.5 h-3.5" />
-            <span>重新整理</span>
-          </button>
-
-          <button
-            type="button"
-            @click="inventoryAdjustmentModalOpen = true"
-            class="
-              btn-primary
-              text-[length:var(--font-body)]
-              px-3.5
-              py-1.5
-              flex
-              items-center
-              space-x-1.5
-            "
-          >
-            <span>庫存調整</span>
-          </button>
-
-        </div>
-      </div>
-
-
-      <!-- Filter -->
-      <div
-        class="
-          grid
-          grid-cols-1
-          md:grid-cols-3
-          gap-3
-        "
-      >
-
-        <div>
-
-          <label
-            class="
-              block
-              text-[length:var(--font-body)]
-              font-bold
-              text-[var(--on-surface-variant)]
-              mb-1
-            "
-          >
-            搜尋原物料
-          </label>
-
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="輸入原物料名稱或料號"
-            class="
-              input-field
-              text-[length:var(--font-body)]
-            "
-          />
-
-        </div>
-
-
-        <div>
-
-          <label
-            class="
-              block
-              text-[length:var(--font-body)]
-              font-bold
-              text-[var(--on-surface-variant)]
-              mb-1
-            "
-          >
-            原物料
-          </label>
-
-          <select
-            v-model="selectedMaterialId"
-            class="
-              input-field
-              text-[length:var(--font-body)]
-            "
-          >
-            <option value="">
-              全部原物料
-            </option>
-
-            <option
-              v-for="material in materialOptions"
-              :key="material.id"
-              :value="String(material.id)"
-            >
-              {{ material.name }}（{{ material.code }}）
-            </option>
-          </select>
-
-        </div>
-
-
-        <div>
-
-          <label
-            class="
-              block
-              text-[length:var(--font-body)]
-              font-bold
-              text-[var(--on-surface-variant)]
-              mb-1
-            "
-          >
-            異動類型
-          </label>
-
-          <select
-            v-model="selectedAction"
-            class="
-              input-field
-              text-[length:var(--font-body)]
-            "
-          >
-            <option value="">
-              全部異動類型
-            </option>
-
-            <option
-              v-for="action in actionOptions"
-              :key="action"
-              :value="action"
-            >
-              {{ getActionLabel(action) }}
-            </option>
-          </select>
-
-        </div>
-
-      </div>
-
-    </div>
+        <button
+          type="button"
+          class="btn-primary ml-2 px-3.5 py-2"
+          @click="inventoryAdjustmentModalOpen = true"
+        >
+          庫存調整
+        </button>
+      </template>
+    </Filter>
 
 
     <!-- Loading -->
@@ -246,79 +90,60 @@
     <!-- Log Table -->
     <div
       v-else
-      class="
-        rounded-2xl
-        overflow-hidden
-        bg-[var(--surface-container)]
-        border
-        border-[var(--outline)]
-        shadow-sm
-      "
+      class="data-table-card"
     >
 
-      <div class="overflow-x-auto">
+      <div class="data-table-scroll">
 
-        <table class="w-full text-left border-collapse">
+        <table class="data-table data-table--fixed">
+          <colgroup>
+            <col class="w-[17%]" />
+            <col class="w-[22%]" />
+            <col class="w-[13%]" />
+            <col class="w-[13%]" />
+            <col class="w-[12%]" />
+            <col class="w-[23%]" />
+          </colgroup>
 
           <thead>
-            <tr
-              class="
-                bg-[var(--surface-container-high)]
-                border-b
-                border-[var(--outline)]
-                text-[length:var(--font-body)]
-                font-bold
-                text-[var(--on-surface-variant)]
-                uppercase
-                tracking-wider
-              "
-            >
-              <th class="py-3 px-4">
+            <tr class="data-table__head-row">
+              <th class="data-table__header">
                 異動時間
               </th>
 
-              <th class="py-3 px-4">
+              <th class="data-table__header">
                 原物料名稱 / 料號
               </th>
 
-              <th class="py-3 px-4">
+              <th class="data-table__header">
                 異動類型
               </th>
 
-              <th class="py-3 px-4">
+              <th class="data-table__header">
                 異動數量
               </th>
 
-              <th class="py-3 px-4">
+              <th class="data-table__header">
                 關聯單據
               </th>
 
-              <th class="py-3 px-4">
+              <th class="data-table__header">
                 備註
               </th>
             </tr>
           </thead>
 
 
-          <tbody
-            class="
-              divide-y
-              divide-[var(--outline-variant)]
-              text-[length:var(--font-body)]
-            "
-          >
+          <tbody class="data-table__body">
 
             <tr
             v-for="log in paginatedLogs"
   :key="log.id"
-              class="
-                hover:bg-[var(--surface-container-high)]
-                transition-colors
-              "
+              class="data-table__row"
             >
 
               <!-- Time -->
-              <td class="py-3.5 px-4 whitespace-nowrap">
+              <td class="data-table__cell data-table__cell--nowrap">
 
                 <div
                   class="
@@ -344,7 +169,7 @@
 
 
               <!-- Material -->
-              <td class="py-3.5 px-4">
+              <td class="data-table__cell">
 
                 <div
                   class="
@@ -371,7 +196,7 @@
 
 
               <!-- Action -->
-              <td class="py-3.5 px-4">
+              <td class="data-table__cell">
 
          <StatusBadge
   :status="getActionStatus(log.action)"
@@ -382,7 +207,7 @@
 
 
               <!-- Quantity -->
-              <td class="py-3.5 px-4">
+              <td class="data-table__cell">
 
                 <span
                   class="
@@ -409,7 +234,7 @@
 
 
               <!-- Ref ID -->
-              <td class="py-3.5 px-4">
+              <td class="data-table__cell">
 
                 <span
                   v-if="log.refId !== null && log.refId !== undefined"
@@ -436,7 +261,7 @@
 
 
               <!-- Note -->
-              <td class="py-3.5 px-4">
+              <td class="data-table__cell">
 
                 <span
                   v-if="log.note"
@@ -468,12 +293,7 @@
 
               <td
                 colspan="6"
-                class="
-                  py-12
-                  text-center
-                  text-[length:var(--font-title)]
-                  text-[var(--on-surface-variant)]
-                "
+                class="data-table__empty"
               >
                 目前沒有符合條件的庫存異動紀錄
               </td>
@@ -506,17 +326,12 @@
 import {
   ref,
   computed,
-  onMounted
+  onMounted,
+  watch
 } from 'vue'
 
-import {
-  History,
-  PackagePlus,
-  PackageMinus,
-  Boxes,
-  RefreshCw,
-  Import
-} from 'lucide-vue-next'
+import { RefreshCw } from 'lucide-vue-next'
+import Filter from '@/component/子元件/Filter.vue'
 import Pagination from '@/component/子元件/Pagination.vue'
 import httpClient from '@/service/httpClient'
 import InventoryAdjustmentModal from '@/component/父元件/InventoryAdjustmentModal.vue'
@@ -550,6 +365,10 @@ const searchQuery = ref('')
 const selectedMaterialId = ref('')
 
 const selectedAction = ref('')
+
+const startDate = ref('')
+
+const endDate = ref('')
 
 
 // ==============================
@@ -628,6 +447,13 @@ const materialOptions = computed(() => {
 
 })
 
+const materialFilterOptions = computed(() =>
+  materialOptions.value.map((material) => ({
+    label: `${material.name}（${material.code}）`,
+    value: String(material.id)
+  }))
+)
+
 
 // ==============================
 // 異動類型選項
@@ -644,6 +470,13 @@ const actionOptions = computed(() => {
   ]
 
 })
+
+const actionFilterOptions = computed(() =>
+  actionOptions.value.map((action) => ({
+    label: getActionLabel(action),
+    value: action
+  }))
+)
 
 
 // ==============================
@@ -684,6 +517,29 @@ const filteredLogs = computed(() => {
       ||
       log.action === selectedAction.value
 
+    const logDate = new Date(log.createdAt)
+
+    const startBoundary = startDate.value
+      ? new Date(`${startDate.value}T00:00:00`)
+      : null
+
+    const endBoundary = endDate.value
+      ? new Date(`${endDate.value}T23:59:59.999`)
+      : null
+
+    const hasDateFilter = Boolean(startBoundary || endBoundary)
+
+    const matchesDate =
+      !hasDateFilter
+      ||
+      (
+        !Number.isNaN(logDate.getTime())
+        &&
+        (!startBoundary || logDate >= startBoundary)
+        &&
+        (!endBoundary || logDate <= endBoundary)
+      )
+
 
     return (
       matchesKeyword
@@ -691,6 +547,8 @@ const filteredLogs = computed(() => {
       matchesMaterial
       &&
       matchesAction
+      &&
+      matchesDate
     )
 
   })
@@ -701,6 +559,13 @@ const filteredLogs = computed(() => {
 // ==============================
 
 const currentPage = ref(1)
+
+watch(
+  [searchQuery, selectedMaterialId, selectedAction, startDate, endDate],
+  () => {
+    currentPage.value = 1
+  }
+)
 
 const pageSize = 10
 

@@ -2,196 +2,42 @@
   <div class="space-y-6 pb-12">
 
 
-    <!-- Controls & Filter Bar -->
-    <div
-      class="
-        p-4
-        rounded-2xl
-        flex
-        flex-col
-        sm:flex-row
-        sm:items-center
-        justify-between
-        gap-3
-        bg-[var(--surface-container)]
-        border
-        border-[var(--outline)]
-      "
+    <!-- 分類、搜尋與操作按鈕整合為共用導覽列 -->
+    <HeadNavBar
+      title="全部"
+      :total="products.length"
+      :show-total="true"
+      :show-add="false"
+      :show-categories="true"
+      :category-options="productCategoryOptions"
+      :active-category="selectedCategory"
+      :use-category-overview="true"
+      category-overview-value="全部"
+      :show-search="true"
+      search-placeholder="搜尋商品名稱或料號..."
+      v-model:search-value="searchText"
+      @change-category="selectedCategory = $event"
     >
-      <div
-        class="
-          flex
-          items-center
-          space-x-2
-          overflow-x-auto
-          pb-1
-          sm:pb-0
-          scrollbar-none
-        "
-      >
-
-        <!-- 全部 -->
+      <template #actions>
         <button
           type="button"
-          @click="selectedCategory = '全部'"
-          class="
-            px-3.5
-            py-1.5
-            rounded-xl
-            text-[length:var(--font-body)]
-            font-bold
-            transition-all
-            shrink-0
-            cursor-pointer
-            border
-          "
-          :class="
-            selectedCategory === '全部'
-              ? 'bg-[var(--primary)] text-[var(--surface)] border-[var(--primary)]'
-              : 'bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] border-[var(--outline)]'
-          "
-        >
-          全部
-
-          <span
-            class="
-              ml-1.5
-              px-1.5
-              py-0.5
-              rounded-full
-              text-[length:var(--font-small)]
-            "
-            :class="
-              selectedCategory === '全部'
-                ? 'bg-[var(--surface)]/15 text-[var(--surface)]'
-                : 'bg-[var(--surface-container-highest)] text-[var(--on-surface-variant)]'
-            "
-          >
-            {{ products.length }}
-          </span>
-        </button>
-
-
-        <!-- 資料庫分類 -->
-        <button
-          v-for="cat in categories"
-          :key="cat.id"
-          type="button"
-          @click="selectedCategory = cat.name"
-          class="
-            px-3.5
-            py-1.5
-            rounded-xl
-            text-[length:var(--font-body)]
-            font-bold
-            transition-all
-            shrink-0
-            cursor-pointer
-            border
-          "
-          :class="
-            selectedCategory === cat.name
-              ? 'bg-[var(--primary)] text-[var(--surface)] border-[var(--primary)]'
-              : 'bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] border-[var(--outline)]'
-          "
-        >
-          {{ cat.name }}
-
-          <span
-            class="
-              ml-1.5
-              px-1.5
-              py-0.5
-              rounded-full
-              text-[length:var(--font-small)]
-            "
-            :class="
-              selectedCategory === cat.name
-                ? 'bg-[var(--surface)]/15 text-[var(--surface)]'
-                : 'bg-[var(--surface-container-highest)] text-[var(--on-surface-variant)]'
-            "
-          >
-            {{ getCategoryCount(cat.name) }}
-          </span>
-        </button>
-
-        <!-- 商品狀態捷徑，不屬於資料庫分類 -->
-        <button
-          type="button"
-          @click="selectedCategory = null"
-          class="
-            px-3.5 py-1.5 rounded-xl text-[length:var(--font-body)]
-            font-bold transition-all shrink-0 cursor-pointer border
-          "
-          :class="
-            selectedCategory === null
-              ? 'bg-[var(--primary)] text-[var(--surface)] border-[var(--primary)]'
-              : 'bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-highest)] border-[var(--outline)]'
-          "
-        >
-          已停用
-          <span
-            class="ml-1.5 px-1.5 py-0.5 rounded-full text-[length:var(--font-small)]"
-            :class="
-              selectedCategory === null
-                ? 'bg-[var(--surface)]/15 text-[var(--surface)]'
-                : 'bg-[var(--surface-container-highest)] text-[var(--on-surface-variant)]'
-            "
-          >
-            {{ inactiveProductCount }}
-          </span>
-        </button>
-
-      </div>
-
-
-      <div class="flex items-center space-x-2 shrink-0">
-
-        <button
-          type="button"
+          class="btn-primary text-[length:var(--font-body)] px-3 py-1.5 inline-flex items-center space-x-1.5"
           @click="showCategoryModal = true"
-          class="
-            btn-primary
-            text-[length:var(--font-body)]
-            px-3
-            py-1.5
-            flex
-            items-center
-            space-x-1.5
-          "
         >
-          ▢
+          <span>▢</span>
           <span>管理分類</span>
         </button>
 
         <button
           type="button"
+          class="btn-primary text-[length:var(--font-body)] px-3 py-1.5 inline-flex items-center space-x-1.5"
           @click="addProductModalOpen = true"
-          class="
-            btn-primary
-            text-[length:var(--font-body)]
-            px-3
-            py-1.5
-            flex
-            items-center
-            space-x-1.5
-          "
         >
           <Plus class="w-4 h-4" />
           <span>新增飲品</span>
         </button>
-
-      </div>
-    </div>
-
-    <Filter
-      id-prefix="product-bom"
-      :show-search="true"
-      search-label="搜尋商品"
-      search-placeholder="搜尋商品名稱或料號..."
-      v-model:search-value="searchText"
-      :reset-values="{ keyword: '' }"
-    />
+      </template>
+    </HeadNavBar>
 
 
     <!-- Loading -->
@@ -691,7 +537,7 @@ import AddProductModal from '@/component/父元件/AddProductModal.vue'
 import ProductCategoryManagementModal from '@/component/父元件/ProductCategoryManagementModal.vue'
 import Pagination from '@/component/子元件/Pagination.vue'
 import ProductImage from '@/component/子元件/ProductImage.vue'
-import Filter from '@/component/子元件/Filter.vue'
+import HeadNavBar from '@/component/子元件/HeadNavbar.vue'
 
 
 const editRecipeModalOpen = ref(false)
@@ -898,6 +744,19 @@ const getCategoryCount = (cat) => {
       product.categoryName === cat
   ).length
 }
+
+const productCategoryOptions = computed(() => [
+  ...categories.value.map((category) => ({
+    id: category.name,
+    name: category.name,
+    count: getCategoryCount(category.name)
+  })),
+  {
+    id: null,
+    name: '已停用',
+    count: inactiveProductCount.value
+  }
+])
 
 const avgCost = computed(() => {
   if (products.value.length === 0) {
