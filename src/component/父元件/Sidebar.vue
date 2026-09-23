@@ -309,13 +309,6 @@ const navItems = [
     path: "/SalesOrder",
   },
   {
-    id: "permission",
-    label: "權限與用戶管理",
-    icon: ShieldUser,
-    path: "/PermissionPage",
-  },
-
-  {
     id: "supplier",
     label: "供應商管理",
     icon: Sliders,

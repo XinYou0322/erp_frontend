@@ -22,6 +22,7 @@ export const useAuthStore = defineStore("auth", () => {
   /** @type {import('vue').Ref<any>} */
   const currentUser = ref(StorageService.get("current_user", null));
   const isAuthenticated = ref(StorageService.get("is_authenticated", false));
+  const isInitialized = ref(false);
   const rolePermissions = ref(
     StorageService.get("role_permissions_matrix", DEFAULT_ROLE_PERMISSIONS),
   );
@@ -184,6 +185,8 @@ export const useAuthStore = defineStore("auth", () => {
         console.warn("回復 Session 時發生其他錯誤:", error);
       }
       return false;
+    } finally {
+      isInitialized.value = true;
     }
   }
 
@@ -831,6 +834,7 @@ export const useAuthStore = defineStore("auth", () => {
   return {
     users,
     currentUser,
+    isInitialized,
     isAuthenticated,
     rolePermissions,
     auditLogs,

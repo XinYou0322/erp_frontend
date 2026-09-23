@@ -203,21 +203,6 @@ const handleLogout = async () => {
 
           <div class="pt-1 mt-1 border-t border-slate-800 space-y-0.5">
             <button
-              v-if="
-                authStore.isAdmin || authStore.hasPermission('users.manage')
-              "
-              @click="
-                router.push('/admin');
-                isUserMenuOpen = false;
-              "
-              class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-emerald-400 hover:bg-emerald-500/10 transition-colors cursor-pointer text-left"
-            >
-              <span class="material-symbols-outlined text-[16px]"
-                >shield_person</span
-              >
-              <span>管理員專屬頁面</span>
-            </button>
-            <button
               v-if="authStore.isAdmin"
               @click="
                 router.push('/permissions');

@@ -155,17 +155,25 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from) => {
+router.beforeEach(async (to, from) => {
   const authStore = useAuthStore();
 
+  // ✨ 核心修正：如果前端網頁剛啟動，且系統還沒有完成首次驗證，強迫路由卡住，等待後端回應
+  if (!authStore.isInitialized) {
+    await authStore.restoreSessionFromBackend();
+  }
+
+  // 1. 如果沒登入，且要去需要驗證的頁面 -> 強制導向登入頁
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return "/login";
   }
 
+  // 2. 如果已經登入，且要去訪客限定的頁面（例如登入頁） -> 自動彈回後台
   if (to.meta.guestOnly && authStore.isAuthenticated) {
     return "/permissions";
   }
 
+  // 3. 管理員權限檢查
   if (to.meta.adminOnly) {
     const isAdminUser =
       authStore.isAdmin || authStore.hasPermission("users.manage");
