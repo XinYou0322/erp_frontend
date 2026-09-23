@@ -30,6 +30,13 @@
 
       :show-reset="false"
       />
+    <div v-if="showPresetHint" class="preset-hint">
+        <span class="material-symbols-outlined">filter_alt</span>
+        已套用篩選:<strong>{{ presetLabel }}</strong>
+        <button class="preset-hint__clear" @click="clearPreset" title="清除篩選">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+    </div>
     <section class="supplier-overview bento-card">
       <div class="supplier-table-wrap">
         <table class="supplier-table">
@@ -95,6 +102,7 @@ import httpClient from '@/service/httpClient'
 import Filter from '@/component/子元件/Filter.vue'
 import OneSalesOrders from '@/component/子元件/OneSalesOrder.vue'
 import Pagination from '@/component/子元件/Pagination.vue'
+import { useQueryPreset } from '@/composables/useQueryPreset'
 
 const loginUserId = ref(1)
 
@@ -103,10 +111,19 @@ const currentPage = ref(0)
 const totalPages = ref(0)
 
 // ------- 篩選條件 -------
-const selectedStatus = ref('')
-const startDate = ref('')
-const endDate = ref('')
+//const selectedStatus = ref('')
+// const startDate = ref('')
+// const endDate = ref('')
+const {
+  startDate,
+  endDate,
+  status: presetStatus,
+  showPresetHint,
+  presetLabel,
+  clearPreset,
+} = useQueryPreset({ COMPLETED: '已完成', VOIDED: '已作廢' })
 const searchText = ref('')
+const selectedStatus = presetStatus
 
 const salesOrderStatusOptions = [
   {

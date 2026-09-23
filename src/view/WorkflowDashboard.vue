@@ -20,14 +20,13 @@ const loading = ref(false);
 const errorMessage = ref("");
 const filters = ref({
   type: "all",
-  status: "all",
+  status: "",
   keyword: "",
   dateFrom: "",
   dateTo: "",
 });
 
 const workflowStatusOptions = [
-  { label: "全部", value: "all" },
   { label: "待審核", value: "pending" },
   { label: "已核准", value: "approved" },
   { label: "已駁回", value: "rejected" },
@@ -73,10 +72,15 @@ const filteredWorkflows = computed(() => {
   return rawWorkflows.value.filter((w) => {
     if (w.status === "cancelled") return false;
 
-    if (filters.value.type !== "all" && w.documentType !== filters.value.type)
+    // 優化 type 判斷 (防禦性寫法)
+    if (filters.value.type && filters.value.type !== "all" && w.documentType !== filters.value.type) {
       return false;
-    if (filters.value.status !== "all" && w.status !== filters.value.status)
+    }
+    
+    // 優化 status 判斷：只要 filters.status 有值(不是空字串) 才過濾
+    if (filters.value.status && w.status !== filters.value.status) {
       return false;
+    }
     if (filters.value.keyword) {
       const kw = filters.value.keyword.toLowerCase();
       const hit = [w.code, w.applicant, w.summary].some((v) =>
@@ -94,17 +98,31 @@ const filteredWorkflows = computed(() => {
 
 const currentMonthWorkflows = computed(() => {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  // 取得當前年月，例如 "2026-09"
+  const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
   return visibleWorkflows.value.filter((w) => {
-    const date = new Date(w.createdAt);
-    return (
-      date.getFullYear() === year &&
-      date.getMonth() === month
-    );
+    if (!w.createdAt) return false;
+    // 直接截取 createdAt 字串的前 7 碼來比對 (假設後端格式為 YYYY-MM-DD 或 YYYY-MM-DDTHH:mm:ss)
+    const itemYearMonth = w.createdAt.slice(0, 7); 
+    return itemYearMonth === currentYearMonth;
   });
 });
+
+// 安全地取得本月的第一天與最後一天 (YYYY-MM-DD)
+function getCurrentMonthRange() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0'); // 月份是 0-11，要 +1 並補零
+  
+  const firstDay = `${year}-${month}-01`;
+  
+  // 計算該月最後一天 (利用 Date 物件的特性：下個月的第 0 天就是這個月的最後一天)
+  const lastDate = new Date(year, now.getMonth() + 1, 0).getDate();
+  const lastDay = `${year}-${month}-${String(lastDate).padStart(2, '0')}`;
+
+  return { firstDay, lastDay };
+}
 
 const averageProcessingDays = computed(() => {
   const completed = currentMonthWorkflows.value.filter(
@@ -128,14 +146,52 @@ const visibleWorkflows = computed(() =>
 
 const stats = computed(() => ({
   pending: visibleWorkflows.value.filter((w) => w.status === "pending").length,
-  approved: visibleWorkflows.value.filter((w) => w.status === "approved").length,
-  rejected: visibleWorkflows.value.filter((w) => w.status === "rejected").length,
+  approved: currentMonthWorkflows.value.filter((w) => w.status === "approved").length,
+  rejected: currentMonthWorkflows.value.filter((w) => w.status === "rejected").length,
   total: visibleWorkflows.value.length,
 }));
 
-// function handleFilterChanged(newFilters) {
-//   filters.value = newFilters;
-// }
+// 判斷目前的日期篩選器是否為「本月」
+function isCurrentMonthFilter() {
+  const { firstDay, lastDay } = getCurrentMonthRange();
+  return filters.value.dateFrom === firstDay && filters.value.dateTo === lastDay;
+}
+
+// 判斷某個統計卡片是否處於「選中 (Active)」狀態
+function isStatActive(type) {
+  if (type === 'pending') {
+    return filters.value.status === 'pending' && !filters.value.dateFrom;
+  }
+  if (type === 'approved' || type === 'rejected') {
+    return filters.value.status === type && isCurrentMonthFilter();
+  }
+  return false;
+}
+
+// 處理統計卡片的點擊事件
+function handleStatClick(type) {
+  // 如果已經選中了這個狀態，再次點擊就「取消篩選」(回到全部)
+  if (isStatActive(type)) {
+    filters.value.status = "";
+    filters.value.dateFrom = "";
+    filters.value.dateTo = "";
+    return;
+  }
+
+  // 否則，設定對應的狀態
+  filters.value.status = type;
+
+  // 如果是「已核准」或「已駁回」，自動幫使用者填入「本月」的日期範圍
+  if (type === 'approved' || type === 'rejected') {
+    const { firstDay, lastDay } = getCurrentMonthRange();
+    filters.value.dateFrom = firstDay;
+    filters.value.dateTo = lastDay;
+  } else {
+    // 如果是「待簽核」，通常不限月份，所以清空日期篩選
+    filters.value.dateFrom = "";
+    filters.value.dateTo = "";
+  }
+}
 
 onMounted(loadWorkflows);
 </script>
@@ -151,20 +207,29 @@ onMounted(loadWorkflows);
     </header>
 
     <section class="dashboard__stats">
-      <div class="stat">
+      <div class="stat"
+        :class="{ 'stat--active': isStatActive('pending') }"
+        @click="handleStatClick('pending')"
+      >
         <span class="stat__label">待簽核</span>
         <span class="stat__value">{{ stats.pending }}</span>
       </div>
-      <!-- 以下三項需要另外的報表統計 API（3.2 節銷售統計/簽核統計），目前先保留假資料 -->
-      <div class="stat">
+
+      <div class="stat"
+        :class="{ 'stat--active': isStatActive('approved') }"
+        @click="handleStatClick('approved')"
+      >
         <span class="stat__label">本月已核准</span>
         <span class="stat__value">{{ stats.approved }}</span>
       </div>
-      <div class="stat">
+      <div class="stat"
+        :class="{ 'stat--active': isStatActive('rejected') }"
+        @click="handleStatClick('rejected')"
+      >
         <span class="stat__label">本月已駁回</span>
         <span class="stat__value">{{ stats.rejected }}</span>
       </div>
-      <div class="stat">
+      <div class="stat stat--readonly">
         <span class="stat__label">平均處理時間</span>
         <span class="stat__value"> {{ averageProcessingDays }}<small>天</small></span>
       </div>
@@ -200,7 +265,7 @@ onMounted(loadWorkflows);
 
       :reset-values="{
         type: 'all',
-        status: 'all',
+        status: '',
         keyword: '',
         dateFrom: '',
         dateTo: ''
@@ -276,14 +341,19 @@ onMounted(loadWorkflows);
   margin-bottom: 20px;
 }
 
+
 /* .stat {
-  background: var(--wf-paper-raised);
-  border: 1px solid var(--wf-line);
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(51, 65, 85, 0.6);
   border-radius: var(--wf-radius-md);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+
   padding: 16px 18px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  transition: all 0.2s ease;
 } */
 
 .stat {
@@ -298,10 +368,52 @@ onMounted(loadWorkflows);
   flex-direction: column;
   gap: 6px;
   transition: all 0.2s ease;
+
+  /* [新增] 可點擊提示 */
+  cursor: pointer;
+  user-select: none; /* 避免連點時選取到文字 */
 }
 
 .stat:hover {
   border-color: rgba(16, 185, 129, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px -12px rgba(0, 0, 0, 0.6);
+}
+
+.stat:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.stat--active {
+  border-color: rgba(16, 185, 129, 0.8);
+  background: rgba(16, 185, 129, 0.12);
+  box-shadow:
+    0 10px 30px -10px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(16, 185, 129, 0.35),
+    0 0 20px -6px rgba(16, 185, 129, 0.45);
+}
+
+.stat--active .stat__label {
+  color: rgba(110, 231, 183, 0.9);
+}
+
+/* [新增] 只讀卡片（平均處理時間）：不可點擊、無 hover 效果 */
+.stat--readonly {
+  cursor: default;
+  user-select: auto;
+}
+
+/* 注意：這段必須寫在 .stat:hover 之後才能覆蓋它 */
+.stat--readonly:hover {
+  transform: none;
+  border-color: rgba(51, 65, 85, 0.6);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* [新增] 鍵盤導覽時的焦點框（無障礙支援） */
+.stat:focus-visible {
+  outline: 2px solid rgba(16, 185, 129, 0.7);
+  outline-offset: 2px;
 }
 
 .stat__label {

@@ -50,6 +50,7 @@ export const getWorkflows = (approverId = getCurrentUserId()) =>
 export const getWorkflowById = (id) =>
   httpClient.get(`/api/workflows/${id}`).then((res) => normalizeStatus(res.data))
 
+//用Workflow id查整筆流程紀錄
 export const getWorkflowLogs = (id) =>
   httpClient.get(`/api/workflows/${id}/logs`).then((res) => res.data)
 
@@ -62,3 +63,8 @@ export const rejectWorkflow = (id, remark) =>
   httpClient
     .patch(`/api/workflows/${id}/reject`, { approverId: getCurrentUserId(), remark })
     .then((res) => res.data)
+
+export const getWorkflowByDocument = (documentType, documentId) =>
+  httpClient
+    .get(`/api/workflows/by-document/${documentType}/${documentId}`)
+    .then((res) => normalizeStatus(res.data)) // 保持與你現有風格一致

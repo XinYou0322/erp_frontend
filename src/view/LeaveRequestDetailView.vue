@@ -5,6 +5,7 @@ import {
   getLeaveRequestById,
   cancelLeaveRequest,
 } from "../service/leaveRequestApi";
+import { getWorkflowLogs, getWorkflowByDocument } from "../service/workflowService";
 import StatusBadge from "../component/子元件/LeaveRequestStatusBadge.vue";
 
 const route = useRoute();
@@ -14,6 +15,21 @@ const leave = ref(null);
 const loading = ref(true);
 const errorMessage = ref("");
 const cancelling = ref(false);
+const workflowLogs = ref([]);
+
+const rejectionInfo = computed(() => {
+  // 從後往前找，找到第一筆 REJECT 就停止
+  const rejectLog = [...workflowLogs.value]
+    .reverse()
+    .find(log => log.action === 'REJECT');
+  
+  return rejectLog ? {
+    reason: rejectLog.remark,
+    operator: rejectLog.operator,
+    time: rejectLog.createdAt
+  } : null;
+});
+
 
 const leaveTypeLabel = computed(() => {
   const map = {
@@ -30,16 +46,21 @@ const leaveTypeLabel = computed(() => {
 const canEdit = computed(() => leave.value?.status === "DRAFT");
 const canCancel = computed(() => leave.value?.status === "PENDING");
 
-async function load() {
-  loading.value = true;
-  try {
-    leave.value = await getLeaveRequestById(route.params.id);
-  } catch (e) {
-    errorMessage.value = "找不到這筆請假單";
-  } finally {
-    loading.value = false;
-  }
-}
+// async function load() {
+//   loading.value = true;
+//   try {
+//     leave.value = await getLeaveRequestById(route.params.id);
+
+//     // 如果有 workflowId，就獲取 logs
+//     if (leave.value.workflowId) {
+//       workflowLogs.value = await getWorkflowLogs(leave.value.workflowId);
+//     }
+//   } catch (e) {
+//     errorMessage.value = "找不到這筆請假單";
+//   } finally {
+//     loading.value = false;
+//   }
+// }
 
 function goToEdit() {
   router.push({ name: "leave-edit", params: { id: leave.value.id } });
@@ -55,6 +76,41 @@ async function handleCancel() {
     cancelling.value = false;
   }
 }
+
+// 格式化時間
+function formatDateTime(dateTimeStr) {
+  if (!dateTimeStr) return '';
+  const date = new Date(dateTimeStr);
+  return date.toLocaleString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+async function load() {
+  loading.value = true;
+  try {
+    // 第一步：取得請假單基本資料
+    leave.value = await getLeaveRequestById(route.params.id);
+    
+    // 第二步：拿著請假單的 id，去問 Workflow 服務對應的 Workflow 是誰
+    // 注意：後端 Spring 會自動把字串 'LEAVE' 轉換成 DocumentType.LEAVE Enum
+    const workflow = await getWorkflowByDocument('LEAVE', leave.value.id);
+    
+    // 第三步：拿到 Workflow 的 id 後，再去索取簽核紀錄 (Logs)
+    workflowLogs.value = await getWorkflowLogs(workflow.id);
+    
+  } catch (e) {
+    console.error("載入失敗:", e);
+    errorMessage.value = "找不到這筆請假單或簽核紀錄";
+  } finally {
+    loading.value = false;
+  }
+}
+
 
 onMounted(load);
 </script>
@@ -97,6 +153,22 @@ onMounted(load);
           <p>{{ leave.reason || "未填寫" }}</p>
         </div>
 
+        <div v-if="leave.status === 'REJECTED' && rejectionInfo" class="detail-rejection">
+          <div class="rejection-header">
+            <span class="material-symbols-outlined rejection-icon">cancel</span>
+            <div>
+              <h3 class="rejection-title">駁回原因</h3>
+              <p class="rejection-meta">
+                由 {{ rejectionInfo.operator }} 於 {{ formatDateTime(rejectionInfo.time) }} 駁回
+              </p>
+            </div>
+          </div>
+          <div class="rejection-content">
+            <p>{{ rejectionInfo.reason || "無具體說明" }}</p>
+          </div>
+          <p class="rejection-hint">請修改後重新提交申請</p>
+        </div>
+
         <div v-if="canEdit || canCancel" class="actions">
           <button v-if="canEdit" class="btn-outline" @click="goToEdit">
             <span class="material-symbols-outlined">edit</span>
@@ -118,6 +190,63 @@ onMounted(load);
 </template>
 
 <style scoped>
+
+.detail-rejection {
+  margin-top: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.03) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 12px;
+}
+
+.rejection-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.rejection-icon {
+  color: #ef4444;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.rejection-title {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ef4444;
+}
+
+.rejection-meta {
+  margin: 0;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.rejection-content {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 3px solid #ef4444;
+  margin-bottom: 12px;
+}
+
+.rejection-content p {
+  margin: 0;
+  color: #f9fafb;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.rejection-hint {
+  margin: 0;
+  color: #9ca3af;
+  font-size: 12px;
+  text-align: right;
+}
 .leave-detail {
   max-width: 560px;
   margin: 0 auto;
