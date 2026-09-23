@@ -70,8 +70,12 @@ const canViewApprovalPage = computed(() => {
 const isPermissionMatrixEditable = computed(() => canManageAllRoles.value);
 
 const visibleRolesForCurrentUser = computed(() => {
-  if (canManageAllRoles.value) return availableRoles;
-  return availableRoles.filter((role) => role.key === currentRoleKey.value);
+ if (canManageAllRoles.value) {
+    return availableRoles.filter((role) => role.key !== "admin");
+  }
+  return availableRoles.filter(
+    (role) => role.key === currentRoleKey.value && role.key !== "admin"
+  );
 });
 
 const visiblePermissionModules = computed(() => {
@@ -567,21 +571,6 @@ const handleResetDefaultPermissions = () => {
         >
         <span>使用者帳號維護清單 ({{ authStore.users.length }})</span>
       </button>
-
-      <button
-        v-if="canViewApprovalPage"
-        @click="activeTab = 'approval'"
-        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
-        :class="
-          activeTab === 'approval'
-            ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm'
-            : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
-        "
-      >
-        <span class="material-symbols-outlined text-[18px]">fact_check</span>
-        <span>帳號審核 ({{ pendingApplications.length }})</span>
-      </button>
-
       <button
         @click="activeTab = 'audit-logs'"
         class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"

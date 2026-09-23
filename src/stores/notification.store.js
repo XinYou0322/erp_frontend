@@ -352,9 +352,7 @@ export const useNotificationStore = defineStore("notification", () => {
           size: 30,
         },
       });
-
-      // 🌟 1. 先把「目前畫面上由前端自己偵測生成」的庫存通知（ID 帶有 ntf- 的卡片）過濾保留下來
-      // 同時排除掉已經被使用者點過「清除已讀」或「垃圾桶」的臨時通知
+      //保留本地生成的庫存通知，放寬過濾限制
       const localStockAlerts = notifications.value.filter(
         (item) =>
           typeof item.id === "string" &&
@@ -364,7 +362,7 @@ export const useNotificationStore = defineStore("notification", () => {
 
       if (Array.isArray(res.data)) {
         const serverItems = res.data.map((item) => ({
-          id: item.id, // 後端 Long 型態的數字 ID
+          id: item.id,
           title: item.title,
           message: item.content || item.message || "",
           type: item.type,
@@ -374,16 +372,14 @@ export const useNotificationStore = defineStore("notification", () => {
           isRead: item.read || false,
         }));
 
-        // 🌟 2. 過濾後端撈回來的歷史舊通知，踢掉被清除黑名單紀錄的項目
         const filteredServerItems = serverItems.filter(
           (item) => !clearedNotificationIds.value.includes(item.id),
         );
 
-        // 🌟 3.【核心修復關鍵】：將後端的通知與前端本地的低庫存通知「合併」起來！
-        // 這樣重新整理網頁時，黑糖珍珠、仙草凍等手動生成的項目才不會被後端的空資料直接沖掉、洗掉！
+        // 合併後端與本地通知
         notifications.value = [...localStockAlerts, ...filteredServerItems];
 
-        // 🌟 4. 去除因 WebSocket 重複推送或併發可能導致的極少數 ID 重複卡片
+        // 依據 ID 去除重複項目
         const seenIds = new Set();
         notifications.value = notifications.value.filter((item) => {
           if (seenIds.has(item.id)) return false;
@@ -440,7 +436,7 @@ export const useNotificationStore = defineStore("notification", () => {
     }
 
     try {
-      // 1. 同步將低庫存陣列發送給後端（讓後端記錄與推播）
+      // 1. 同步將低庫存陣列發送給後端
       await httpClient.post("/api/notifications/low-stock", {
         userId,
         materials,
@@ -452,46 +448,33 @@ export const useNotificationStore = defineStore("notification", () => {
       materials.forEach((m) => {
         const isCritical = (m.stock ?? 0) === 0;
 
-        // 🌟 核心關鍵：動態生成這項物料的唯一識別 ID
-        const targetId = `ntf-inv-low-${m.code || "unknown"}`;
+        // 🌟 使用物料的唯一 code 作為 ID 識別
+        const targetId = `ntf-inv-low-${m.code || m.id || "unknown"}`;
 
-        // 🔍 【防重複檢查一】：檢查當前的通知清單中，是否已經存在這筆 ID？
+        // 🔍 檢查當前通知清單中是否已有該品項的通知（包含已讀或未讀）
         const exists = notifications.value.find((n) => n.id === targetId);
-
         if (exists) {
-          // 如果這則通知已經存在，且使用者已經讀過了，或者內容沒變，我們就直接跳過它，不再重複塞入
-          return;
+          return; // 該品項已有卡片，不重複塞入
         }
 
-        // 🔍 【防重複檢查二】：如果是後端 API/WebSocket 已經撈過回來的舊歷史通知，也阻擋
-        const isDuplicateInMessage = notifications.value.some(
-          (n) =>
-            n.category === "inventory" && n.message.includes(`【${m.name}】`),
-        );
-        if (isDuplicateInMessage) {
-          return;
-        }
-
-        // 🚀 通過檢查，代表這是真正需要提醒的全新告警
+        // 🚀 通過精準檢查，代表這是全新不同品項的低庫存，允許加入
         addNotification(
           {
             id: targetId,
-            title: isCritical
-              ? `${m.name} 庫存緊急缺料`
-              : `${m.name} 庫存水位告急`,
-            message: `【${m.name}】當前可用庫存僅存 ${m.stock} ${m.unit}，已低於安全庫存警戒線 (${m.minStock} ${m.unit})，建議立即安排採購。`,
+            title: isCritical ? `${m.name}庫存緊急缺料` : `${m.name}庫存偏低`,
+            message: `${m.name}低於安全庫存，請確認是否補貨。`, // 修正：文案對齊您的圖片設計
             type: isCritical ? "danger" : "warning",
             category: "inventory",
-            actionLabel: "前往庫存補充",
+            actionLabel: "前往查看",
             actionRoute: `/material`,
           },
-          false, // 先傳入 false，避免迴圈連續跳出時提示音爆音
+          false, // 防止多品項連發時音效重疊爆音
         );
 
         hasNewAlert = true;
       });
 
-      // 📢 如果這次重新整理，真的有發現「之前沒看過的全新低庫存品項」，才播放提示音
+      // 如果真的有新通知，才播放提示音
       if (hasNewAlert) {
         playNotificationChime();
       }
