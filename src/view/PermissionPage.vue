@@ -274,37 +274,23 @@ const handleSaveNewUser = async () => {
   }
 
   // 決定對應後端 roleId
-  let targetRoleId = 1;
-  if (authStore.serverRoles && authStore.serverRoles.length > 0) {
-    if (userForm.value.role === "admin") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("店長"),
-      ) as any;
-      if (r) targetRoleId = r.id;
-    } else if (userForm.value.role === "manager") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("經理"),
-      ) as any;
-      if (r) targetRoleId = r.id;
-    } else if (userForm.value.role === "employee") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("正職"),
-      ) as any;
-      if (r) targetRoleId = r.id;
-    }
-  }
+  let targetRoleLevel = 4;
+  if (userForm.value.role === "admin") targetRoleLevel = 1;
+  else if (userForm.value.role === "manager") targetRoleLevel = 2;
+  else if (userForm.value.role === "employee") targetRoleLevel = 3;
+  else if (userForm.value.role === "guest") targetRoleLevel = 4;
 
   await authStore.createUserApi({
     name: userForm.value.name,
     email: userForm.value.email,
     password: userForm.value.password || "Test1234!",
     role: userForm.value.role,
-    roleId: targetRoleId,
+    roleLevel: targetRoleLevel, // ✨ 欄位已更換為 roleLevel
     department: userForm.value.department,
     phone: userForm.value.phone,
     avatar: userForm.value.avatar,
-  });
-  uiStore.showToast(`已成功開立新帳號「${userForm.value.name}」！`);
+});
+ uiStore.showToast(`已成功開立新帳號「${userForm.value.name}」！`);
   isAddUserModalOpen.value = false;
 };
 
@@ -325,31 +311,17 @@ const handleOpenEditUser = (user: any) => {
 const handleSaveEditUser = async () => {
   if (!userForm.value.id) return;
 
-  let targetRoleId = 1;
-  if (authStore.serverRoles && authStore.serverRoles.length > 0) {
-    if (userForm.value.role === "admin") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("店長"),
-      ) as any;
-      if (r) targetRoleId = r.id;
-    } else if (userForm.value.role === "manager") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("經理"),
-      ) as any;
-      if (r) targetRoleId = r.id;
-    } else if (userForm.value.role === "employee") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("正職"),
-      ) as any;
-      if (r) targetRoleId = r.id;
-    }
-  }
+   let targetRoleLevel = 4;
+  if (userForm.value.role === "admin") targetRoleLevel = 1;
+  else if (userForm.value.role === "manager") targetRoleLevel = 2;
+  else if (userForm.value.role === "employee") targetRoleLevel = 3;
+  else if (userForm.value.role === "guest") targetRoleLevel = 4;
 
-  await authStore.updateUserApi(userForm.value.id, {
+   await authStore.updateUserApi(userForm.value.id, {
     name: userForm.value.name,
     email: userForm.value.email,
     role: userForm.value.role,
-    roleId: targetRoleId,
+    roleLevel: targetRoleLevel, 
     department: userForm.value.department,
     phone: userForm.value.phone,
     avatar: userForm.value.avatar,

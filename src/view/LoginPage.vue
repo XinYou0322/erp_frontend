@@ -53,34 +53,19 @@ const handleQuickFill = (targetEmail: string, targetPass: string) => {
   errorMessage.value = "";
 };
 
-const resolveBackendRoleId = (selectedRole: UserRole) => {
-  const roles = (authStore.serverRoles || []) as any[];
+const resolveBackendRoleLevel = (selectedRole: UserRole): number => {
   const normalized = String(selectedRole || "").trim().toLowerCase();
-
-  const match = roles.find((role: any) => {
-    const label = String(role?.name || role?.roleName || "").trim().toUpperCase();
-    return (
-      (normalized === "admin" && label === "ADMIN") ||
-      (normalized === "manager" && label === "MANAGER") ||
-      ((normalized === "employee" || normalized === "guest") &&
-        (label === "STAFF" || label === "PURCHASING" || label === "EMPLOYEE"))
-    );
-  }) as any;
-
-  if (match?.id) return Number(match.id);
-
   const fallbackMap: Record<string, number> = {
-    admin: 1,
-    manager: 2,
-    employee: 3,
-    guest: 3,
+    admin: 1,     // 店長為 1
+    manager: 2,   // 經理為 2
+    employee: 3,  // 正職為 3
+    guest: 4,     // 訪客為 4
   };
-
-  return fallbackMap[normalized] || 3;
+  return fallbackMap[normalized] || 4;
 };
 
 onMounted(async () => {
-  await authStore.fetchRolesFromApi();
+  
   await authStore.fetchPublicUsersForLogin();
 });
 
@@ -181,7 +166,7 @@ const handleRegisterSubmit = async () => {
       password: applicantPassword,
       name,
       email: applicantEmail,
-      roleId: resolveBackendRoleId(requestedRole),
+      roleId: resolveBackendRoleLevel(requestedRole),
       avatar: avatar || "",
       department,
       reason: normalizedReason,
