@@ -75,7 +75,9 @@
           "
         >
           <PackagePlus class="w-4 h-4" />
-          <span>進貨原物料</span>
+          <span>
+            {{ purchaseOrderReceivingEnabled ? "採購單收貨" : "進貨原物料" }}
+          </span>
         </button>
 
       </div>
@@ -742,6 +744,7 @@
 
     <InventoryIntakeModal
       :is-open="inventoryIntakeModalOpen"
+      :purchase-order-mode="purchaseOrderReceivingEnabled"
       @close="inventoryIntakeModalOpen = false"
       @success="handleInventorySuccess"
     />
@@ -767,6 +770,17 @@ import Pagination from '@/component/子元件/Pagination.vue'
 import httpClient from "@/service/httpClient";
 import InventoryIntakeModal from "@/component/父元件/InventoryIntakeModal.vue";
 import StatusBadge from '@/component/子元件/StatusBadge.vue'
+
+const props = defineProps({
+  purchaseOrderReceivingEnabled: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+const purchaseOrderReceivingEnabled = computed(
+  () => props.purchaseOrderReceivingEnabled,
+);
 // ==============================
 // 庫存摘要資料
 // ==============================
