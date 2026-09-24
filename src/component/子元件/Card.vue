@@ -7,20 +7,27 @@
       </h2>
     </div>
 
-    <!-- 商品圖片 -->
+    <!-- 商品圖片
     <div class="pos-product-card__image">
       <img
         v-if="image"
         :src="image"
         :alt="name"
-      >
-      <span
+      > -->
+      <!-- <span
         v-else
         class="pos-product-card__image-placeholder"
       >
         圖片
-      </span>
+      </span> -->
+    <div class="pos-product-card__image">
+      <!--【我修改】統一交給 ProductImage 處理空圖片、相對路徑及載入失敗。-->
+      <ProductImage
+        :src="image"
+        :alt="`${name} 商品圖片`"
+      />
     </div>
+  
     <!-- 商品價格 -->
     <p class="pos-product-card__price">
       價格：
@@ -54,6 +61,8 @@
   </section>
 </template>
 <script setup>
+import ProductImage from './ProductImage.vue'
+
 defineProps({
   name: {
     type: String,

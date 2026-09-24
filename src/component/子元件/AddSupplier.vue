@@ -287,9 +287,10 @@
             </label>
             <textarea
               :id="`supplier-note-input-${supplier.localId}`"
-              v-model="supplier.supplierNotes.content"
+              v-model="supplier.supplierNotes.remark"
               class="w-full resize-y rounded-xl border border-[var(--outline)] bg-[var(--surface-container-low)] px-3 py-2.5 text-sm text-[var(--on-surface)] outline-none transition placeholder:text-[var(--on-surface-variant)]/60 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20"
               rows="3"
+              @input="clearError(supplier, 'remark')"
               placeholder="輸入合作條件、聯絡偏好或其他備註"
             ></textarea>
             <span v-if="supplier.errors.remark" class="mt-1 block text-xs text-[var(--error)]">
@@ -371,7 +372,7 @@ function createEmptySupplier(selected, expanded) {
     email: '',
     status: 'PENDING',
     supplierNotes: {
-      content: ''
+      remark: ''
     }
   }
 }
@@ -708,3 +709,4 @@ defineExpose({
   resetForm: resetForm
 })
 </script>
+  

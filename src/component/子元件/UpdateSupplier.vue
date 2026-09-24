@@ -1,7 +1,7 @@
 <template>
 
   <ModalWrapper
-    :is-open="visible"
+    :is-open="visible && !saveSuccessful"
     title="修改供應商"
     subtitle="請確認資料後再送出修改"
     max-width="3xl"
@@ -149,13 +149,24 @@
       </div>
     </template>
   </ModalWrapper>
+  <ConfirmSuccessfulModal
+    :is-open="visible && saveSuccessful"
+    item-name="供應商"
+    @confirm="emit('close')"
+    @cancel="emit('close')"
+  />
 </template>
 
 <script setup>
 import { reactive, ref, watch } from 'vue'
 import ModalWrapper from '@/component/子元件/ModalWrapper.vue'
+import ConfirmSuccessfulModal from '@/component/子元件/ConfirmSuccessfulModal.vue'
 
 const props = defineProps({
+  saveSuccessful: {
+    type: Boolean,
+    default: false
+  },
   visible: {
     type: Boolean,
     default: false

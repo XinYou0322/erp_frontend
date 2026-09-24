@@ -1,5 +1,11 @@
 <template>
   <div class="supplier-page">
+    <CheckSupplier
+      v-if="showCheckSupplier && selectedSupplier"
+      :supplier="selectedSupplier"
+      @close="closeDetail"
+    />
+    <template v-else>
     <HeadNavBar
        title="總覽"
       :total="totalElements"
@@ -70,21 +76,18 @@
       :login-user-id="loginUserId"
       @saved="handleSupplierSaved"
     />
-
-    <CheckSupplier
-      v-if="showCheckSupplier"
-      :visible="showCheckSupplier"
-      :supplier="selectedSupplier"
-      @close="closeDetail"
-    />
     
     <UpdateSupplier
       v-if="showUpdateSupplier"
       :visible="showUpdateSupplier"
+      :is-saving="isUpdatingSupplier"
+      :api-error="updateError"
+      :save-successful="updateSuccessful"
       :supplier="selectedSupplier"
       @close="closeUpdate"
       @update="submitUpdate"
     />
+  </template>
   </div>
 </template>
 
@@ -146,6 +149,7 @@ const selectedSupplier = ref(null)
 const addedCount = ref(0)
 const isUpdatingSupplier = ref(false)
 const updateError = ref('')
+const updateSuccessful = ref(false)
 
 
 
@@ -237,6 +241,7 @@ watch(selectedStatus, function () {
 })
 
 async function submitUpdate(updateData) {
+  if (isUpdatingSupplier.value || updateSuccessful.value) return
 
   const supplierId = updateData.id
 
@@ -261,10 +266,9 @@ async function submitUpdate(updateData) {
     )
 
     console.log('修改成功：', response.data)
-    alert('供應商修改成功')
+    updateSuccessful.value = true
 
-    // 程式主動關閉代表已儲存成功，不需要再顯示「放棄修改」確認。
-    closeUpdate()
+    // 等待使用者關閉成功提示，再關閉修改元件。
 
     // 重新查詢，讓總覽顯示最新資料
     await fetchData()
@@ -294,11 +298,13 @@ function closeDetail() {
 
 
 function showUpdate(oneSupplier) {
+  updateSuccessful.value = false
   selectedSupplier.value = oneSupplier
   updateError.value = ''
   showUpdateSupplier.value = true
 }
 function closeUpdate() {
+  updateSuccessful.value = false
   showUpdateSupplier.value = false
   selectedSupplier.value = null
 }

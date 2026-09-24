@@ -12,7 +12,28 @@
     />
 
     <template v-else>
+      <HeadNavbar
+        title="總覽"
+        :total="totalElements"
+        :show-add="true"
+        add-title="新增採購單"
+        :active-tab="activeTab"
+        @change-tab="changeTab"
+        :show-search="true"
+        search-placeholder="搜尋採購單號、供應商名稱..."
+        v-model:search-value="searchText"
+        :show-page-size="true"
+        :page-size="pageSize"
+        @update:page-size="changePageSize"
+        :show-filter-toggle="true"
+        :filter-expanded="filterExpanded"
+        @toggle-filter="toggleFilter"
+        :show-refresh="true"
+        @refresh="refreshData"
+      />
+
       <Filter
+        v-if="activeTab === 'overview' && filterExpanded"
         class="purchase-order-filter"
         id-prefix="purchase-order"
 
@@ -33,22 +54,13 @@
         v-model:start-date="startDate"
         v-model:end-date="endDate"
 
-        :show-search="true"
-        search-label="搜尋"
-        search-placeholder="搜尋採購單號、供應商名稱..."
-        v-model:search-value="searchText"
-
-        :show-page-size="true"
-        :page-size="pageSize"
-        @update:page-size="changePageSize"
-
-        :show-refresh="true"
-        refresh-title="更新採購單資料"
-        @refresh="refreshData"
+        :show-search="false"
+        :show-page-size="false"
+        :show-refresh="false"
 
         :show-reset="false"
       />
-      <section class="supplier-overview bento-card">
+      <section v-if="activeTab === 'overview'" class="supplier-overview bento-card">
         <div class="supplier-table-wrap">
           <table class="supplier-table">
             <thead>
@@ -100,6 +112,12 @@
           @change-page="changePage"
         />
       </section>
+
+      <AddPurchaseOrder
+        v-else-if="activeTab === 'add'"
+        :login-user-id="loginUserId"
+        @saved="handlePurchaseOrdersSaved"
+      />
     </template>
     
     <!-- 修改視窗只會從 PurchaseOrderDetail.vue 的「修改」按鈕開啟。 -->
@@ -117,10 +135,12 @@
 import { ref, watch, onMounted } from 'vue'
 import httpClient from '@/service/httpClient'
 import Filter from '@/component/子元件/Filter.vue'
+import HeadNavbar from '@/component/子元件/HeadNavbar.vue'
 import OnePurchaseOrder from '@/component/子元件/OnePurchaseOrder.vue'
 import UpdatePurchaseOrder from '@/component/子元件/UpdatePurchaseOrder.vue'
 import Pagination from '@/component/子元件/Pagination.vue'
 import PurchaseOrderDetail from '@/view/PurchaseOrderDetail.vue'
+import AddPurchaseOrder from '@/component/子元件/AddPurchaseOrder.vue'
 
 onMounted(() => {
   fetchSupplierOptions()
@@ -135,6 +155,9 @@ const selectedStatus = ref('')
 const selectedSupplierId = ref('')
 const startDate = ref('')
 const endDate = ref('')
+const filterExpanded = ref(false)
+const activeTab = ref('overview')
+const isResettingFilters = ref(false)
 
 //供應商下拉選單資料 後端查詢後放入
 const supplierOptions = ref([])
@@ -146,7 +169,7 @@ const purchaseOrderStatusOptions = [
   },
   {
     label: '待簽核',
-    value: 'PENDING'
+    value: 'PENDING_APPROVAL'
   },
   {
     label: '已核准',
@@ -161,10 +184,6 @@ const purchaseOrderStatusOptions = [
     value: 'RECEIVED'
   },
   {
-    label: '已完成',
-    value: 'COMPLETED'
-  },
-  {
     label: '已取消',
     value: 'CANCELLED'
   }
@@ -174,6 +193,7 @@ const purchaseOrderStatusOptions = [
 const pageSize = ref(10)
 const currentPage = ref(0)
 const totalPages = ref(0)
+const totalElements = ref(0)
 
 // ---------- 採購單列表與彈出視窗 ----------
 const purchaseOrderList = ref([])
@@ -187,6 +207,15 @@ function changePageSize(size) {
   pageSize.value = size
   currentPage.value = 0
   fetchData()
+}
+function toggleFilter() {
+  filterExpanded.value = !filterExpanded.value
+}
+function changeTab(tab) {
+  activeTab.value = tab
+  if (tab === 'overview') {
+    fetchData()
+  }
 }
 // 接收 Pagination.vue 傳回的畫面頁碼。
 function changePage(page) {
@@ -280,36 +309,57 @@ async function fetchData() {
     }
 
     purchaseOrderList.value = normalizedList
-    totalPages.value = response.data.totalPages
-    currentPage.value = response.data.number
+    totalPages.value = Number(response.data.totalPages) || 0
+    totalElements.value = Number(response.data.totalElements) || 0
+    currentPage.value = Number(response.data.number) || 0
   } catch (error) {
     console.error('查詢採購單失敗：', error)
+    purchaseOrderList.value = []
+    totalPages.value = 0
+    totalElements.value = 0
   }
 }
 // 搜尋監聽
 watch(searchText, function () {
+  if (isResettingFilters.value) return
   currentPage.value = 0
   fetchData()
 })
 //狀態監聽
 watch(selectedStatus, function () {
+  if (isResettingFilters.value) return
   currentPage.value = 0
   fetchData()
 })
 //供應商改變時重新查詢。
 watch(selectedSupplierId, function () {
+  if (isResettingFilters.value) return
   currentPage.value = 0
   fetchData()
 })
 //開始日期或結束日期改變時重新查詢。
 watch([startDate, endDate], function () {
+  if (isResettingFilters.value) return
   currentPage.value = 0
   fetchData()
 })
 //更新按鈕會重新取得供應商選項與採購單資料。
 async function refreshData() {
+  isResettingFilters.value = true
+  searchText.value = ''
+  selectedStatus.value = ''
+  selectedSupplierId.value = ''
+  startDate.value = ''
+  endDate.value = ''
   currentPage.value = 0
-  await fetchSupplierOptions()
+  try {
+    await Promise.all([fetchSupplierOptions(), fetchData()])
+  } finally {
+    isResettingFilters.value = false
+  }
+}
+
+async function handlePurchaseOrdersSaved() {
   await fetchData()
 }
 
@@ -365,7 +415,7 @@ function showDetail(onePurchaseOrder) {
 }
 
 function closeDetail() {
-  showCheckPurchaseOrder.value = false
+  showPurchaseOrderDetail.value = false
   selectedPurchaseOrder.value = null
 }
 

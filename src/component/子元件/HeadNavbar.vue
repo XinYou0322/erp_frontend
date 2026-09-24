@@ -117,6 +117,25 @@
         ↻ 
       </button>
 
+      <button
+        v-if="showFilterToggle"
+        type="button"
+        class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-0 bg-transparent p-0 text-[var(--on-surface-variant)] transition hover:bg-[var(--surface-container-high)] hover:text-[var(--on-surface)]"
+        :title="filterExpanded ? '收合進階篩選' : '展開進階篩選'"
+        :aria-label="filterExpanded ? '收合進階篩選' : '展開進階篩選'"
+        :aria-expanded="filterExpanded"
+        @click="toggleFilter"
+      >
+        <svg
+          class="h-5 w-5 fill-none stroke-current stroke-2 transition-transform"
+          :class="{ 'rotate-180': filterExpanded }"
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+        >
+          <path d="m7 10 5 5 5-5" />
+        </svg>
+      </button>
+
     </div>
 </nav>
 
@@ -125,7 +144,7 @@
 
 
 <script setup>
-defineProps({
+const props = defineProps({
   //左一按鈕 
   title: {
     type: String,
@@ -238,6 +257,15 @@ pageSizeOptions: {
   showRefresh: {
     type: Boolean,
     default: false
+  },
+  // 是否顯示進階篩選展開／收合按鈕。
+  showFilterToggle: {
+    type: Boolean,
+    default: false
+  },
+  filterExpanded: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -256,6 +284,8 @@ const emit = defineEmits([
 
   // 按下更新
   'refresh',
+
+  'toggle-filter',
 
   'open-sales-order-record'
 
@@ -319,6 +349,9 @@ function refresh() {
 console.log('有按到刷新按鈕')
   emit('refresh')
 
+}
+function toggleFilter() {
+  emit('toggle-filter')
 }
 //HeadNavbar 只負責發出事件，由 pos.vue 決定要開哪個視窗。
 function openSalesOrderRecord() {
