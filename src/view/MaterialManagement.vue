@@ -228,7 +228,7 @@ const route = useRoute();
 // 原物料資料
 // ==============================
 
-const materials = ref([]);
+const rawMaterials = ref([]);
 const searchQuery = ref(""); // ✨ 確保搜尋變數與通知抽屜同步
 
 const materialSummary = ref({
@@ -264,6 +264,22 @@ const addMaterialModalOpen = ref(false);
 
 const editMaterialModalOpen = ref(false);
 const selectedMaterial = ref(null);
+
+// ✨ 核心升級：前端即時響應式過濾，完美解構「黑糖珍珠」、「仙草凍」等跳轉關鍵字
+const materials = computed(() => {
+  const keyword = searchQuery.value.trim().toLowerCase();
+  if (!keyword) return rawMaterials.value;
+
+  return rawMaterials.value.filter(
+    (m) =>
+      String(m.name || "")
+        .toLowerCase()
+        .includes(keyword) ||
+      String(m.code || "")
+        .toLowerCase()
+        .includes(keyword),
+  );
+});
 
 // ==============================
 // 父元件事件
@@ -319,26 +335,22 @@ const loadMaterials = () => {
   }
 
   httpClient
-    .get("/api/material/page", { params })
-    .then((response) => {
-      totalElements.value = response.data.totalElements;
-      materials.value = response.data.content;
-      totalPages.value = response.data.totalPages;
-      totalElements.value = response.data.totalElements;
+    .get("/api/material/page", {
+      params: {
+        page: currentPage.value - 1,
+        size: pageSize,
+      },
     })
-
     .then((response) => {
-      console.log("後端分頁資料：", response.data);
-
-      totalElements.value = response.data.totalElements;
-      // 目前這一頁的 6 筆資料
-      materials.value = response.data.content;
-
-      // 總頁數
-      totalPages.value = response.data.totalPages;
-
-      // 全部共有幾筆
-      totalElements.value = response.data.totalElements;
+      // 🛡️ 安全防禦：確認有拿到資料才解構，完美消滅 Cannot read properties of undefined 錯誤
+      if (response && response.data) {
+        console.log("後端分頁資料成功讀取：", response.data);
+        totalElements.value = response.data.totalElements || 0;
+        rawMaterials.value = response.data.content || [];
+        totalPages.value = response.data.totalPages || 0;
+      } else {
+        throw new Error("後端回傳格式不正確");
+      }
     })
 
     .catch((error) => {
@@ -428,8 +440,6 @@ watch(
   () => route.query.search,
   (newSearch) => {
     searchQuery.value = newSearch || "";
-    currentPage.value = 1; // 回到第一頁
-    loadMaterials();
   },
 );
 </script>
