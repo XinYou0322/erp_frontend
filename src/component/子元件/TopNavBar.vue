@@ -61,11 +61,7 @@ const handleLogout = async () => {
 
       <!-- Global Search -->
       <div class="relative w-full">
-        <span
-          class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[18px]"
-        >
-          search
-        </span>
+    
         
         <span
           v-if="uiStore.globalSearchTerm"

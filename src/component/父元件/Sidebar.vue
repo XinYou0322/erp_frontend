@@ -291,36 +291,23 @@ const navItems = [
     icon: LayoutDashboard,
     path: "/dashboard",
   },
+    {
+    id: "inventory",
+    label: "原物料進銷存",
+    icon: Package,
+ 
+    path: "/inventory",
+  },
   {
     id: "bom",
     label: "商品BOM 管理",
     icon: FlaskConical,
-    badge: "SOP",
+  
     path: "/product",
   },
-  {
-    id: "inventory",
-    label: "原物料進銷存",
-    icon: Package,
-    badge: "庫存",
-    path: "/inventory",
-  },
 
-  {
-    id: "salesOrder",
-    label: "銷售單管理",
-    icon: Receipt,
-    badge: "出單",
-    path: "/SalesOrder",
-  },
+
  
-  {
-    id: "system-settings",
-    label: "系統設定",
-    icon: Settings,
-    path: "/system-settings",
-    adminOnly: true,
-  },
 
   {
     id: "supplier",
@@ -334,18 +321,27 @@ const navItems = [
     icon: Sliders,
     path: "/PurchaseOrder",
   },
-  {
-    id: "workflow",
-    label: "簽核系統",
-    icon: ReceiptText,
-    path: "/workflows",
+   {
+    id: "salesOrder",
+    label: "銷售單管理",
+    icon: Receipt,
+
+    path: "/SalesOrder",
   },
-  {
+   {
     id: "leave",
     label: "請假系統",
     icon: CalendarCheck,
     path: "/leave-requests",
   },
+  {
+    id: "workflow",
+    label: "簽核系統",
+    icon: ReceiptText,
+    path: "/workflows",
+     adminOnly: true,
+  },
+
 ];
 
 const visibleNavItems = computed(() =>
