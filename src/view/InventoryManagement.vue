@@ -783,6 +783,9 @@ import Pagination from '@/component/子元件/Pagination.vue'
 import httpClient from "@/service/httpClient";
 import InventoryIntakeModal from "@/component/父元件/InventoryIntakeModal.vue";
 import StatusBadge from '@/component/子元件/StatusBadge.vue'
+import { useNotificationStore } from '@/stores/notification.store'
+
+const notificationStore = useNotificationStore();
 // ==============================
 // 庫存摘要資料
 // ==============================
@@ -901,6 +904,7 @@ const loadInventory = () => {
 
     .then((response) => {
       inventory.value = response.data;
+      notificationStore.syncLowStockAlerts(inventory.value);
 
       console.log("後端回傳：", inventory.value);
     })

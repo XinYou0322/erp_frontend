@@ -70,8 +70,12 @@ const canViewApprovalPage = computed(() => {
 const isPermissionMatrixEditable = computed(() => canManageAllRoles.value);
 
 const visibleRolesForCurrentUser = computed(() => {
-  if (canManageAllRoles.value) return availableRoles;
-  return availableRoles.filter((role) => role.key === currentRoleKey.value);
+ if (canManageAllRoles.value) {
+    return availableRoles.filter((role) => role.key !== "admin");
+  }
+  return availableRoles.filter(
+    (role) => role.key === currentRoleKey.value && role.key !== "admin"
+  );
 });
 
 const visiblePermissionModules = computed(() => {
@@ -274,37 +278,23 @@ const handleSaveNewUser = async () => {
   }
 
   // 決定對應後端 roleId
-  let targetRoleId = 1;
-  if (authStore.serverRoles && authStore.serverRoles.length > 0) {
-    if (userForm.value.role === "admin") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("店長"),
-      ) as any;
-      if (r) targetRoleId = r.id;
-    } else if (userForm.value.role === "manager") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("經理"),
-      ) as any;
-      if (r) targetRoleId = r.id;
-    } else if (userForm.value.role === "employee") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("正職"),
-      ) as any;
-      if (r) targetRoleId = r.id;
-    }
-  }
+  let targetRoleLevel = 4;
+  if (userForm.value.role === "admin") targetRoleLevel = 1;
+  else if (userForm.value.role === "manager") targetRoleLevel = 2;
+  else if (userForm.value.role === "employee") targetRoleLevel = 3;
+  else if (userForm.value.role === "guest") targetRoleLevel = 4;
 
   await authStore.createUserApi({
     name: userForm.value.name,
     email: userForm.value.email,
     password: userForm.value.password || "Test1234!",
     role: userForm.value.role,
-    roleId: targetRoleId,
+    roleLevel: targetRoleLevel, // ✨ 欄位已更換為 roleLevel
     department: userForm.value.department,
     phone: userForm.value.phone,
     avatar: userForm.value.avatar,
-  });
-  uiStore.showToast(`已成功開立新帳號「${userForm.value.name}」！`);
+});
+ uiStore.showToast(`已成功開立新帳號「${userForm.value.name}」！`);
   isAddUserModalOpen.value = false;
 };
 
@@ -325,31 +315,17 @@ const handleOpenEditUser = (user: any) => {
 const handleSaveEditUser = async () => {
   if (!userForm.value.id) return;
 
-  let targetRoleId = 1;
-  if (authStore.serverRoles && authStore.serverRoles.length > 0) {
-    if (userForm.value.role === "admin") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("店長"),
-      ) as any;
-      if (r) targetRoleId = r.id;
-    } else if (userForm.value.role === "manager") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("經理"),
-      ) as any;
-      if (r) targetRoleId = r.id;
-    } else if (userForm.value.role === "employee") {
-      const r = authStore.serverRoles.find((x: any) =>
-        (x.roleName || x.name)?.includes("正職"),
-      ) as any;
-      if (r) targetRoleId = r.id;
-    }
-  }
+   let targetRoleLevel = 4;
+  if (userForm.value.role === "admin") targetRoleLevel = 1;
+  else if (userForm.value.role === "manager") targetRoleLevel = 2;
+  else if (userForm.value.role === "employee") targetRoleLevel = 3;
+  else if (userForm.value.role === "guest") targetRoleLevel = 4;
 
-  await authStore.updateUserApi(userForm.value.id, {
+   await authStore.updateUserApi(userForm.value.id, {
     name: userForm.value.name,
     email: userForm.value.email,
     role: userForm.value.role,
-    roleId: targetRoleId,
+    roleLevel: targetRoleLevel, 
     department: userForm.value.department,
     phone: userForm.value.phone,
     avatar: userForm.value.avatar,
@@ -595,21 +571,6 @@ const handleResetDefaultPermissions = () => {
         >
         <span>使用者帳號維護清單 ({{ authStore.users.length }})</span>
       </button>
-
-      <button
-        v-if="canViewApprovalPage"
-        @click="activeTab = 'approval'"
-        class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
-        :class="
-          activeTab === 'approval'
-            ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm'
-            : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
-        "
-      >
-        <span class="material-symbols-outlined text-[18px]">fact_check</span>
-        <span>帳號審核 ({{ pendingApplications.length }})</span>
-      </button>
-
       <button
         @click="activeTab = 'audit-logs'"
         class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"

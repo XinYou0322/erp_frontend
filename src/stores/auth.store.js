@@ -22,6 +22,7 @@ export const useAuthStore = defineStore("auth", () => {
   /** @type {import('vue').Ref<any>} */
   const currentUser = ref(StorageService.get("current_user", null));
   const isAuthenticated = ref(StorageService.get("is_authenticated", false));
+  const isInitialized = ref(false);
   const rolePermissions = ref(
     StorageService.get("role_permissions_matrix", DEFAULT_ROLE_PERMISSIONS),
   );
@@ -57,6 +58,36 @@ export const useAuthStore = defineStore("auth", () => {
     )
       return "employee";
     return "guest";
+  }
+
+  function mapRoleLevelToSystemRoleKey(level) {
+    switch (Number(level)) {
+      case 1:
+        return "admin";
+      case 2:
+        return "manager";
+      case 3:
+        return "employee";
+      case 4:
+        return "guest";
+      default:
+        return "employee";
+    }
+  }
+
+  function mapRoleLevelToName(level) {
+    switch (Number(level)) {
+      case 1:
+        return "系統管理員 (Admin)";
+      case 2:
+        return "營運經理 / 店長 (Manager)";
+      case 3:
+        return "現場員工 / 收銀員 (Employee)";
+      case 4:
+        return "訪客 / 外部審計 (Guest)";
+      default:
+        return "一般員工";
+    }
   }
 
   // --- Computed Roles ---
@@ -184,6 +215,8 @@ export const useAuthStore = defineStore("auth", () => {
         console.warn("回復 Session 時發生其他錯誤:", error);
       }
       return false;
+    } finally {
+      isInitialized.value = true;
     }
   }
 
@@ -420,9 +453,9 @@ export const useAuthStore = defineStore("auth", () => {
       username: u.username,
       email: u.email,
       avatar: normalizeAvatarUrl(u.avatar || getDefaultAvatar()),
-      role: u.role?.name || "employee",
-      roleName: u.role?.description || u.role?.name || "一般員工",
-      roleId: u.role?.id,
+      role: mapRoleLevelToSystemRoleKey(u.roleLevel),
+      roleName: mapRoleLevelToName(u.roleLevel),
+      roleLevel: u.roleLevel,
       department: u.department?.name || "門市營運部",
       status: normalizeUserStatus(u.status || "ACTIVE"),
       createdAt: u.createdAt
@@ -506,7 +539,7 @@ export const useAuthStore = defineStore("auth", () => {
       password: userDto.password || "Test1234!",
       name: userDto.name,
       email: userDto.email,
-      roleId: Number(userDto.roleId) || 1,
+      roleLevel: Number(userDto.roleLevel) || 1,
       avatar: userDto.avatar || "",
     };
 
@@ -527,7 +560,7 @@ export const useAuthStore = defineStore("auth", () => {
       const res = await httpClient.put(`/api/users/${id}`, {
         name: userDto.name,
         email: userDto.email,
-        roleId: Number(userDto.roleId) || 1,
+        roleLevel: Number(userDto.roleLevel) || 1,
         status: statusUpper === "INACTIVE" ? "INACTIVE" : "ACTIVE",
         avatar: userDto.avatar || "",
       });
@@ -831,6 +864,7 @@ export const useAuthStore = defineStore("auth", () => {
   return {
     users,
     currentUser,
+    isInitialized,
     isAuthenticated,
     rolePermissions,
     auditLogs,

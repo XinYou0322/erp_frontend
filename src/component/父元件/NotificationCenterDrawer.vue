@@ -38,9 +38,26 @@ const showSettings = ref(false);
 const handleAction = (notif: any) => {
   notifStore.markAsRead(notif.id);
   uiStore.isNotificationCenterOpen = false;
+
   if (notif.actionRoute) {
-    router.push(notif.actionRoute);
-    uiStore.showToast(`已跳轉至「${notif.title}」關聯頁面`);
+    // 🔍 判斷是否為庫存預警分類
+    if (notif.category === "inventory" && notif.title) {
+      // 自動從標題「仙草凍庫存偏低」或「黑糖珍珠庫存緊急缺料」中提取出乾淨的物料名稱
+      const materialName = notif.title
+        .replace(/(庫存偏低|庫存緊急缺料|庫存水位告急)/g, "")
+        .trim();
+
+      // 🚀 帶上 ?search=物料名稱 參數跳轉，完美不寫死！
+      router.push({
+        path: notif.actionRoute,
+        query: { search: materialName },
+      });
+      uiStore.showToast(`已跳轉並自動過濾「${materialName}」`);
+    } else {
+      // 一般通知維持原樣跳轉
+      router.push(notif.actionRoute);
+      uiStore.showToast(`已跳轉至「${notif.title}」關聯頁面`);
+    }
   }
 };
 
