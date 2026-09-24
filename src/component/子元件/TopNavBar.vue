@@ -66,12 +66,7 @@ const handleLogout = async () => {
         >
           search
         </span>
-        <input
-          type="text"
-          v-model="uiStore.globalSearchTerm"
-          placeholder="搜尋 SKU、原物料、供應商或單號..."
-          class="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-emerald-500/80 focus:ring-1 focus:ring-emerald-500/50 transition-all font-sans"
-        />
+        
         <span
           v-if="uiStore.globalSearchTerm"
           @click="uiStore.setGlobalSearch('')"

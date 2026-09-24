@@ -91,7 +91,7 @@ const handleFormLogin = async () => {
         notifStore.connectWebSocket(res.user.id);
       }
       // 跳轉至主功能頁（原物料管理）
-      router.push("/material");
+      router.push("/dashboard");
     } else {
       errorMessage.value = res.message;
     }
@@ -116,7 +116,7 @@ const handleSelectUser =  async(user: UserProfile) => {
     notifStore.connectWebSocket(user.id);
   }
   
-  router.push("/overview");
+  router.push("/dashboard");
 };
 
 // Forgot Password

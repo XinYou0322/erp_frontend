@@ -63,12 +63,12 @@ const routes = [
     name: "product",
     component: () => import("@/view/ProductBomManagement.vue"),
   },
-  {
-    path: "/material",
-    name: "material",
-    component: () => import("@/view/MaterialManagement.vue"),
-    meta: { requiresAuth: true },
-  },
+  // {
+  //   path: "/material",
+  //   name: "material",
+  //   component: () => import("@/view/MaterialManagement.vue"),
+  //   meta: { requiresAuth: true },
+  // },
 
   {
     path: "/workflows",

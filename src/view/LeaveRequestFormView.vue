@@ -283,7 +283,7 @@ onMounted(async () => {
           <option value="">請選擇簽核人</option>
 
           <option v-for="user in approvers" :key="user.id" :value="user.id">
-            {{ user.name }}（{{ user.role.description }}）
+            {{ user.name }}（{{ user.roleLevel}}）
           </option>
         </select>
       </div>

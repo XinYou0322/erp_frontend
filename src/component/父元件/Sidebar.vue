@@ -313,12 +313,7 @@ const navItems = [
     badge: "出單",
     path: "/SalesOrder",
   },
-  {
-    id: "permission",
-    label: "權限與用戶管理",
-    icon: ShieldUser,
-    path: "/PermissionPage",
-  },
+ 
   {
     id: "system-settings",
     label: "系統設定",
