@@ -29,6 +29,11 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+  path: "/dashboard/revenue",
+  name: "revenue-detail",
+  component: () => import("../view/RevenueDetailView.vue"), 
+ },
+  {
     path: "/admin",
     name: "admin",
     component: () => import("@/view/PermissionPage.vue"),
