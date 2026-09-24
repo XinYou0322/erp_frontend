@@ -23,19 +23,19 @@ export const useNotificationStore = defineStore("notification", () => {
   // 1. 狀態定義 (State)
   // =====================================================================
   const notifications = ref(
-    StorageService.get("notifications_v1", INITIAL_NOTIFICATIONS),
+    StorageService.get("humanist_erp_notifications_v1", INITIAL_NOTIFICATIONS),
   );
 
   // 📢 新增：用來暫存被使用者手動「清除已讀」或「點擊垃圾桶」的通知 ID 陣列
   const clearedNotificationIds = ref(
-    StorageService.get("cleared_notification_ids_v1", []),
+    StorageService.get("humanist_erp_cleared_notification_ids_v1", []),
   );
 
   // 📢 新增：監聽並保存已清除的 ID 到本地快取
   watch(
     clearedNotificationIds,
     (newList) => {
-      StorageService.set("cleared_notification_ids_v1", newList);
+      StorageService.set("humanist_erp_cleared_notification_ids_v1", newList);
     },
     { deep: true },
   );
@@ -63,7 +63,7 @@ export const useNotificationStore = defineStore("notification", () => {
   watch(
     notifications,
     (newList) => {
-      StorageService.set("notifications_v1", newList);
+      StorageService.set("humanist_erp_notifications_v1", newList);
     },
     { deep: true },
   );
@@ -290,9 +290,13 @@ export const useNotificationStore = defineStore("notification", () => {
           const data = JSON.parse(event.data);
           if (data.action === "NEW_NOTIFICATION" && data.notification) {
             const item = data.notification;
+            const finalId =
+              item.category === "inventory"
+                ? `${item.id}-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`
+                : item.id;
             addNotification(
               {
-                id: item.id,
+                id: finalId,
                 title: item.title,
                 message: item.content,
                 type: item.type,
@@ -352,7 +356,7 @@ export const useNotificationStore = defineStore("notification", () => {
           size: 30,
         },
       });
-      //保留本地生成的庫存通知，放寬過濾限制
+
       const localStockAlerts = notifications.value.filter(
         (item) =>
           typeof item.id === "string" &&
@@ -361,27 +365,37 @@ export const useNotificationStore = defineStore("notification", () => {
       );
 
       if (Array.isArray(res.data)) {
-        const serverItems = res.data.map((item) => ({
-          id: item.id,
-          title: item.title,
-          message: item.content || item.message || "",
-          type: item.type,
-          category: item.category,
-          actionRoute: item.actionRoute,
-          timestamp: item.createdAt,
-          isRead: item.read || false,
-        }));
+        const serverItems = res.data.map((item) => {
+          // 保持 ID 隨機化以支援重複並排顯示
+          const finalId =
+            item.category === "inventory"
+              ? `ntf-inv-server-${item.id || "0"}-${Math.random().toString(36).substring(2, 7)}-${Date.now()}`
+              : item.id;
+
+          return {
+            id: finalId,
+            title: item.title, // 📥 直接用後端動態傳來的標題 (例：仙草凍庫存偏低)
+            message: item.content || item.message || "", // 📥 直接用後端組好的美麗文案
+            type: item.type,
+            category: item.category,
+            actionRoute: item.actionRoute,
+            timestamp: item.createdAt || new Date().toISOString(),
+            isRead: item.read || false,
+          };
+        });
 
         const filteredServerItems = serverItems.filter(
           (item) => !clearedNotificationIds.value.includes(item.id),
         );
 
-        // 合併後端與本地通知
         notifications.value = [...localStockAlerts, ...filteredServerItems];
 
-        // 依據 ID 去除重複項目
+        // 庫存分類不參與去重，確保多筆並存
         const seenIds = new Set();
         notifications.value = notifications.value.filter((item) => {
+          if (item.category === "inventory") {
+            return true;
+          }
           if (seenIds.has(item.id)) return false;
           seenIds.add(item.id);
           return true;
@@ -421,11 +435,7 @@ export const useNotificationStore = defineStore("notification", () => {
 
   const triggerLowStockAlert = async (materials = []) => {
     const rawUserId = useAuthStore().currentUser?.id;
-    const userId = Number.isInteger(rawUserId)
-      ? rawUserId
-      : typeof rawUserId === "string" && /^\d+\$/.test(rawUserId.trim())
-        ? Number(rawUserId)
-        : null;
+    const userId = Number.isInteger(rawUserId) ? rawUserId : null;
 
     if (
       !Array.isArray(materials) ||
@@ -435,40 +445,53 @@ export const useNotificationStore = defineStore("notification", () => {
       return;
     }
 
+    // ✨ 關鍵修正：將前端物件轉換為後端完全認得的欄位結構 (補上 minStock)
+    const formattedMaterials = materials.map((m) => ({
+      id: m.id,
+      code: m.code,
+      name: m.name,
+      unit: m.unit || "g",
+      stock: m.stock ?? m.availableStock ?? 0,
+      minStock: m.safeStock ?? m.minStock ?? 0, // 🚀 對齊後端的 item.get("minStock")
+    }));
+
     try {
-      // 1. 同步將低庫存陣列發送給後端
+      // 同步將格式化後的正確陣列發送給後端
       await httpClient.post("/api/notifications/low-stock", {
         userId,
-        materials,
+        materials: formattedMaterials, // 傳送對齊後的資料
       });
 
       let hasNewAlert = false;
 
       // 2. 巡迴檢查每一項低庫存物料
       materials.forEach((m) => {
-        const isCritical = (m.stock ?? 0) === 0;
+        const currentStock = m.stock ?? m.availableStock ?? 0; // 支援多種欄位命名習慣
+        const safeStock = m.safeStock ?? 0;
 
-        // 🌟 使用物料的唯一 code 作為 ID 識別
-        const targetId = `ntf-inv-low-${m.code || m.id || "unknown"}`;
+        // 🔍 動態判定單位：如果後端有回傳 unit 就用後端的，沒有就從名稱後綴或代碼猜測，預設為空字串
+        const unit = m.unit || "";
 
-        // 🔍 檢查當前通知清單中是否已有該品項的通知（包含已讀或未讀）
-        const exists = notifications.value.find((n) => n.id === targetId);
-        if (exists) {
-          return; // 該品項已有卡片，不重複塞入
-        }
+        const isCritical = currentStock === 0;
 
-        // 🚀 通過精準檢查，代表這是全新不同品項的低庫存，允許加入
+        // 產生唯一 ID 防止覆蓋
+        const targetId = `ntf-inv-low-${m.code || m.id || "unknown"}-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
+
+        // 🚀 注入精確的動態庫存數據文案
         addNotification(
           {
             id: targetId,
-            title: isCritical ? `${m.name}庫存緊急缺料` : `${m.name}庫存偏低`,
-            message: `${m.name}低於安全庫存，請確認是否補貨。`, // 修正：文案對齊您的圖片設計
+            title: isCritical
+              ? `${m.name}庫存緊急缺料`
+              : `${m.name}庫存偏低需補`,
+            // ✨ 這裡將文案升級：清楚顯示「目前庫存」與「安全庫存水位」
+            message: `${m.name}已低於安全庫存！當前可用庫存：${currentStock} ${unit}（安全庫存：${safeStock} ${unit}），請確認是否補貨。`,
             type: isCritical ? "danger" : "warning",
             category: "inventory",
             actionLabel: "前往查看",
             actionRoute: `/material`,
           },
-          false, // 防止多品項連發時音效重疊爆音
+          false,
         );
 
         hasNewAlert = true;
