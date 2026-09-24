@@ -34,7 +34,7 @@
           @click="addProductModalOpen = true"
         >
           <Plus class="w-4 h-4" />
-          <span>新增飲品</span>
+          <span>{{ retailModeEnabled ? '新增商品' : '新增飲品' }}</span>
         </button>
       </template>
     </HeadNavBar>
@@ -193,6 +193,7 @@
 
 
             <button
+              v-if="!retailModeEnabled"
               type="button"
               @click="handleOpenEditRecipe(product)"
               class="
@@ -279,7 +280,7 @@
                   font-sans
                 "
               >
-                單杯物料成本
+                {{ retailModeEnabled ? '商品成本' : '單杯物料成本' }}
               </span>
 
               <span
@@ -328,7 +329,7 @@
 
 
           <!-- BOM -->
-          <div class="mt-4 space-y-2">
+          <div v-if="!retailModeEnabled" class="mt-4 space-y-2">
 
             <span
               class="
@@ -514,6 +515,7 @@
 
     <AddProductModal
       :is-open="addProductModalOpen"
+      :retail-mode="retailModeEnabled"
       @close="addProductModalOpen = false"
       @success="handleProductSuccess"
     />
@@ -528,7 +530,8 @@
   </div>
 </template>
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue' 
+import { ref, computed, onMounted, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { FlaskConical, DollarSign, Layers, CheckCircle2, Coffee, Edit3, Plus, Import, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import MetricCard from '@/component/子元件/MetricCard.vue'
 import httpClient from '@/service/httpClient'
@@ -538,6 +541,7 @@ import ProductCategoryManagementModal from '@/component/父元件/ProductCategor
 import Pagination from '@/component/子元件/Pagination.vue'
 import ProductImage from '@/component/子元件/ProductImage.vue'
 import HeadNavBar from '@/component/子元件/HeadNavbar.vue'
+import { useSystemSettingStore } from '@/stores/systemSetting.store'
 
 
 const editRecipeModalOpen = ref(false)
@@ -545,6 +549,11 @@ const addProductModalOpen = ref(false)
 const selectedProduct = ref(null)
 const showCategoryModal = ref(false)
 const expandedImages = ref({})
+const systemSettingStore = useSystemSettingStore()
+const {
+  retailModeEnabled,
+  errorMessage: settingErrorMessage
+} = storeToRefs(systemSettingStore)
 
 const toggleProductImage = (productId) => {
   expandedImages.value[productId] = !expandedImages.value[productId]
@@ -616,13 +625,9 @@ const loadProducts = () => {
       products.value =
         response.data
 
-      products.value.forEach(
-        (product) => {
-
-          loadBom(product.id)
-
-        }
-      )
+      if (!retailModeEnabled.value) {
+        products.value.forEach((product) => loadBom(product.id))
+      }
 
     })
     .catch((error) => {
@@ -823,11 +828,13 @@ const loadCategories = () => {
 
     })
 }
-onMounted(() => {
-
+onMounted(async () => {
+  try {
+    await systemSettingStore.loadRetailModeSetting()
+  } catch (error) {
+    errorMessage.value = settingErrorMessage.value || '讀取零售模式失敗'
+  }
   loadProducts()
-
   loadCategories()
-
 })
 </script>

@@ -3,92 +3,6 @@
 
 
     <!-- =========================
-         Toolbar
-         ========================= -->
-    <div
-      class="
-        p-4
-        rounded-2xl
-        flex
-        flex-col
-        sm:flex-row
-        sm:items-center
-        justify-between
-        gap-3
-        bg-[var(--surface-container)]
-        border
-        border-[var(--outline)]
-      "
-    >
-
-      <div>
-
-        <div
-          class="
-            font-bold
-            text-[length:var(--font-heading)]
-            text-[var(--on-surface)]
-          "
-        >
-          原物料主檔管理
-        </div>
-
-        <div
-          class="
-            text-[length:var(--font-body)]
-            text-[var(--on-surface-variant)]
-            mt-1
-          "
-        >
-          管理原物料名稱、料號、單位、成本與安全庫存
-        </div>
-
-      </div>
-
-
-      <div class="flex items-center space-x-2 shrink-0">
-
-        <!-- 重新整理 -->
-        <button
-          type="button"
-          @click="loadMaterials"
-          class="
-            btn-secondary
-            text-[length:var(--font-body)]
-            px-3
-            py-1.5
-          "
-        >
-          重新整理
-        </button>
-
-
-        <!-- 新增原物料 -->
-        <button
-          type="button"
-          @click="handleOpenAddMaterial"
-          class="
-            btn-primary
-            text-[length:var(--font-body)]
-            px-3
-            py-1.5
-            flex
-            items-center
-            space-x-1.5
-          "
-        >
-          <Plus class="w-4 h-4" />
-
-          <span>
-            新增原物料
-          </span>
-        </button>
-
-      </div>
-    </div>
-
-
-    <!-- =========================
          Loading
          ========================= -->
     <div
@@ -420,7 +334,6 @@ import {
   ShieldCheck,
   Scale,
   Edit3,
-  Plus,
 } from "lucide-vue-next";
 import MetricCard from "@/component/子元件/MetricCard.vue";
 import AddMaterialModal from "@/component/父元件/AddMaterialModal.vue";
@@ -626,6 +539,16 @@ const handleMaterialDisabled = async () => {
     loadMaterialSummary()
   ])
 }
+
+const refresh = () => {
+  loadMaterials();
+  loadMaterialSummary();
+};
+
+defineExpose({
+  refresh,
+  openPrimaryAction: handleOpenAddMaterial,
+});
 
 
 

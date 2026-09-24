@@ -3,7 +3,7 @@
 
   <nav class="head-navbar">
     <div class="head-navbar__left">
-
+      <slot name="navigation">
       <button class="head-navbar__button" 
       :class="{ 'is-active': isOverviewActive }"
       @click="clickOverview">
@@ -36,6 +36,7 @@
     @click="changeTab('add')">
     + {{ addTitle }}
   </button>
+      </slot>
   
      
   

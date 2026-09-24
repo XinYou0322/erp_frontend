@@ -1,8 +1,8 @@
 <template>
   <ModalWrapper
     :is-open="isOpen"
-    title="新增飲品"
-    subtitle="建立商品基本資料，配方可於商品建立後另外設定"
+    :title="retailMode ? '新增零售商品' : '新增飲品'"
+    :subtitle="retailMode ? '建立商品後，系統會同步建立一筆原物料與一筆 BOM' : '建立商品基本資料，配方可於商品建立後另外設定'"
     max-width="2xl"
     :icon="Plus"
     @close="handleClose"
@@ -158,6 +158,9 @@
             <option value="杯">杯</option>
             <option value="瓶">瓶</option>
             <option value="份">份</option>
+            <option v-if="retailMode" value="個">個</option>
+            <option v-if="retailMode" value="盒">盒</option>
+            <option v-if="retailMode" value="包">包</option>
           </select>
         </div>
 
@@ -181,9 +184,25 @@
 
       </div>
 
+      <div v-if="retailMode">
+        <label class="block font-bold text-[var(--on-surface)] text-xs mb-1">
+          進貨成本 (NT$)
+          <span class="text-[var(--error)]">*</span>
+        </label>
+        <input
+          v-model.number="retailCost"
+          type="number"
+          min="0"
+          step="0.01"
+          required
+          class="input-field"
+          placeholder="此成本會同步寫入對應原物料"
+        />
+      </div>
+
 
       <!-- BOM 說明 -->
-      <div class="
+      <div v-if="!retailMode" class="
           rounded-xl
           border
           border-[var(--outline)]
@@ -274,6 +293,10 @@ const props = defineProps({
   isOpen: {
     type: Boolean,
     required: true
+  },
+  retailMode: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -297,6 +320,7 @@ const categoryId = ref(null)
 const sellingPrice = ref(0)
 const unit = ref('杯')
 const status = ref('ACTIVE')
+const retailCost = ref(0)
 
 const submitting = ref(false)
 const errorMessage = ref('')
@@ -336,7 +360,7 @@ watch(
   (isOpen) => {
 
     if (isOpen) {
-
+      unit.value = props.retailMode ? '個' : '杯'
       loadCategories()
 
     }
@@ -360,8 +384,9 @@ const resetForm = () => {
   name.value = ''
   categoryId.value = null
   sellingPrice.value = 0
-  unit.value = '杯'
+  unit.value = props.retailMode ? '個' : '杯'
   status.value = 'ACTIVE'
+  retailCost.value = 0
   errorMessage.value = ''
 }
 
@@ -390,6 +415,11 @@ const handleSubmit = async () => {
     return
   }
 
+  if (props.retailMode && Number(retailCost.value) < 0) {
+    errorMessage.value = '進貨成本不可小於 0。'
+    return
+  }
+
   errorMessage.value = ''
 
   submitting.value = true
@@ -415,7 +445,15 @@ const handleSubmit = async () => {
         sellingPrice: Number(sellingPrice.value),
         unit: unit.value,
         status: status.value,
-        imageUrl: uploadedImageUrl
+        imageUrl: uploadedImageUrl,
+        ...(props.retailMode
+          ? {
+              productType: 'RETAIL',
+              retailCost: Number(retailCost.value)
+            }
+          : {
+              productType: 'RECIPE'
+            })
       }
     )
 

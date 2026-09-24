@@ -5,51 +5,35 @@
 
 
 
-    <!-- 與銷售單管理共用的查詢工具列 -->
-    <Filter
-      class="purchase-order-filter inventory-log-filter"
-      id-prefix="inventory-log"
-      :show-status="true"
-      status-label="異動類型"
-      status-default-text="全部異動類型"
-      :status-options="actionFilterOptions"
-      v-model:status-value="selectedAction"
-      :show-supplier="true"
-      supplier-label="原物料"
-      supplier-default-text="全部原物料"
-      :supplier-options="materialFilterOptions"
-      v-model:supplier-value="selectedMaterialId"
-      :show-date-range="true"
-      date-label="異動日期"
-      v-model:start-date="startDate"
-      v-model:end-date="endDate"
-      :show-search="true"
-      search-label="搜尋原物料"
-      search-placeholder="輸入原物料名稱或料號"
-      v-model:search-value="searchQuery"
-      :show-refresh="false"
-      :show-reset="false"
-    >
-      <template #actions>
-        <button
-          type="button"
-          class="btn-secondary text-[length:var(--font-body)] px-3 py-1.5 inline-flex items-center space-x-1.5"
-          title="重新整理庫存異動紀錄"
-          @click="loadLogs"
-        >
-          <RefreshCw class="w-3.5 h-3.5" />
-          <span>重新整理</span>
-        </button>
-
-        <button
-          type="button"
-          class="btn-primary ml-2 px-3.5 py-2"
-          @click="inventoryAdjustmentModalOpen = true"
-        >
-          庫存調整
-        </button>
-      </template>
-    </Filter>
+    <!-- 由原物料進銷存上方 Bar 控制展開的查詢工具列 -->
+    <Transition name="inventory-filter">
+      <Filter
+        v-show="filtersExpanded"
+        class="purchase-order-filter inventory-log-filter"
+        id-prefix="inventory-log"
+        :show-status="true"
+        status-label="異動類型"
+        status-default-text="全部異動類型"
+        :status-options="actionFilterOptions"
+        v-model:status-value="selectedAction"
+        :show-supplier="true"
+        supplier-label="原物料"
+        supplier-default-text="全部原物料"
+        :supplier-options="materialFilterOptions"
+        v-model:supplier-value="selectedMaterialId"
+        :show-date-range="true"
+        date-label="異動日期"
+        v-model:start-date="startDate"
+        v-model:end-date="endDate"
+        :show-search="true"
+        search-label="搜尋原物料"
+        search-placeholder="輸入原物料名稱或料號"
+        v-model:search-value="searchQuery"
+        :show-refresh="false"
+        :show-reset="false"
+      >
+      </Filter>
+    </Transition>
 
 
     <!-- Loading -->
@@ -330,12 +314,17 @@ import {
   watch
 } from 'vue'
 
-import { RefreshCw } from 'lucide-vue-next'
 import Filter from '@/component/子元件/Filter.vue'
 import Pagination from '@/component/子元件/Pagination.vue'
 import httpClient from '@/service/httpClient'
 import InventoryAdjustmentModal from '@/component/父元件/InventoryAdjustmentModal.vue'
 import StatusBadge from '@/component/子元件/StatusBadge.vue'
+defineProps({
+  filtersExpanded: {
+    type: Boolean,
+    default: false
+  }
+})
 const inventoryAdjustmentModalOpen = ref(false)
 // ==============================
 // 異動紀錄
@@ -753,6 +742,13 @@ const formatDateTime = (dateTime) => {
   )
 
 }
+
+defineExpose({
+  refresh: loadLogs,
+  openPrimaryAction: () => {
+    inventoryAdjustmentModalOpen.value = true
+  }
+})
 
 
 // ==============================

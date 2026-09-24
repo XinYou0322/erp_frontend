@@ -4,86 +4,6 @@
   
 
 
-    <!-- Toolbar -->
-    <div
-      class="
-        p-4
-        rounded-2xl
-        flex
-        flex-col
-        sm:flex-row
-        sm:items-center
-        justify-between
-        gap-3
-        bg-[var(--surface-container)]
-        border
-        border-[var(--outline)]
-      "
-    >
-      <div>
-        <div
-          class="
-            font-bold
-            text-[length:var(--font-heading)]
-            text-[var(--on-surface)]
-          "
-        >
-          原物料庫存
-        </div>
-
-        <div
-          class="
-            text-[length:var(--font-body)]
-            text-[var(--on-surface-variant)]
-            mt-1
-          "
-        >
-          顯示各原物料所有批次加總後的庫存
-        </div>
-      </div>
-
-
-      <div class="flex items-center space-x-2">
-
-        <button
-          type="button"
-          @click="loadInventory"
-          class="
-            btn-secondary
-            text-[length:var(--font-body)]
-            px-3
-            py-1.5
-            flex
-            items-center
-            space-x-1.5
-          "
-        >
-          <RefreshCw class="w-3.5 h-3.5" />
-          <span>重新整理</span>
-        </button>
-             <button
-          type="button"
-          @click="inventoryIntakeModalOpen = true"
-          class="
-            btn-primary
-            text-[length:var(--font-body)]
-            px-3.5
-            py-1.5
-            flex
-            items-center
-            space-x-1.5
-          "
-        >
-          <PackagePlus class="w-4 h-4" />
-          <span>
-            {{ purchaseOrderReceivingEnabled ? "採購單收貨" : "進貨原物料" }}
-          </span>
-        </button>
-
-      </div>
-    </div>
-
-
     <!-- Loading -->
     <div
       v-if="loading"
@@ -760,9 +680,7 @@ import {
   DollarSign,
   FileSpreadsheet,
   Plus,
-  RefreshCw,
   Boxes,
-  PackagePlus,
 } from "lucide-vue-next";
 
 import MetricCard from "@/component/子元件/MetricCard.vue";
@@ -1160,6 +1078,14 @@ const handleWasteInactiveMaterial = async (item) => {
     );
   }
 };
+
+defineExpose({
+  refresh: loadInventory,
+  openPrimaryAction: () => {
+    inventoryIntakeModalOpen.value = true;
+  },
+});
+
 onMounted(() => {
   loadInventory();
 });

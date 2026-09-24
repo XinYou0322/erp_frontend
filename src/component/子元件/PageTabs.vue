@@ -1,13 +1,7 @@
 <template>
   <div
-    class="
-      flex
-      items-center
-      gap-2
-      border-b
-      border-[var(--outline)]
-      pb-3
-    "
+    class="flex items-center gap-2"
+    :class="embedded ? 'flex-wrap' : 'border-b border-[var(--outline)] pb-3'"
   >
     <button
       v-for="tab in tabs"
@@ -67,6 +61,10 @@ defineProps({
   modelValue: {
     type: String,
     required: true,
+  },
+  embedded: {
+    type: Boolean,
+    default: false,
   },
 });
 
