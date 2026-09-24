@@ -2,7 +2,6 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../../stores/auth.store";
-import { useInventoryStore } from "../../stores/inventory.store";
 import { useNotificationStore } from "../../stores/notification.store";
 import { useUIStore } from "../../stores/ui.store";
 import { UserProfile } from "../../types";
@@ -15,11 +14,16 @@ const defaultAvatar = getDefaultAvatar();
 
 const router = useRouter();
 const authStore = useAuthStore();
-const inventoryStore = useInventoryStore();
 const notifStore = useNotificationStore();
 const uiStore = useUIStore();
 
 const isUserMenuOpen = ref(false);
+
+const openLowStockNotifications = async () => {
+  await notifStore.syncLowStockAlerts();
+  notifStore.activeCategory = "inventory";
+  uiStore.isNotificationCenterOpen = true;
+};
 
 const handleUserSelect = async (u: UserProfile) => {
   await authStore.switchUser(u);
@@ -83,20 +87,16 @@ const handleLogout = async () => {
       <!-- Low Stock Warning Icon -->
       <div
         v-if="
-          inventoryStore.lowStockMaterials.length > 0 && uiStore.lowStockNotice
+          notifStore.lowStockMaterials.length > 0 && uiStore.lowStockNotice
         "
         class="hidden sm:flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-xl text-amber-400 text-xs font-bold font-data-mono cursor-pointer transition-colors"
-        @click="
-          // 📢 修正：點擊時不再重複呼叫前端模擬，而是直接切換到庫存分類並拉開面板
-          notifStore.activeCategory = 'inventory';
-          uiStore.isNotificationCenterOpen = true;
-        "
+        @click="openLowStockNotifications"
         title="查看庫存告急通知"
       >
         <span class="material-symbols-outlined text-[16px] animate-pulse"
           >warning</span
         >
-        <span>{{ inventoryStore.lowStockMaterials.length }} 項庫存告急</span>
+        <span>{{ notifStore.lowStockMaterials.length }} 項庫存告急</span>
       </div>
 
       <!-- Calendar Shortcut Button -->

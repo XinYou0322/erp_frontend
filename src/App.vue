@@ -93,7 +93,7 @@ const notifStore = useNotificationStore();
 
 // 當使用者登入成功或重新整理頁面時
 // 自動建立 WebSocket 連線並拉取通知
-const initNotificationConnection = () => {
+const initNotificationConnection = async () => {
   const currentUserId = authStore.currentUser?.id;
   const backendValid = authStore.isAuthenticated && authStore.isValidBackendUserId(currentUserId);
 
@@ -102,8 +102,9 @@ const initNotificationConnection = () => {
   }
 
   notifStore.connectWebSocket(currentUserId);
-  notifStore.fetchNotifications();
-  notifStore.fetchUnreadCount();
+  await notifStore.fetchNotifications();
+  await notifStore.syncLowStockAlerts();
+  await notifStore.fetchUnreadCount();
 };
 
 onMounted(async () => {
