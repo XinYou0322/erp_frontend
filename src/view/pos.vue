@@ -47,7 +47,7 @@
               v-for="product in filteredProducts"
               :key="product.id"
               :name="product.name"
-              :image="product.imageUrl || ''"
+              :image="getProductImageSrc(product)"
               :price="product.sellingPrice"
               :quantity="productQuantities[product.id] || 0"
               @increase="increaseProduct(product)"
@@ -265,12 +265,12 @@ async function loadProducts() {
   try {
     const response = await httpClient.get('/api/product/list')
 
-    // 後端正常情況會直接回傳 List<ProductResponseDTO>
+    // POS 僅保留啟用商品，供列表、分類計數與訂單選取使用
     products.value = Array.isArray(response.data)
-      ? response.data
+      ? response.data.filter((product) => product.status === 'ACTIVE')
       : []
 
-    // 顯示全部商品總數，不會因為分類或關鍵字篩選而改變
+    // 顯示可販售商品總數，不會因為分類或關鍵字篩選而改變
     totalProducts.value = products.value.length
   } catch (error) {
     console.error('取得商品資料失敗', error)
@@ -281,6 +281,12 @@ async function loadProducts() {
   } finally {
     loadingProducts.value = false
   }
+
+}
+function getProductImageSrc(product) {
+  return typeof product?.imageUrl === 'string'
+    ? product.imageUrl.trim()
+    : ''  
 }
 //同時相容 DTO 的 categoryId 與 category.id 兩種回傳格式
 function getProductCategoryId(product) {

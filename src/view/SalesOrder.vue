@@ -17,7 +17,7 @@
 
       :show-search="true"
       search-label="搜尋"
-      search-placeholder="搜尋銷售單號、供應商名稱..."
+      search-placeholder="搜尋單號、建立人、付款方式、總金額..."
       v-model:search-value="searchText"
 
       :show-page-size="true"
@@ -25,7 +25,7 @@
       @update:page-size="changePageSize"
 
       :show-refresh="true"
-      refresh-title="更新銷售單資料"
+      refresh-title="清除搜尋與篩選，顯示全部銷售單"
       @refresh="refreshData"
 
       :show-reset="false"
@@ -94,14 +94,24 @@
       />
     </section>
 
+    <VoidSalesOrderModal
+      :is-open="voidModalOpen"
+      :order-number="voidTarget?.orderNumber || ''"
+      :is-saving="voidingSalesOrderId !== null"
+      :successful="voidSuccessful"
+      :error="voidError"
+      @close="closeVoidModal"
+      @confirm="confirmVoidSalesOrder"
+    />
     </div>
 </template>
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { nextTick, onMounted, ref, watch } from 'vue'
 import httpClient from '@/service/httpClient'
 import Filter from '@/component/子元件/Filter.vue'
 import OneSalesOrders from '@/component/子元件/OneSalesOrder.vue'
 import Pagination from '@/component/子元件/Pagination.vue'
+import VoidSalesOrderModal from '@/component/子元件/VoidSalesOrderModal.vue'
 import { useQueryPreset } from '@/composables/useQueryPreset'
 
 const loginUserId = ref(1)
@@ -123,6 +133,7 @@ const {
   clearPreset,
 } = useQueryPreset({ COMPLETED: '已完成', VOIDED: '已作廢' })
 const searchText = ref('')
+let isResettingFilters = false
 const selectedStatus = presetStatus
 
 const salesOrderStatusOptions = [
@@ -139,6 +150,7 @@ const salesOrderStatusOptions = [
 // -------- 銷售單列表資料 --------
 const salesOrderList = ref([])
 const isLoading = ref(false)
+let latestListRequest = 0
 
 // 保存目前展開列與各銷售單的明細查詢狀態。
 const expandedSalesOrderId = ref(null)
@@ -155,6 +167,7 @@ onMounted(() => {
 watch(
   [selectedStatus, startDate, endDate, searchText],
   function () {
+    if (isResettingFilters) return
     currentPage.value = 0
     resetDetailState()
     fetchData()
@@ -175,12 +188,25 @@ function changePage(page) {
 }
 
 async function refreshData() {
-  currentPage.value = 0
-  resetDetailState()
+  if (isResettingFilters) return
+  isResettingFilters = true
+  try {
+    selectedStatus.value = ''
+    startDate.value = ''
+    endDate.value = ''
+    searchText.value = ''
+    currentPage.value = 0
+    resetDetailState()
+    // 等待篩選監聽器執行完畢，再統一查詢一次。
+    await nextTick()
+  } finally {
+    isResettingFilters = false
+  }
   await fetchData()
 }
 
 async function fetchData() {
+  const requestId = ++latestListRequest
   isLoading.value = true
 
   try {
@@ -196,6 +222,8 @@ async function fetchData() {
         size: pageSize.value
       }
     })
+
+    if (requestId !== latestListRequest) return
 
     const responseList = Array.isArray(response.data.content)
       ? response.data.content
@@ -222,13 +250,14 @@ async function fetchData() {
       expandedSalesOrderId.value = null
     }
   } catch (error) {
+    if (requestId !== latestListRequest) return
     console.error('查詢銷售單失敗：', error)
     salesOrderList.value = []
     totalPages.value = 0
 
     alert(resolveErrorMessage(error, '查詢銷售單失敗'))
   } finally {
-    isLoading.value = false
+    if (requestId === latestListRequest) isLoading.value = false
   }
 }
 
@@ -351,26 +380,36 @@ function normalizeSalesOrderDetail(salesOrder) {
 }
 
 // 作廢成功後重新取得列表與目前明細，展開區會立即更新為「已作廢」。
-async function voidSalesOrder(salesOrderId) {
-  const inputReason = window.prompt('請輸入作廢原因')
+const voidModalOpen = ref(false)
+const voidTarget = ref(null)
+const voidSuccessful = ref(false)
+const voidError = ref('')
 
-  if (inputReason === null) {
-    return
-  }
+function voidSalesOrder(salesOrderId) {
+  if (voidingSalesOrderId.value !== null) return
+  const order = salesOrderList.value.find(order => order.id === salesOrderId)
+  if (!order || order.status === 'VOIDED') return
+  voidTarget.value = { id: order.id, orderNumber: order.orderNumber }
+  voidSuccessful.value = false
+  voidError.value = ''
+  voidModalOpen.value = true
+}
 
+function closeVoidModal() {
+  if (voidingSalesOrderId.value !== null) return
+  voidModalOpen.value = false
+  voidTarget.value = null
+}
+
+async function confirmVoidSalesOrder(inputReason) {
+  if (voidingSalesOrderId.value !== null || voidSuccessful.value || !voidTarget.value) return
   const voidReason = inputReason.trim()
-
-  if (!voidReason) {
-    alert('作廢原因不可為空')
+  if (!voidReason || voidReason.length > 1000) {
+    voidError.value = '請填寫作廢原因，最多 1000 個字。'
     return
   }
-
-  const confirmed = window.confirm('確定要作廢這筆銷售單嗎？')
-
-  if (!confirmed) {
-    return
-  }
-
+  const salesOrderId = voidTarget.value.id
+  voidError.value = ''
   voidingSalesOrderId.value = salesOrderId
 
   try {
@@ -385,7 +424,7 @@ async function voidSalesOrder(salesOrderId) {
       }
     })
 
-    alert('銷售單作廢成功')
+    voidSuccessful.value = true
     await fetchData()
 
     if (expandedSalesOrderId.value === salesOrderId) {
@@ -393,7 +432,7 @@ async function voidSalesOrder(salesOrderId) {
     }
   } catch (error) {
     console.error('作廢銷售單失敗：', error)
-    alert(resolveErrorMessage(error, '銷售單作廢失敗'))
+    voidError.value = String(resolveErrorMessage(error, '銷售單作廢失敗'))
   } finally {
     voidingSalesOrderId.value = null
   }

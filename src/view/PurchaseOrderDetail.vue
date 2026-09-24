@@ -375,7 +375,7 @@ async function loadData() {
   try {
     const response = await httpClient({
       method: 'get',
-      url: `/api/purchaseOrder/${props.purchaseOrderId}`
+      url: `/api/purchaseOrder/find/${props.purchaseOrderId}`
     })
 
     const responseData = response.data?.data ?? response.data
