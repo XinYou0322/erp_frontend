@@ -40,6 +40,12 @@ const routes = [
     meta: { requiresAuth: true, adminOnly: true },
   },
   {
+    path: "/system-settings",
+    name: "system-settings",
+    component: () => import("@/view/SystemSettingsPage.vue"),
+    meta: { requiresAuth: true, adminOnly: true },
+  },
+  {
     path: "/PermissionPage",
     redirect: "/permissions",
   },

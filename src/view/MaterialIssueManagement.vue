@@ -5,174 +5,26 @@
 
 
 
-    <!-- Toolbar -->
-    <div
-      class="
-        p-4
-        rounded-2xl
-        flex
-        flex-col
-        gap-4
-        bg-[var(--surface-container)]
-        border
-        border-[var(--outline)]
-      "
-    >
-
-      <div
-        class="
-          flex
-          flex-col
-          lg:flex-row
-          lg:items-center
-          justify-between
-          gap-3
-        "
+    <!-- 由原物料進銷存上方 Bar 控制展開的查詢工具列 -->
+    <Transition name="inventory-filter">
+      <Filter
+        v-show="filtersExpanded"
+        class="purchase-order-filter material-issue-filter"
+        id-prefix="material-issue"
+        :show-supplier="true"
+        supplier-label="原物料"
+        supplier-default-text="全部原物料"
+        :supplier-options="materialFilterOptions"
+        v-model:supplier-value="selectedMaterialId"
+        :show-search="true"
+        search-label="搜尋原物料"
+        search-placeholder="輸入原物料名稱或料號"
+        v-model:search-value="searchQuery"
+        :show-refresh="false"
+        :show-reset="false"
       >
-        <div>
-
-          <div
-            class="
-              font-bold
-              text-[length:var(--font-heading)]
-              text-[var(--on-surface)]
-            "
-          >
-            當日領料紀錄
-          </div>
-
-          <div
-            class="
-              text-[length:var(--font-body)]
-              text-[var(--on-surface-variant)]
-              mt-1
-            "
-          >
-            查看今日原物料領用狀況與新增手動領料
-          </div>
-
-        </div>
-
-
-        <div class="flex items-center space-x-2">
-
-          <button
-            type="button"
-            @click="loadLogs"
-            class="
-              btn-secondary
-              text-[length:var(--font-body)]
-              px-3
-              py-1.5
-              flex
-              items-center
-              space-x-1.5
-            "
-          >
-            <RefreshCw class="w-3.5 h-3.5" />
-            <span>重新整理</span>
-          </button>
-
-          <button
-            type="button"
-            @click="inventoryAdjustmentModalOpen = true"
-            class="
-              btn-primary
-              text-[length:var(--font-body)]
-              px-3.5
-              py-1.5
-              flex
-              items-center
-              space-x-1.5
-            "
-          >
-            <PackageMinus class="w-3.5 h-3.5" />
-            <span>新增領料</span>
-          </button>
-
-        </div>
-      </div>
-
-
-      <!-- Filter -->
-      <div
-        class="
-          grid
-          grid-cols-1
-          md:grid-cols-2
-          gap-3
-        "
-      >
-
-        <div>
-
-          <label
-            class="
-              block
-              text-[length:var(--font-body)]
-              font-bold
-              text-[var(--on-surface-variant)]
-              mb-1
-            "
-          >
-            搜尋原物料
-          </label>
-
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="輸入原物料名稱或料號"
-            class="
-              input-field
-              text-[length:var(--font-body)]
-            "
-          />
-
-        </div>
-
-
-        <div>
-
-          <label
-            class="
-              block
-              text-[length:var(--font-body)]
-              font-bold
-              text-[var(--on-surface-variant)]
-              mb-1
-            "
-          >
-            原物料
-          </label>
-
-          <select
-            v-model="selectedMaterialId"
-            class="
-              input-field
-              text-[length:var(--font-body)]
-            "
-          >
-            <option value="">
-              全部原物料
-            </option>
-
-            <option
-              v-for="material in materialOptions"
-              :key="material.id"
-              :value="String(material.id)"
-            >
-              {{ material.name }}（{{ material.code }}）
-            </option>
-          </select>
-
-        </div>
-
-
-
-
-      </div>
-
-    </div>
+      </Filter>
+    </Transition>
 
 
     <!-- Loading -->
@@ -213,75 +65,55 @@
     <!-- Log Table -->
     <div
       v-else
-      class="
-        rounded-2xl
-        overflow-hidden
-        bg-[var(--surface-container)]
-        border
-        border-[var(--outline)]
-        shadow-sm
-      "
+      class="data-table-card"
     >
 
-      <div class="overflow-x-auto">
+      <div class="data-table-scroll">
 
-        <table class="w-full text-left border-collapse">
+        <table class="data-table data-table--fixed">
+          <colgroup>
+            <col class="w-[18%]" />
+            <col class="w-[25%]" />
+            <col class="w-[15%]" />
+            <col class="w-[15%]" />
+            <col class="w-[27%]" />
+          </colgroup>
 
           <thead>
-            <tr
-              class="
-                bg-[var(--surface-container-high)]
-                border-b
-                border-[var(--outline)]
-                text-[length:var(--font-body)]
-                font-bold
-                text-[var(--on-surface-variant)]
-                uppercase
-                tracking-wider
-              "
-            >
-              <th class="py-3 px-4">
+            <tr class="data-table__head-row">
+              <th class="data-table__header">
                 領料時間
               </th>
 
-              <th class="py-3 px-4">
+              <th class="data-table__header">
                 原物料名稱 / 料號
               </th>
 
-              <th class="py-3 px-4">
+              <th class="data-table__header">
                 領料類型
               </th>
 
-              <th class="py-3 px-4">
+              <th class="data-table__header">
                 領料數量
               </th>
 
-              <th class="py-3 px-4">
+              <th class="data-table__header">
                 備註
               </th>
             </tr>
           </thead>
 
 
-          <tbody
-            class="
-              divide-y
-              divide-[var(--outline-variant)]
-              text-[length:var(--font-body)]
-            "
-          >
+          <tbody class="data-table__body">
 
             <tr
             v-for="log in paginatedLogs"
   :key="log.id"
-              class="
-                hover:bg-[var(--surface-container-high)]
-                transition-colors
-              "
+              class="data-table__row"
             >
 
               <!-- Time -->
-              <td class="py-3.5 px-4 whitespace-nowrap">
+              <td class="data-table__cell data-table__cell--nowrap">
 
                 <div
                   class="
@@ -307,7 +139,7 @@
 
 
               <!-- Material -->
-              <td class="py-3.5 px-4">
+              <td class="data-table__cell">
 
                 <div
                   class="
@@ -334,7 +166,7 @@
 
 
               <!-- Action -->
-              <td class="py-3.5 px-4">
+              <td class="data-table__cell">
 
          <StatusBadge
   :status="getActionStatus(log.action)"
@@ -345,7 +177,7 @@
 
 
               <!-- Quantity -->
-              <td class="py-3.5 px-4">
+              <td class="data-table__cell">
                 <span
                   class="
                     font-data-mono
@@ -361,7 +193,7 @@
 
 
               <!-- Note -->
-              <td class="py-3.5 px-4">
+              <td class="data-table__cell">
 
                 <span
                   v-if="log.note"
@@ -393,12 +225,7 @@
 
               <td
                 colspan="5"
-                class="
-                  py-12
-                  text-center
-                  text-[length:var(--font-title)]
-                  text-[var(--on-surface-variant)]
-                "
+                class="data-table__empty"
               >
                 今日尚無領料紀錄
               </td>
@@ -432,17 +259,21 @@
 import {
   ref,
   computed,
-  onMounted
+  onMounted,
+  watch
 } from 'vue'
 
-import {
-  PackageMinus,
-  RefreshCw
-} from 'lucide-vue-next'
+import Filter from '@/component/子元件/Filter.vue'
 import Pagination from '@/component/子元件/Pagination.vue'
 import httpClient from '@/service/httpClient'
 import InventoryAdjustmentModal from '@/component/父元件/InventoryAdjustmentModal.vue'
 import StatusBadge from '@/component/子元件/StatusBadge.vue'
+defineProps({
+  filtersExpanded: {
+    type: Boolean,
+    default: false
+  }
+})
 const inventoryAdjustmentModalOpen = ref(false)
 // ==============================
 // 異動紀錄
@@ -549,6 +380,13 @@ const materialOptions = computed(() => {
 
 })
 
+const materialFilterOptions = computed(() =>
+  materialOptions.value.map((material) => ({
+    label: `${material.name}（${material.code}）`,
+    value: String(material.id)
+  }))
+)
+
 
 // ==============================
 // 領料類型選項
@@ -629,6 +467,13 @@ const filteredLogs = computed(() => {
 // ==============================
 
 const currentPage = ref(1)
+
+watch(
+  [searchQuery, selectedMaterialId],
+  () => {
+    currentPage.value = 1
+  }
+)
 
 const pageSize = 10
 
@@ -816,6 +661,13 @@ const formatDateTime = (dateTime) => {
   )
 
 }
+
+defineExpose({
+  refresh: loadLogs,
+  openPrimaryAction: () => {
+    inventoryAdjustmentModalOpen.value = true
+  }
+})
 
 
 // ==============================

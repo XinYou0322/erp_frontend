@@ -245,6 +245,9 @@
       >
         {{ refreshText }}
       </button>
+
+      <!-- 個別頁面可選擇放入自己的操作按鈕。 -->
+      <slot name="actions" />
     </div>
 </div>
     <!-- 按下後使用父元件傳入的 resetValues 重設，不在共用元件中寫死預設值。 -->

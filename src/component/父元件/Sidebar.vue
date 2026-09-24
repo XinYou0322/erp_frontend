@@ -33,7 +33,7 @@
       <!-- ============================== -->
       <nav class="space-y-1.5" aria-label="系統主要功能選單">
         <button
-          v-for="item in navItems"
+          v-for="item in visibleNavItems"
           :key="item.id"
           type="button"
           @click="handleNavClick(item)"
@@ -195,9 +195,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
+import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth.store";
+import { useSystemSettingStore } from "@/stores/systemSetting.store";
 
 import {
   CupSoda,
@@ -211,6 +213,7 @@ import {
   FlaskConical,
   Receipt,
   ShieldUser,
+  Settings,
   ReceiptText,
   CalendarCheck,
 } from "lucide-vue-next";
@@ -224,6 +227,8 @@ const route = useRoute();
 const router = useRouter();
 
 const authStore = useAuthStore();
+const systemSettingStore = useSystemSettingStore();
+const { retailModeEnabled } = storeToRefs(systemSettingStore);
 
 const latestClockRecords = computed(() => {
   return [...(authStore.clockTimeline ?? [])]
@@ -309,6 +314,20 @@ const navItems = [
     path: "/SalesOrder",
   },
   {
+    id: "permission",
+    label: "權限與用戶管理",
+    icon: ShieldUser,
+    path: "/PermissionPage",
+  },
+  {
+    id: "system-settings",
+    label: "系統設定",
+    icon: Settings,
+    path: "/system-settings",
+    adminOnly: true,
+  },
+
+  {
     id: "supplier",
     label: "供應商管理",
     icon: Sliders,
@@ -333,4 +352,23 @@ const navItems = [
     path: "/leave-requests",
   },
 ];
+
+const visibleNavItems = computed(() =>
+  navItems
+    .filter((item) => !item.adminOnly || authStore.isAdmin)
+    .map((item) =>
+      item.id === "inventory"
+        ? {
+            ...item,
+            label: retailModeEnabled.value ? "庫存管理" : "原物料進銷存",
+          }
+        : item,
+    ),
+);
+
+onMounted(() => {
+  systemSettingStore.loadRetailModeSetting().catch((error) => {
+    console.error("讀取零售模式失敗：", error);
+  });
+});
 </script>

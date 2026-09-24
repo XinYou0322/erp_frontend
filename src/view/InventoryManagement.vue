@@ -4,84 +4,6 @@
   
 
 
-    <!-- Toolbar -->
-    <div
-      class="
-        p-4
-        rounded-2xl
-        flex
-        flex-col
-        sm:flex-row
-        sm:items-center
-        justify-between
-        gap-3
-        bg-[var(--surface-container)]
-        border
-        border-[var(--outline)]
-      "
-    >
-      <div>
-        <div
-          class="
-            font-bold
-            text-[length:var(--font-heading)]
-            text-[var(--on-surface)]
-          "
-        >
-          原物料庫存
-        </div>
-
-        <div
-          class="
-            text-[length:var(--font-body)]
-            text-[var(--on-surface-variant)]
-            mt-1
-          "
-        >
-          顯示各原物料所有批次加總後的庫存
-        </div>
-      </div>
-
-
-      <div class="flex items-center space-x-2">
-
-        <button
-          type="button"
-          @click="loadInventory"
-          class="
-            btn-secondary
-            text-[length:var(--font-body)]
-            px-3
-            py-1.5
-            flex
-            items-center
-            space-x-1.5
-          "
-        >
-          <RefreshCw class="w-3.5 h-3.5" />
-          <span>重新整理</span>
-        </button>
-             <button
-          type="button"
-          @click="inventoryIntakeModalOpen = true"
-          class="
-            btn-primary
-            text-[length:var(--font-body)]
-            px-3.5
-            py-1.5
-            flex
-            items-center
-            space-x-1.5
-          "
-        >
-          <PackagePlus class="w-4 h-4" />
-          <span>進貨原物料</span>
-        </button>
-
-      </div>
-    </div>
-
-
     <!-- Loading -->
     <div
       v-if="loading"
@@ -120,70 +42,57 @@
     <!-- Inventory Table -->
     <div
       v-else
-      class="
-        rounded-2xl
-        overflow-hidden
-        bg-[var(--surface-container)]
-        border
-        border-[var(--outline)]
-        shadow-sm
-      "
+      class="data-table-card"
     >
-      <div class="overflow-x-auto">
+      <div class="data-table-scroll">
 
-        <table class="w-full text-left border-collapse">
+        <table
+          class="data-table data-table--fixed"
+        >
+          <colgroup>
+            <col class="w-[19%]" />
+            <col class="w-[21%]" />
+            <col class="w-[11%]" />
+            <col class="w-[16%]" />
+            <col class="w-[12%]" />
+            <col class="w-[10%]" />
+            <col class="w-[11%]" />
+          </colgroup>
 
           <thead>
-            <tr
-              class="
-                bg-[var(--surface-container-high)]
-                border-b
-                border-[var(--outline)]
-                text-[length:var(--font-body)]
-                font-bold
-                text-[var(--on-surface-variant)]
-                uppercase
-                tracking-wider
-              "
-            >
-              <th class="py-3 px-4">
+            <tr class="data-table__head-row">
+              <th class="data-table__header data-table__header--nowrap">
                 原物料名稱 / 料號
               </th>
 
-              <th class="py-3 px-4">
+              <th class="data-table__header data-table__header--nowrap">
                 現有總存量 / 安全庫存
               </th>
 
-              <th class="py-3 px-4">
+              <th class="data-table__header data-table__header--nowrap">
                 庫存狀態
               </th>
 
-              <th class="py-3 px-4">
+              <th class="data-table__header data-table__header--nowrap">
                 最近有效日期
               </th>
 
-              <th class="py-3 px-4">
+              <th class="data-table__header data-table__header--nowrap">
                 進料成本單價
               </th>
 
-              <th class="py-3 px-4">
+              <th class="data-table__header data-table__header--nowrap">
                 庫存估值
               </th>
 
-              <th class="py-3 px-4 text-right pr-6">
+              <th class="data-table__header data-table__header--nowrap data-table__header--right">
                 操作
               </th>
             </tr>
           </thead>
 
 
-          <tbody
-            class="
-              divide-y
-              divide-[var(--outline-variant)]
-              text-[length:var(--font-body)]
-            "
-          >
+          <tbody class="data-table__body">
 
             <template
             v-for="item in paginatedInventory"
@@ -192,10 +101,7 @@
 
               <!-- 原物料摘要 -->
 <tr
-  class="
-    hover:bg-[var(--surface-container-high)]
-    transition-colors
-  "
+  class="data-table__row"
   :class="{
     'inactive-material-row':
       item.materialStatus === 'INACTIVE'
@@ -203,7 +109,7 @@
 >
 
                 <!-- 名稱 / Code -->
-                <td class="py-3.5 px-4">
+                <td class="data-table__cell data-table__cell--nowrap">
 
                   <div
                     class="
@@ -246,7 +152,7 @@
 
 
                 <!-- 總庫存 / 安全庫存 -->
-                <td class="py-3.5 px-4">
+                <td class="data-table__cell data-table__cell--nowrap">
 
                   <div
                     class="
@@ -305,7 +211,7 @@
 
 
                 <!-- 庫存狀態 -->
-                <td class="py-3.5 px-4">
+                <td class="data-table__cell">
 
                  <StatusBadge
   :status="item.status.toLowerCase()"
@@ -315,7 +221,7 @@
 
 
                 <!-- 最近有效日期 -->
-                <td class="py-3.5 px-4">
+                <td class="data-table__cell data-table__cell--nowrap">
 
                   <div
                     v-if="item.nearestExpiryDate"
@@ -382,8 +288,8 @@
                 <!-- 單位成本 -->
                 <td
                   class="
-                    py-3.5
-                    px-4
+                    data-table__cell
+                    data-table__cell--nowrap
                     font-data-mono
                     font-bold
                     text-[length:var(--font-body)]
@@ -399,8 +305,8 @@
                 <!-- 庫存估值 -->
                 <td
                   class="
-                    py-3.5
-                    px-4
+                    data-table__cell
+                    data-table__cell--nowrap
                     font-data-mono
                     text-[length:var(--font-body)]
                     text-[var(--on-surface)]
@@ -412,7 +318,7 @@
 
 
                 <!-- 查看批次 -->
-<td class="py-3.5 px-4 text-right pr-6">
+<td class="data-table__cell data-table__cell--nowrap data-table__cell--right">
   <!-- 停用原物料：只顯示一鍵報廢 -->
   <button
     v-if="item.materialStatus === 'INACTIVE'"
@@ -758,6 +664,7 @@
 
     <InventoryIntakeModal
       :is-open="inventoryIntakeModalOpen"
+      :purchase-order-mode="purchaseOrderReceivingEnabled"
       @close="inventoryIntakeModalOpen = false"
       @success="handleInventorySuccess"
     />
@@ -773,9 +680,7 @@ import {
   DollarSign,
   FileSpreadsheet,
   Plus,
-  RefreshCw,
   Boxes,
-  PackagePlus,
 } from "lucide-vue-next";
 
 import MetricCard from "@/component/子元件/MetricCard.vue";
@@ -783,6 +688,17 @@ import Pagination from '@/component/子元件/Pagination.vue'
 import httpClient from "@/service/httpClient";
 import InventoryIntakeModal from "@/component/父元件/InventoryIntakeModal.vue";
 import StatusBadge from '@/component/子元件/StatusBadge.vue'
+
+const props = defineProps({
+  purchaseOrderReceivingEnabled: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+const purchaseOrderReceivingEnabled = computed(
+  () => props.purchaseOrderReceivingEnabled,
+);
 import { useNotificationStore } from '@/stores/notification.store'
 
 const notificationStore = useNotificationStore();
@@ -1166,6 +1082,14 @@ const handleWasteInactiveMaterial = async (item) => {
     );
   }
 };
+
+defineExpose({
+  refresh: loadInventory,
+  openPrimaryAction: () => {
+    inventoryIntakeModalOpen.value = true;
+  },
+});
+
 onMounted(() => {
   loadInventory();
 });

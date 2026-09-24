@@ -245,7 +245,7 @@
                 <!-- 原物料 -->
                 <td class="py-2.5 px-3">
                   <select
-                    v-model="item.materialId"
+                    v-model.number="item.materialId"
                     @change="onMaterialChange(item)"
                     class="input-field py-1 text-xs"
                   >
@@ -270,8 +270,8 @@
                 <!-- 庫存批次 -->
                 <td class="py-2.5 px-3">
                   <select
-                    v-model="item.inventoryId"
-                    :disabled="!item.materialId || item.batchLoading"
+                    v-model.number="item.inventoryId"
+                    :disabled="!hasSelectedId(item.materialId) || item.batchLoading"
                     class="input-field py-1 text-xs"
                   >
                     <option
@@ -607,9 +607,13 @@ const removeAdjustmentRow = (idx) => {
   adjustmentItems.value.splice(idx, 1);
 };
 
+const hasSelectedId = (value) => {
+  return value !== "" && value !== null && value !== undefined;
+};
+
 const onMaterialChange = (item) => {
   const material = materials.value.find(
-    (material) => material.materialId === item.materialId,
+    (material) => Number(material.materialId) === Number(item.materialId),
   );
 
   if (!material) {
@@ -693,7 +697,10 @@ if (duplicateItem) {
   }
 
   const invalidItem = adjustmentItems.value.find(
-    (item) => !item.inventoryId || !item.action || Number(item.quantity) <= 0,
+    (item) =>
+      !hasSelectedId(item.inventoryId) ||
+      !item.action ||
+      Number(item.quantity) <= 0,
   );
 
   if (invalidItem) {

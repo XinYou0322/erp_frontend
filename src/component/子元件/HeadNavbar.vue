@@ -3,10 +3,10 @@
 
   <nav class="head-navbar">
     <div class="head-navbar__left">
-
+      <slot name="navigation">
       <button class="head-navbar__button" 
-      :class="{ 'is-active': activeTab === 'overview' }"
-      @click="changeTab('overview')">
+      :class="{ 'is-active': isOverviewActive }"
+      @click="clickOverview">
       {{ title }}
       <span v-if="showTotal" class="head-navbar__count"> {{ total }}</span>
     </button>
@@ -36,6 +36,7 @@
     @click="changeTab('add')">
     + {{ addTitle }}
   </button>
+      </slot>
   
      
   
@@ -117,6 +118,9 @@
         ↻ 
       </button>
 
+      <!-- 個別頁面可在導覽列右側放入自己的操作按鈕。 -->
+      <slot name="actions" />
+
       <button
         v-if="showFilterToggle"
         type="button"
@@ -144,6 +148,8 @@
 
 
 <script setup>
+import { computed } from 'vue'
+
 const props = defineProps({
   //左一按鈕 
   title: {
@@ -173,6 +179,16 @@ const props = defineProps({
   // null = 總覽
   activeCategory: {
     type: [Number, String, null],
+    default: null
+  },
+  // 啟用後，左側第一顆按鈕改為控制商品分類，而不是頁籤。
+  useCategoryOverview: {
+    type: Boolean,
+    default: false
+  },
+  // 分類模式下，第一顆按鈕所代表的值。
+  categoryOverviewValue: {
+    type: [Number, String],
     default: null
   },
 
@@ -290,6 +306,13 @@ const emit = defineEmits([
   'open-sales-order-record'
 
 ])
+
+const isOverviewActive = computed(() =>
+  props.useCategoryOverview
+    ? props.activeCategory === props.categoryOverviewValue
+    : props.activeTab === 'overview'
+)
+
 // 切換頁面
 function changeTab(tab) {
 
@@ -298,11 +321,8 @@ function changeTab(tab) {
 // 點擊總覽
 function clickOverview() {
 
-  // POS 有啟用種類功能
-  if (props.showCategories) {
-
-    // null 代表全部商品
-    emit('change-category', null)
+  if (props.useCategoryOverview) {
+    emit('change-category', props.categoryOverviewValue)
 
     return
   }
@@ -365,3 +385,4 @@ function openSalesOrderRecord() {
 
 
 </style>
+
