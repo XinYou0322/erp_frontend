@@ -34,6 +34,7 @@ const props = defineProps({
   savingText: { type: String, default: '儲存中…' },
   successTitle: { type: String, default: '儲存成功' },
   maxLength: { type: Number, default: 1000 },
+  initialValue: { type: String, default: '' },
   error: { type: String, default: '' }
 })
 const emit = defineEmits(['close', 'confirm'])
@@ -48,7 +49,7 @@ let previousFocus = null
 watch(() => props.isOpen, async (open) => {
   if (open) {
     previousFocus = document.activeElement
-    reason.value = ''
+    reason.value = props.initialValue
     validationError.value = ''
     await nextTick()
     reasonInput.value?.focus()

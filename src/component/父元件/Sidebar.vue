@@ -63,25 +63,8 @@
             </span>
           </div>
 
-          <!-- 右邊 Badge -->
-          <span
-            v-if="item.badge"
-            class="px-1.5 py-0.5 rounded-full text-[10px] font-bold"
-            :class="
-              isMainItemActive(item)
-                ? `
-                    bg-[var(--surface)]/15
-                    text-[var(--surface)]
-                  `
-                : `
-                    bg-[var(--primary)]/10
-                    text-[var(--primary)]
-                  `
-            "
-          >
-            {{ item.badge }}
-          </span>
-        </button>
+
+        </button> 
       </nav>
 
       <!-- ============================== -->
@@ -339,6 +322,13 @@ const navItems = [
     label: "簽核系統",
     icon: ReceiptText,
     path: "/workflows",
+     adminOnly: true,
+  },
+  {
+    id: "SystemSettings",
+    label: "SystemSettings",
+    icon: ReceiptText,
+    path: "/system-settings",
      adminOnly: true,
   },
 

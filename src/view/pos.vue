@@ -11,14 +11,18 @@
                 :show-sales-order-record="true"
                 sales-order-record-title="近期銷售"
                 :show-search="true"
+                :show-settings="true"
                 v-model:searchValue="searchValue"
                 search-placeholder="搜尋商品..."
                 @change-tab="changeHeadTab"
                 @change-category="changeCategory"
-                @open-sales-order-record="openRecentSales"/>
+                @open-sales-order-record="openRecentSales"
+                @open-settings="openSettings"/>
+
+    <PosSetting v-if="showPosSettings" />
 
     <!-- POS 主內容：左側商品區 + 右側明細區 -->
-    <div class="pos-layout">
+    <div v-else class="pos-layout">
       <section class="pos-layout__products">
         <div class="pos-product-grid">
         <!-- 商品 API 尚未完成時，顯示載入提示 -->
@@ -44,7 +48,7 @@
           </p>
         <template v-else>            
             <Card 
-              v-for="product in filteredProducts"
+              v-for="product in paginatedProducts"
               :key="product.id"
               :name="product.name"
               :image="getProductImageSrc(product)"
@@ -54,6 +58,12 @@
               @decrease="decreaseProduct(product)"/>
         </template>
         </div>
+
+        <Pagination
+          :current-page="productCurrentPage"
+          :total-pages="productTotalPages"
+          @change-page="changeProductPage"
+        />
       </section>
       <RecentSalesPanel
         v-if="showRecentSales"
@@ -89,16 +99,24 @@
   </main>
 </template>
 <script setup>
-import { ref, computed ,onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import httpClient from '@/service/httpClient'
 import Card from '@/component/子元件/Card.vue'
 import HeadNavBar from '@/component/子元件/HeadNavbar.vue'
 import AllRightCard from '@/component/子元件/AllRightCard.vue'
 import RecentSalesPanel from '@/component/父元件/RecentSalesPanel.vue'
+import PosSetting from '@/component/父元件/PosSetting.vue'
+import Pagination from '@/component/子元件/Pagination.vue'
 
 //用於「查看全部銷售單」跳轉到完整銷售單頁面
 const router = useRouter()
+const showPosSettings = ref(false)
+
+// 點擊導覽列齒輪後切換 POS 設定區。
+function openSettings() {
+  showPosSettings.value = !showPosSettings.value
+}
 
 const categories = ref([])
 const activeCategory = ref(null)
@@ -111,6 +129,8 @@ const loadingProducts = ref(false)
 const productError = ref('')
 //暫存每項商品目前選擇的數量；key 是 product.id
 const productQuantities = ref({})
+const productCurrentPage = ref(1)
+const PRODUCTS_PER_PAGE = 10
 
 //需要的付款方式與畫面送出狀態
 const paymentMethod = ref('')
@@ -310,6 +330,37 @@ const filteredProducts = computed(() => {
 
     return matchesCategory && matchesKeyword
   })
+})
+
+// POS 商品只在前端分頁，後端仍一次回傳完整啟用商品清單。
+const productTotalPages = computed(() => {
+  return Math.ceil(filteredProducts.value.length / PRODUCTS_PER_PAGE)
+})
+
+const paginatedProducts = computed(() => {
+  const startIndex = (productCurrentPage.value - 1) * PRODUCTS_PER_PAGE
+  return filteredProducts.value.slice(
+    startIndex,
+    startIndex + PRODUCTS_PER_PAGE
+  )
+})
+
+function changeProductPage(page) {
+  if (page < 1 || page > productTotalPages.value) return
+  productCurrentPage.value = page
+}
+
+// 搜尋或切換分類後從第 1 頁開始，避免停留在已不存在的頁碼。
+watch([searchValue, activeCategory], () => {
+  productCurrentPage.value = 1
+})
+
+watch(productTotalPages, (totalPages) => {
+  if (totalPages === 0) {
+    productCurrentPage.value = 1
+  } else if (productCurrentPage.value > totalPages) {
+    productCurrentPage.value = totalPages
+  }
 })
 
 function changeCategory(categoryId) {

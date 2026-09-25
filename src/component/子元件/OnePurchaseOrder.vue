@@ -133,7 +133,8 @@ const statusInfo = computed(() => {
       className: 'purchase-order-status--pending'
     },
     APPROVED: {
-      label: '已核准',
+      // 【修改】顯示名稱更新，狀態代碼 APPROVED 保留。
+      label: '已簽核',
       className: 'purchase-order-status--approved'
     },
     REJECTED: {
@@ -141,7 +142,8 @@ const statusInfo = computed(() => {
       className: 'purchase-order-status--rejected'
     },
     RECEIVED: {
-      label: '已收貨',
+      // 【修改】顯示名稱更新，狀態代碼 RECEIVED 保留。
+      label: '已到貨',
       className: 'purchase-order-status--received'
     },
     COMPLETED: {

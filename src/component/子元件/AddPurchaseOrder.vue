@@ -270,9 +270,9 @@ async function loadMaterials() {
   materialOptions.value = Array.isArray(response.data) ? response.data : []
 }
 async function loadApprovers() {
-  const response = await httpClient.get('/api/users/all')
-  const users = Array.isArray(response.data) ? response.data : []
-  approverOptions.value = users.filter(user => !user.status || String(user.status).toUpperCase() === 'ACTIVE')
+  // 【修改】名單由後端依 Session 與 role_level 決定，前端不自行篩選資格。
+  const response = await httpClient.get('/api/purchaseOrder/approvers')
+  approverOptions.value = Array.isArray(response.data) ? response.data : []
 }
 
 function validateOrder(order) {
