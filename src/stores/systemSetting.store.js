@@ -4,12 +4,15 @@ import httpClient from "@/service/httpClient";
 
 const RECEIVING_SETTING_KEY = "PURCHASE_ORDER_RECEIVING_ENABLED";
 const RETAIL_MODE_SETTING_KEY = "RETAIL_MODE_ENABLED";
+const POS_DEDUCTION_SETTING_KEY = "POS_AUTO_MATERIAL_DEDUCTION_ENABLED";
 
 export const useSystemSettingStore = defineStore("systemSetting", () => {
   const purchaseOrderReceivingEnabled = ref(false);
   const retailModeEnabled = ref(false);
+  const posAutoMaterialDeductionEnabled = ref(false);
   const loaded = ref(false);
   const retailModeLoaded = ref(false);
+  const posDeductionLoaded = ref(false);
   const loading = ref(false);
   const saving = ref(false);
   const errorMessage = ref("");
@@ -100,9 +103,53 @@ export const useSystemSettingStore = defineStore("systemSetting", () => {
     }
   }
 
+  async function loadPosDeductionSetting(force = false) {
+    if (posDeductionLoaded.value && !force) {
+      return posAutoMaterialDeductionEnabled.value;
+    }
+
+    loading.value = true;
+    errorMessage.value = "";
+    try {
+      const response = await httpClient.get(
+        `/api/system-settings/${POS_DEDUCTION_SETTING_KEY}`,
+      );
+      posAutoMaterialDeductionEnabled.value =
+        String(response.data?.value).toLowerCase() === "true";
+      posDeductionLoaded.value = true;
+      return posAutoMaterialDeductionEnabled.value;
+    } catch (error) {
+      errorMessage.value = getApiError(error, "讀取 POS 扣料模式失敗");
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function updatePosAutoMaterialDeductionEnabled(enabled) {
+    saving.value = true;
+    errorMessage.value = "";
+    try {
+      const response = await httpClient.put(
+        `/api/system-settings/${POS_DEDUCTION_SETTING_KEY}`,
+        { value: String(Boolean(enabled)) },
+      );
+      posAutoMaterialDeductionEnabled.value =
+        String(response.data?.value).toLowerCase() === "true";
+      posDeductionLoaded.value = true;
+      return posAutoMaterialDeductionEnabled.value;
+    } catch (error) {
+      errorMessage.value = getApiError(error, "更新 POS 扣料模式失敗");
+      throw error;
+    } finally {
+      saving.value = false;
+    }
+  }
+
   return {
     purchaseOrderReceivingEnabled,
     retailModeEnabled,
+    posAutoMaterialDeductionEnabled,
     loaded,
     loading,
     saving,
@@ -111,6 +158,8 @@ export const useSystemSettingStore = defineStore("systemSetting", () => {
     updatePurchaseOrderReceivingEnabled,
     loadRetailModeSetting,
     updateRetailModeEnabled,
+    loadPosDeductionSetting,
+    updatePosAutoMaterialDeductionEnabled,
   };
 });
 

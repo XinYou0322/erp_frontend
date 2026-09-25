@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useAuthStore } from "@/stores/auth.store";
+import { useSystemSettingStore } from "@/stores/systemSetting.store";
 
 import { getDashboard } from "@/service/dashboardService";
 import { getPendingWorkflows } from "@/service/workflowService";
@@ -11,8 +12,10 @@ import TopProductsCard from "@/component/父元件/TopProductsCard.vue";
 import WorkflowTable from "@/component/父元件/WorkflowTable.vue";
 import DashboardCustomize from "@/component/子元件/DashboardCustomize.vue";
 import HourPeakChart from "@/component/父元件/HourPeakChart.vue";
+import MaterialConsumptionChart from "@/component/父元件/MaterialConsumptionChart.vue";
 
 const authStore = useAuthStore();
+const systemSettingStore = useSystemSettingStore();
 
 const dashboard = ref(null);
 const workflows = ref([]);
@@ -27,6 +30,9 @@ const widgets = ref({
 });
 
 const userName = computed(() => authStore.currentUser?.name ?? "使用者");
+const showMaterialConsumption = computed(
+  () => !systemSettingStore.posAutoMaterialDeductionEnabled,
+);
 
 function loadWidgetSettings() {
   const saved = localStorage.getItem("dashboardWidgets");
@@ -40,7 +46,20 @@ async function loadDashboard() {
   errorMessage.value = "";
 
   try {
-    dashboard.value = await getDashboard();
+    const [dashboardResult, deductionSettingResult] = await Promise.allSettled([
+      getDashboard(),
+      systemSettingStore.loadPosDeductionSetting(true),
+    ]);
+
+    if (dashboardResult.status === "rejected") {
+      throw dashboardResult.reason;
+    }
+
+    dashboard.value = dashboardResult.value;
+
+    if (deductionSettingResult.status === "rejected") {
+      console.warn("讀取 POS 扣料模式失敗，暫時顯示領料比較圖表");
+    }
 
     const approverId = authStore.currentUser?.id;
 
@@ -107,6 +126,10 @@ onMounted(() => {
           class="card span-2"
         >
           <RevenueChart :data="dashboard.weeklyRevenue"/>
+        </div>
+
+        <div v-if="showMaterialConsumption" class="card span-2">
+          <MaterialConsumptionChart :data="dashboard.materialConsumption" />
         </div>
 
         <!--

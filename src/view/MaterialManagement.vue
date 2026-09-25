@@ -1,5 +1,28 @@
 <template>
 
+  <Transition name="inventory-filter">
+    <Filter
+      v-show="filtersExpanded"
+      class="purchase-order-filter material-master-filter mb-6"
+      id-prefix="material-master"
+      :show-status="true"
+      status-label="原物料狀態"
+      status-default-text="全部原物料狀態"
+      :status-options="materialStatusOptions"
+      v-model:status-value="selectedStatus"
+      :show-supplier="true"
+      supplier-label="計量單位"
+      supplier-default-text="全部計量單位"
+      :supplier-options="unitFilterOptions"
+      v-model:supplier-value="selectedUnit"
+      :show-search="true"
+      search-label="搜尋原物料"
+      search-placeholder="輸入原物料名稱或料號"
+      v-model:search-value="searchQuery"
+      :show-refresh="false"
+      :show-reset="false"
+    />
+  </Transition>
 
 
   <!-- =========================
@@ -179,6 +202,14 @@ import AddMaterialModal from "@/component/父元件/AddMaterialModal.vue";
 import Pagination from "@/component/子元件/Pagination.vue";
 import httpClient from "@/service/httpClient";
 import EditMaterialModal from "@/component/父元件/EditMaterialModal.vue";
+import Filter from "@/component/子元件/Filter.vue";
+
+const props = defineProps({
+  filtersExpanded: {
+    type: Boolean,
+    default: false,
+  },
+});
 
 // ✨ 新增：宣告路由實例
 const route = useRoute();
@@ -189,6 +220,21 @@ const route = useRoute();
 
 const rawMaterials = ref([]);
 const searchQuery = ref(""); // ✨ 確保搜尋變數與通知抽屜同步
+const selectedStatus = ref("");
+const selectedUnit = ref("");
+const materialFilterSource = ref([]);
+
+const materialStatusOptions = [
+  { label: "啟用", value: "ACTIVE" },
+  { label: "停用", value: "INACTIVE" },
+];
+
+const unitFilterOptions = computed(() =>
+  [...new Set(materialFilterSource.value.map((material) => material.unit))]
+    .filter(Boolean)
+    .sort((a, b) => String(a).localeCompare(String(b), "zh-TW"))
+    .map((unit) => ({ label: unit, value: unit })),
+);
 
 const materialSummary = ref({
   totalMaterials: 0,
@@ -226,18 +272,7 @@ const selectedMaterial = ref(null);
 
 // ✨ 核心升級：前端即時響應式過濾，完美解構「黑糖珍珠」、「仙草凍」等跳轉關鍵字
 const materials = computed(() => {
-  const keyword = searchQuery.value.trim().toLowerCase();
-  if (!keyword) return rawMaterials.value;
-
-  return rawMaterials.value.filter(
-    (m) =>
-      String(m.name || "")
-        .toLowerCase()
-        .includes(keyword) ||
-      String(m.code || "")
-        .toLowerCase()
-        .includes(keyword),
-  );
+  return rawMaterials.value;
 });
 
 // ==============================
@@ -273,6 +308,7 @@ const handleMaterialSuccess = () => {
   loadMaterials();
 
   loadMaterialSummary();
+  loadMaterialFilterOptions();
 };
 
 // ==============================
@@ -283,22 +319,17 @@ const loadMaterials = () => {
   loading.value = true;
   errorMessage.value = "";
 
-  // 📥 動態組裝參數，如果網頁網址有 ?search=黑糖珍珠，就把它帶給後端
   const params = {
     page: currentPage.value - 1,
     size: pageSize,
+    keyword: searchQuery.value.trim() || undefined,
+    status: selectedStatus.value || undefined,
+    unit: selectedUnit.value || undefined,
   };
-
-  if (searchQuery.value.trim()) {
-    params.search = searchQuery.value.trim(); // 假設你後端分頁 API 支援 search 欄位過濾
-  }
 
   httpClient
     .get("/api/material/page", {
-      params: {
-        page: currentPage.value - 1,
-        size: pageSize,
-      },
+      params,
     })
     .then((response) => {
       // 🛡️ 安全防禦：確認有拿到資料才解構，完美消滅 Cannot read properties of undefined 錯誤
@@ -320,6 +351,20 @@ const loadMaterials = () => {
 
     .finally(() => {
       loading.value = false;
+    });
+};
+
+const loadMaterialFilterOptions = () => {
+  httpClient
+    .get("/api/material")
+    .then((response) => {
+      materialFilterSource.value = Array.isArray(response.data)
+        ? response.data
+        : [];
+    })
+    .catch((error) => {
+      console.error("取得原物料篩選選項失敗：", error);
+      materialFilterSource.value = [];
     });
 };
 const goToPage = (page) => {
@@ -369,6 +414,7 @@ const handleEditSuccess = () => {
   loadMaterials();
 
   loadMaterialSummary();
+  loadMaterialFilterOptions();
 };
 
 const handleCloseEditMaterial = () => {
@@ -379,13 +425,15 @@ const handleCloseEditMaterial = () => {
 const handleMaterialDisabled = async () => {
   await Promise.all([
     loadMaterials(),
-    loadMaterialSummary()
+    loadMaterialSummary(),
+    loadMaterialFilterOptions()
   ])
 }
 
 const refresh = () => {
   loadMaterials();
   loadMaterialSummary();
+  loadMaterialFilterOptions();
 };
 
 defineExpose({
@@ -408,6 +456,12 @@ onMounted(() => {
 
   loadMaterials();
   loadMaterialSummary();
+  loadMaterialFilterOptions();
+});
+
+watch([searchQuery, selectedStatus, selectedUnit], () => {
+  currentPage.value = 1;
+  loadMaterials();
 });
 
 // ✨ 新增：監聽路由，當使用者打開通知中心點擊另一個物料時，不用重新整理就能直接切換過濾

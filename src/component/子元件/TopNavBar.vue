@@ -122,6 +122,20 @@ const handleLogout = async () => {
         </span>
       </button>
 
+      <!-- Global System Settings Shortcut -->
+      <button
+        @click="router.push('/system-settings')"
+        title="系統控制設定"
+        class="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 transition-colors cursor-pointer"
+        :class="
+          router.currentRoute.value.path === '/system-settings'
+            ? 'text-emerald-400 border-emerald-500/40 bg-slate-800'
+            : ''
+        "
+      >
+        <span class="material-symbols-outlined text-[20px]">settings</span>
+      </button>
+
       <!-- User Role Dropdown Switcher -->
       <div class="relative">
         <button

@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { PackageCheck, Settings, Store } from 'lucide-vue-next'
+import { PackageCheck, PackageMinus, Settings, Store } from 'lucide-vue-next'
 import BaseBadge from '@/component/子元件/BaseBadge.vue'
 import BaseCard from '@/component/子元件/BaseCard.vue'
 import { useSystemSettingStore } from '@/stores/systemSetting.store'
@@ -10,6 +10,7 @@ const systemSettingStore = useSystemSettingStore()
 const {
   purchaseOrderReceivingEnabled,
   retailModeEnabled,
+  posAutoMaterialDeductionEnabled,
   errorMessage: storeErrorMessage
 } = storeToRefs(systemSettingStore)
 
@@ -24,7 +25,8 @@ async function loadSettings() {
 
   const results = await Promise.allSettled([
     systemSettingStore.loadRetailModeSetting(true),
-    systemSettingStore.loadReceivingSetting(true)
+    systemSettingStore.loadReceivingSetting(true),
+    systemSettingStore.loadPosDeductionSetting(true)
   ])
 
   if (results.some((result) => result.status === 'rejected')) {
@@ -59,6 +61,24 @@ async function toggleReceivingMode() {
     successMessage.value = '原物料進料採購模式已更新'
   } catch (error) {
     pageErrorMessage.value = storeErrorMessage.value || '更新原物料進料採購模式失敗'
+  } finally {
+    savingKey.value = ''
+  }
+}
+
+async function togglePosDeductionMode() {
+  savingKey.value = 'pos-deduction'
+  pageErrorMessage.value = ''
+  successMessage.value = ''
+  try {
+    await systemSettingStore.updatePosAutoMaterialDeductionEnabled(
+      !posAutoMaterialDeductionEnabled.value
+    )
+    successMessage.value = posAutoMaterialDeductionEnabled.value
+      ? '已切換為 POS 結帳自動扣料'
+      : '已切換為人員自行領料'
+  } catch (error) {
+    pageErrorMessage.value = storeErrorMessage.value || '更新 POS 扣料模式失敗'
   } finally {
     savingKey.value = ''
   }
@@ -177,6 +197,48 @@ onMounted(loadSettings)
               <span
                 class="absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all"
                 :class="purchaseOrderReceivingEnabled ? 'left-9' : 'left-1'"
+              />
+            </button>
+          </div>
+        </BaseCard>
+
+        <BaseCard>
+          <template #header>
+            <div class="flex w-full items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <PackageMinus class="h-5 w-5 text-amber-400" />
+                <span class="text-sm font-bold text-white">原物料扣料模式</span>
+              </div>
+              <BaseBadge :variant="posAutoMaterialDeductionEnabled ? 'success' : 'neutral'" dot>
+                {{ posAutoMaterialDeductionEnabled ? 'POS 自動扣料' : '人員自行領料' }}
+              </BaseBadge>
+            </div>
+          </template>
+
+          <div class="flex items-center justify-between gap-6">
+            <div>
+              <p class="text-sm font-semibold text-slate-200">
+                POS 結帳時依照商品 BOM 扣除原物料
+              </p>
+              <p class="mt-2 max-w-xl text-xs leading-6 text-slate-400">
+                開啟後，POS 完成結帳會自動依 BOM 與銷售數量扣除有效庫存；關閉時維持目前的人員自行領料流程。
+              </p>
+            </div>
+
+            <button
+              type="button"
+              role="switch"
+              :aria-checked="posAutoMaterialDeductionEnabled"
+              :disabled="Boolean(savingKey)"
+              class="relative h-8 w-16 shrink-0 rounded-full border transition-colors disabled:cursor-wait disabled:opacity-60"
+              :class="posAutoMaterialDeductionEnabled
+                ? 'border-emerald-400 bg-emerald-500'
+                : 'border-slate-700 bg-slate-800'"
+              @click="togglePosDeductionMode"
+            >
+              <span
+                class="absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all"
+                :class="posAutoMaterialDeductionEnabled ? 'left-9' : 'left-1'"
               />
             </button>
           </div>
