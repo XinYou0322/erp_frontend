@@ -10,7 +10,7 @@
 -->
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { nextTick, onMounted, onUnmounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useNotificationStore } from "../../stores/notification.store";
 import { useAuthStore } from "../../stores/auth.store";
@@ -34,29 +34,116 @@ const categories = [
 // 是否展開偏好設定面板
 const showSettings = ref(false);
 
-// 處理點擊導航動作
+// ---------------------------------------------------------------------
+// 分類標籤列：自訂可拖曳捲軸
+// ---------------------------------------------------------------------
+const tabScrollRef = ref<HTMLElement | null>(null);
+const tabTrackRef = ref<HTMLElement | null>(null);
+const tabThumbWidthPct = ref(100);
+const tabThumbLeftPct = ref(0);
+const tabThumbDragging = ref(false);
+let tabThumbStartX = 0;
+let tabThumbStartScrollLeft = 0;
+
+const updateTabThumb = () => {
+  const el = tabScrollRef.value;
+  if (!el) return;
+  const { scrollWidth, clientWidth, scrollLeft } = el;
+  if (scrollWidth <= clientWidth + 1) {
+    tabThumbWidthPct.value = 100;
+    tabThumbLeftPct.value = 0;
+    return;
+  }
+  const widthPct = (clientWidth / scrollWidth) * 100;
+  const maxLeftPct = 100 - widthPct;
+  tabThumbWidthPct.value = widthPct;
+  tabThumbLeftPct.value = (scrollLeft / (scrollWidth - clientWidth)) * maxLeftPct;
+};
+
+const onTabListScroll = () => updateTabThumb();
+
+const onTabThumbPointerDown = (e: PointerEvent) => {
+  if (!tabScrollRef.value) return;
+  tabThumbDragging.value = true;
+  tabThumbStartX = e.clientX;
+  tabThumbStartScrollLeft = tabScrollRef.value.scrollLeft;
+  (e.currentTarget as HTMLElement)?.setPointerCapture?.(e.pointerId);
+};
+
+const onTabThumbPointerMove = (e: PointerEvent) => {
+  if (!tabThumbDragging.value || !tabScrollRef.value || !tabTrackRef.value) return;
+  const el = tabScrollRef.value;
+  const trackWidth = tabTrackRef.value.clientWidth;
+  const { scrollWidth, clientWidth } = el;
+  if (trackWidth === 0) return;
+  const deltaX = e.clientX - tabThumbStartX;
+  const ratio = scrollWidth / trackWidth;
+  const maxScrollLeft = scrollWidth - clientWidth;
+  let nextScrollLeft = tabThumbStartScrollLeft + deltaX * ratio;
+  nextScrollLeft = Math.max(0, Math.min(maxScrollLeft, nextScrollLeft));
+  el.scrollLeft = nextScrollLeft;
+  updateTabThumb();
+};
+
+const onTabThumbPointerUp = () => {
+  tabThumbDragging.value = false;
+};
+
+let tabResizeObserver: ResizeObserver | null = null;
+
+onMounted(() => {
+  nextTick(() => {
+    updateTabThumb();
+    if (tabScrollRef.value && typeof ResizeObserver !== "undefined") {
+      tabResizeObserver = new ResizeObserver(() => updateTabThumb());
+      tabResizeObserver.observe(tabScrollRef.value);
+    }
+  });
+});
+
+onUnmounted(() => {
+  tabResizeObserver?.disconnect();
+});
+
+// 🎯 處理點擊導航動作（整合完美防禦與校正邏輯）
 const handleAction = (notif: any) => {
   notifStore.markAsRead(notif.id);
   uiStore.isNotificationCenterOpen = false;
 
   if (notif.actionRoute) {
+    let targetRoute = notif.actionRoute;
+
+    // 🌟 簽核中心路由防禦
+    if (notif.category === "workflow") {
+      if (!targetRoute.startsWith("/workflows") && !targetRoute.startsWith("/leave-requests")) {
+        console.warn(`[通知中心] 簽核路由「${targetRoute}」不匹配，已自動強制校正至 /workflows`);
+        targetRoute = "/workflows";
+      }
+    }
+
     // 🔍 判斷是否為庫存預警分類
     if (notif.category === "inventory" && notif.title) {
-      // 自動從標題「仙草凍庫存偏低」或「黑糖珍珠庫存緊急缺料」中提取出乾淨的物料名稱
       const materialName = notif.title
         .replace(/(庫存偏低|庫存緊急缺料|庫存水位告急)/g, "")
         .trim();
 
-      // 🚀 帶上 ?search=物料名稱 參數跳轉，完美不寫死！
       router.push({
-        path: notif.actionRoute,
+        path: targetRoute,
         query: { search: materialName },
       });
       uiStore.showToast(`已跳轉並自動過濾「${materialName}」`);
     } else {
-      // 一般通知維持原樣跳轉
-      router.push(notif.actionRoute);
+      // 一般通知與校正後的簽核通知跳轉
+      router.push(targetRoute);
       uiStore.showToast(`已跳轉至「${notif.title}」關聯頁面`);
+    }
+  } else {
+    // 📢 備援防禦：若無傳路徑但分類為簽核，直接強制送往簽核中心
+    if (notif.category === "workflow") {
+      router.push("/workflows");
+      uiStore.showToast("已跳轉至簽核中心");
+    } else {
+      uiStore.showToast("此通知未提供關聯頁面路徑");
     }
   }
 };
@@ -116,13 +203,13 @@ const getCategoryLabel = (cat: string) => {
   <div v-if="uiStore.isNotificationCenterOpen">
     <!-- 半透明背景遮罩 -->
     <div
-      class="fixed inset-0 bg-black/60 z-50 backdrop-blur-xs transition-opacity"
+       class="fixed inset-0 bg-black/60 z-50 backdrop-blur-xs transition-opacity"
       @click="uiStore.isNotificationCenterOpen = false"
     />
 
     <!-- 側邊抽屜本體 -->
     <aside
-      class="fixed right-0 top-0 bottom-0 w-full max-w-lg bg-slate-900 z-50 border-l border-slate-800 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-200"
+       class="fixed right-0 top-0 bottom-0 w-full max-w-lg bg-slate-900 z-50 border-l border-slate-800 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-200"
     >
       <!-- 1. 抽屜頂部標題與工具欄 -->
       <div
@@ -264,34 +351,58 @@ const getCategoryLabel = (cat: string) => {
           </div>
         </div>
 
-        <!-- 2. 分類篩選 Tab 按鈕列 -->
-        <div
-          class="flex items-center gap-1.5 mt-3 overflow-x-auto pb-0.5 no-scrollbar"
-        >
-          <button
-            v-for="cat in categories"
-            :key="cat.key"
-            @click="notifStore.activeCategory = cat.key"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer"
-            :class="
-              notifStore.activeCategory === cat.key
-                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/40 shadow-xs'
-                : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
-            "
+        <!-- 2. 分類篩選 Tab 按鈕列 (下方白色長條可拖曳左右捲動) -->
+        <div class="mt-3">
+          <div
+            ref="tabScrollRef"
+            class="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar scroll-smooth"
+            @scroll="onTabListScroll"
           >
-            <span>{{ cat.label }}</span>
-            <span
-              v-if="notifStore.unreadCountsByCategory[cat.key] > 0"
-              class="px-1.5 py-0.2 rounded-full text-[10px] font-bold"
+            <button
+              v-for="cat in categories"
+              :key="cat.key"
+              @click="notifStore.activeCategory = cat.key"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer"
               :class="
                 notifStore.activeCategory === cat.key
-                  ? 'bg-emerald-500 text-slate-950'
-                  : 'bg-slate-700 text-slate-300'
+                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/40 shadow-xs'
+                  : 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
               "
             >
-              {{ notifStore.unreadCountsByCategory[cat.key] }}
-            </span>
-          </button>
+              <span>{{ cat.label }}</span>
+              <span
+                v-if="notifStore.unreadCountsByCategory[cat.key] > 0"
+                class="px-1.5 py-0.2 rounded-full text-[10px] font-bold"
+                :class="
+                  notifStore.activeCategory === cat.key
+                    ? 'bg-emerald-500 text-slate-950'
+                    : 'bg-slate-700 text-slate-300'
+                "
+              >
+                {{ notifStore.unreadCountsByCategory[cat.key] }}
+              </span>
+            </button>
+          </div>
+
+          <!-- 自訂捲軸手柄：白色長條，點住拖曳可左右捲動上面的標籤列 -->
+          <div
+            v-if="tabThumbWidthPct < 100"
+            ref="tabTrackRef"
+            class="relative h-1.5 mt-1.5 rounded-full bg-slate-800/70"
+          >
+            <div
+              class="absolute top-0 h-1.5 rounded-full bg-white/80 hover:bg-white transition-colors cursor-grab touch-none"
+              :class="{ 'cursor-grabbing bg-white': tabThumbDragging }"
+              :style="{
+                width: tabThumbWidthPct + '%',
+                left: tabThumbLeftPct + '%',
+              }"
+              @pointerdown="onTabThumbPointerDown"
+              @pointermove="onTabThumbPointerMove"
+              @pointerup="onTabThumbPointerUp"
+              @pointercancel="onTabThumbPointerUp"
+            />
+          </div>
         </div>
 
         <!-- 3. 二級工具列 (僅看未讀 / 標為已讀) -->
