@@ -12,14 +12,14 @@
      Primary / 品牌主色
      ========================= */
 
-  /* 主要藍色 */
-  --color-primary: #007BFF;
+  /* 跟隨全域主題色，Sidebar 與共用按鈕使用同一套色系 */
+  --color-primary: var(--primary, #007bff);
 
   /* 深藍：Hover、文字強調 */
-  --color-primary-dark: #0059bb;
+  --color-primary-dark: var(--primary-container, #0059bb);
 
   /* 淺藍：漸層使用 */
-  --color-primary-light: #00D2FF;
+  --color-primary-light: var(--secondary, #00d2ff);
 
 
   /* =========================

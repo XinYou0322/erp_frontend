@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6 pb-12">
+  <div class="space-y-6 px-6 pt-6 pb-12">
 
     <!-- 頁籤與進料模式整合在共用導覽列 -->
     <HeadNavBar :show-total="false" :show-add="false">

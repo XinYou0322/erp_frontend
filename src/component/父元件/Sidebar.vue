@@ -9,16 +9,23 @@
       <!-- ============================== -->
       <div class="flex items-center space-x-3 px-2 pt-2">
         <div
-          class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] flex items-center justify-center text-[var(--surface)] shadow-lg shadow-black/20"
+          class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl"
         >
-          <CupSoda class="w-6 h-6" />
+          <img
+            v-if="resolvedSiteLogoUrl && !logoLoadFailed"
+            :src="resolvedSiteLogoUrl"
+            alt="網站圖示"
+            class="h-full w-full object-contain"
+            @error="logoLoadFailed = true"
+          />
+          <CupSoda v-else class="h-6 w-6 text-[var(--primary)]" />
         </div>
 
         <div>
           <h1
             class="font-black text-base tracking-tight text-[var(--on-surface)] leading-none"
           >
-            深淵之流
+            {{ siteName }}
           </h1>
 
           <p
@@ -44,7 +51,7 @@
                   bg-gradient-to-r
                   from-[var(--primary)]
                   to-[var(--secondary)]
-                  text-[var(--surface)]
+                  text-[var(--on-primary)]
                   shadow-md shadow-black/20
                 `
               : `
@@ -75,7 +82,7 @@
         <button
           type="button"
           @click="router.push('/pos')"
-          class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] hover:opacity-95 text-[var(--surface)] text-xs font-bold flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-md shadow-black/20"
+          class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] hover:opacity-95 text-[var(--on-primary)] text-xs font-bold flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-md shadow-black/20"
         >
           <CupSoda class="w-4 h-4" />
 
@@ -178,11 +185,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth.store";
-import { useSystemSettingStore } from "@/stores/systemSetting.store";
+import {
+  resolveBackendAssetUrl,
+  useSystemSettingStore,
+} from "@/stores/systemSetting.store";
 
 import {
   CupSoda,
@@ -211,7 +221,13 @@ const router = useRouter();
 
 const authStore = useAuthStore();
 const systemSettingStore = useSystemSettingStore();
-const { retailModeEnabled } = storeToRefs(systemSettingStore);
+const { retailModeEnabled, siteName, siteLogoUrl } = storeToRefs(systemSettingStore);
+const logoLoadFailed = ref(false);
+const resolvedSiteLogoUrl = computed(() => resolveBackendAssetUrl(siteLogoUrl.value));
+
+watch(siteLogoUrl, () => {
+  logoLoadFailed.value = false;
+});
 
 const latestClockRecords = computed(() => {
   return [...(authStore.clockTimeline ?? [])]
@@ -343,6 +359,9 @@ const visibleNavItems = computed(() =>
 onMounted(() => {
   systemSettingStore.loadRetailModeSetting().catch((error) => {
     console.error("讀取零售模式失敗：", error);
+  });
+  systemSettingStore.loadBrandingSettings().catch((error) => {
+    console.error("讀取網站外觀設定失敗：", error);
   });
 });
 </script>

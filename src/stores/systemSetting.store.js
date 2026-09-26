@@ -5,14 +5,20 @@ import httpClient from "@/service/httpClient";
 const RECEIVING_SETTING_KEY = "PURCHASE_ORDER_RECEIVING_ENABLED";
 const RETAIL_MODE_SETTING_KEY = "RETAIL_MODE_ENABLED";
 const POS_DEDUCTION_SETTING_KEY = "POS_AUTO_MATERIAL_DEDUCTION_ENABLED";
+const SITE_NAME_SETTING_KEY = "SITE_NAME";
+const SITE_LOGO_SETTING_KEY = "SITE_LOGO_URL";
+const DEFAULT_SITE_NAME = "深淵之流";
 
 export const useSystemSettingStore = defineStore("systemSetting", () => {
   const purchaseOrderReceivingEnabled = ref(false);
   const retailModeEnabled = ref(false);
   const posAutoMaterialDeductionEnabled = ref(false);
+  const siteName = ref(DEFAULT_SITE_NAME);
+  const siteLogoUrl = ref("");
   const loaded = ref(false);
   const retailModeLoaded = ref(false);
   const posDeductionLoaded = ref(false);
+  const brandingLoaded = ref(false);
   const loading = ref(false);
   const saving = ref(false);
   const errorMessage = ref("");
@@ -146,22 +152,101 @@ export const useSystemSettingStore = defineStore("systemSetting", () => {
     }
   }
 
+  async function loadBrandingSettings(force = false) {
+    if (brandingLoaded.value && !force) {
+      return { siteName: siteName.value, siteLogoUrl: siteLogoUrl.value };
+    }
+
+    loading.value = true;
+    errorMessage.value = "";
+    try {
+      const [nameResponse, logoResponse] = await Promise.all([
+        httpClient.get(`/api/system-settings/${SITE_NAME_SETTING_KEY}`),
+        httpClient.get(`/api/system-settings/${SITE_LOGO_SETTING_KEY}`),
+      ]);
+      siteName.value = String(nameResponse.data?.value || DEFAULT_SITE_NAME).trim();
+      siteLogoUrl.value = String(logoResponse.data?.value || "").trim();
+      brandingLoaded.value = true;
+      return { siteName: siteName.value, siteLogoUrl: siteLogoUrl.value };
+    } catch (error) {
+      errorMessage.value = getApiError(error, "讀取網站外觀設定失敗");
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function uploadSiteLogo(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const response = await httpClient.post(
+        "/api/system-settings/branding/logo",
+        formData,
+      );
+      return String(response.data?.imageUrl || "");
+    } catch (error) {
+      errorMessage.value = getApiError(error, "網站圖示上傳失敗");
+      throw error;
+    }
+  }
+
+  async function updateBrandingSettings(name, logoUrl) {
+    saving.value = true;
+    errorMessage.value = "";
+    try {
+      const normalizedName = String(name || "").trim();
+      const normalizedLogoUrl = String(logoUrl || "").trim();
+      const [nameResponse, logoResponse] = await Promise.all([
+        httpClient.put(`/api/system-settings/${SITE_NAME_SETTING_KEY}`, {
+          value: normalizedName,
+        }),
+        httpClient.put(`/api/system-settings/${SITE_LOGO_SETTING_KEY}`, {
+          value: normalizedLogoUrl,
+        }),
+      ]);
+      siteName.value = String(nameResponse.data?.value || DEFAULT_SITE_NAME);
+      siteLogoUrl.value = String(logoResponse.data?.value || "");
+      brandingLoaded.value = true;
+      return { siteName: siteName.value, siteLogoUrl: siteLogoUrl.value };
+    } catch (error) {
+      errorMessage.value = getApiError(error, "更新網站外觀設定失敗");
+      throw error;
+    } finally {
+      saving.value = false;
+    }
+  }
+
   return {
     purchaseOrderReceivingEnabled,
     retailModeEnabled,
     posAutoMaterialDeductionEnabled,
+    siteName,
+    siteLogoUrl,
     loaded,
     loading,
     saving,
     errorMessage,
+    brandingLoaded,
     loadReceivingSetting,
     updatePurchaseOrderReceivingEnabled,
     loadRetailModeSetting,
     updateRetailModeEnabled,
     loadPosDeductionSetting,
     updatePosAutoMaterialDeductionEnabled,
+    loadBrandingSettings,
+    uploadSiteLogo,
+    updateBrandingSettings,
   };
 });
+
+export function resolveBackendAssetUrl(path) {
+  if (!path || path.startsWith("blob:") || /^https?:\/\//i.test(path)) {
+    return path || "";
+  }
+  const baseUrl = (import.meta.env.VITE_AXIOS_HTTP_BASEURL || "").replace(/\/+$/, "");
+  return `${baseUrl}${path.startsWith("/") ? "" : "/"}${path}`;
+}
 
 function getApiError(error, fallback) {
   return (

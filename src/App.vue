@@ -73,11 +73,16 @@
 
 <script setup lang="ts">
 import { onMounted, watch } from "vue";
+import { storeToRefs } from "pinia";
 import { useRoute } from "vue-router";
 import { RouterView } from "vue-router";
 
 import { useAuthStore } from "@/stores/auth.store";
 import { useNotificationStore } from "@/stores/notification.store";
+import {
+  resolveBackendAssetUrl,
+  useSystemSettingStore,
+} from "@/stores/systemSetting.store";
 
 import Sidebar from "./component/父元件/Sidebar.vue";
 import TopNavBar from "./component/子元件/TopNavBar.vue";
@@ -89,6 +94,22 @@ const route = useRoute();
 
 const authStore = useAuthStore();
 const notifStore = useNotificationStore();
+const systemSettingStore = useSystemSettingStore();
+const { siteName, siteLogoUrl } = storeToRefs(systemSettingStore);
+
+const applyBrowserBranding = () => {
+  document.title = siteName.value || "深淵之流";
+  let favicon = document.querySelector("link[rel='icon']");
+  if (!favicon) {
+    favicon = document.createElement("link");
+    favicon.rel = "icon";
+    document.head.appendChild(favicon);
+  }
+  const logoUrl = resolveBackendAssetUrl(siteLogoUrl.value);
+  favicon.href = logoUrl
+    ? `${logoUrl}${logoUrl.includes("?") ? "&" : "?"}v=${Date.now()}`
+    : "/favicon.ico";
+};
 
 
 // 當使用者登入成功或重新整理頁面時
@@ -110,9 +131,14 @@ const initNotificationConnection = async () => {
 onMounted(async () => {
   const sessionValid = await authStore.restoreSessionFromBackend();
   if (sessionValid) {
+    await systemSettingStore.loadBrandingSettings().catch((error) => {
+      console.error("讀取網站外觀設定失敗：", error);
+    });
     initNotificationConnection();
   }
 });
+
+watch([siteName, siteLogoUrl], applyBrowserBranding, { immediate: true });
 
 watch(
   () => authStore.isAuthenticated,
@@ -120,6 +146,9 @@ watch(
     if (isAuth) {
       const backendValid = await authStore.restoreSessionFromBackend();
       if (backendValid) {
+        await systemSettingStore.loadBrandingSettings(true).catch((error) => {
+          console.error("讀取網站外觀設定失敗：", error);
+        });
         initNotificationConnection();
       }
     } else {
