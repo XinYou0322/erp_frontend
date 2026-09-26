@@ -31,7 +31,7 @@ const widgets = ref({
 
 const userName = computed(() => authStore.currentUser?.name ?? "使用者");
 const showMaterialConsumption = computed(
-  () => !systemSettingStore.posAutoMaterialDeductionEnabled,
+  () => !systemSettingStore.salesInventorySyncEnabled,
 );
 
 function loadWidgetSettings() {
@@ -48,7 +48,7 @@ async function loadDashboard() {
   try {
     const [dashboardResult, deductionSettingResult] = await Promise.allSettled([
       getDashboard(),
-      systemSettingStore.loadPosDeductionSetting(true),
+      systemSettingStore.loadSalesInventorySyncSetting(true),
     ]);
 
     if (dashboardResult.status === "rejected") {
