@@ -13,7 +13,7 @@ const systemSettingStore = useSystemSettingStore()
 const {
   purchaseOrderReceivingEnabled,
   retailModeEnabled,
-  posAutoMaterialDeductionEnabled,
+  salesInventorySyncEnabled,
   siteName,
   siteLogoUrl,
   errorMessage: storeErrorMessage
@@ -38,7 +38,7 @@ async function loadSettings() {
   const results = await Promise.allSettled([
     systemSettingStore.loadRetailModeSetting(true),
     systemSettingStore.loadReceivingSetting(true),
-    systemSettingStore.loadPosDeductionSetting(true),
+    systemSettingStore.loadSalesInventorySyncSetting(true),
     systemSettingStore.loadBrandingSettings(true)
   ])
 
@@ -161,10 +161,10 @@ async function togglePosDeductionMode() {
   pageErrorMessage.value = ''
   successMessage.value = ''
   try {
-    await systemSettingStore.updatePosAutoMaterialDeductionEnabled(
-      !posAutoMaterialDeductionEnabled.value
+    await systemSettingStore.updateSalesInventorySyncEnabled(
+      !salesInventorySyncEnabled.value
     )
-    successMessage.value = posAutoMaterialDeductionEnabled.value
+    successMessage.value = salesInventorySyncEnabled.value
       ? '已切換為 POS 結帳自動扣料'
       : '已切換為人員自行領料'
   } catch (error) {
@@ -391,8 +391,8 @@ onBeforeUnmount(clearLocalPreview)
                 <PackageMinus class="h-5 w-5 text-[var(--tertiary)]" />
                 <span class="text-sm font-bold text-[var(--on-surface)]">原物料扣料模式</span>
               </div>
-              <BaseBadge :variant="posAutoMaterialDeductionEnabled ? 'success' : 'neutral'" dot>
-                {{ posAutoMaterialDeductionEnabled ? 'POS 自動扣料' : '人員自行領料' }}
+              <BaseBadge :variant="salesInventorySyncEnabled ? 'success' : 'neutral'" dot>
+                {{ salesInventorySyncEnabled ? 'POS 自動扣料' : '人員自行領料' }}
               </BaseBadge>
             </div>
           </template>
@@ -410,17 +410,17 @@ onBeforeUnmount(clearLocalPreview)
             <button
               type="button"
               role="switch"
-              :aria-checked="posAutoMaterialDeductionEnabled"
+              :aria-checked="salesInventorySyncEnabled"
               :disabled="Boolean(savingKey)"
               class="relative h-8 w-16 shrink-0 rounded-full border transition-colors disabled:cursor-wait disabled:opacity-60"
-              :class="posAutoMaterialDeductionEnabled
+              :class="salesInventorySyncEnabled
                 ? 'border-[var(--primary)] bg-[var(--primary)]'
                 : 'border-[var(--outline)] bg-[var(--surface-container-high)]'"
               @click="togglePosDeductionMode"
             >
               <span
                 class="absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all"
-                :class="posAutoMaterialDeductionEnabled ? 'left-9' : 'left-1'"
+                :class="salesInventorySyncEnabled ? 'left-9' : 'left-1'"
               />
             </button>
           </div>
