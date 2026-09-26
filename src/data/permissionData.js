@@ -148,26 +148,6 @@ export const PERMISSION_MODULES = [
     ],
   },
   {
-    id: "analytics",
-    name: "分析與報表 (Analytics & Reports)",
-    icon: "query_stats",
-    description: "營運營收趨勢、產品毛利率分佈、原物料損耗預測與審計",
-    permissions: [
-      {
-        key: "analytics.view",
-        label: "檢視財務與營運分析報表",
-        description: "允許瀏覽多維度營收圖表、損耗趨勢與品項貢獻度",
-        module: "analytics",
-      },
-      {
-        key: "analytics.export",
-        label: "匯出財務與決策報表",
-        description: "允許下載 Excel / CSV 決策分析大表",
-        module: "analytics",
-      },
-    ],
-  },
-  {
     id: "permissions",
     name: "權限與使用者管理 (RBAC & Users)",
     icon: "admin_panel_settings",
@@ -209,8 +189,6 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     "workflows.view",
     "workflows.submit",
     "workflows.approve",
-    "analytics.view",
-    "analytics.export",
     "permissions.view",
     "permissions.manage",
   ],
@@ -230,8 +208,6 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     "workflows.view",
     "workflows.submit",
     "workflows.approve",
-    "analytics.view",
-    "analytics.export",
     "permissions.view",
   ],
   employee: [
@@ -241,7 +217,7 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     "workflows.view",
     "workflows.submit",
   ],
-  guest: ["overview.view", "analytics.view"],
+  guest: ["overview.view"],
 };
 export const INITIAL_SECURITY_AUDIT_LOGS = [
   {

@@ -473,7 +473,10 @@ export const useNotificationStore = defineStore("notification", () => {
    * 使用庫存摘要同步低庫存警示。這些警示是目前庫存狀態的即時投影，
    * 不重複寫入 notification_record，避免每次整理庫存都新增相同通知。
    */
-  const syncLowStockAlerts = async (inventorySummary = null, playSound = false) => {
+  const syncLowStockAlerts = async (
+    inventorySummary = null,
+    playSound = false,
+  ) => {
     if (!autoAlertLowStock.value) {
       lowStockMaterials.value = [];
       notifications.value = notifications.value.filter(
@@ -545,7 +548,9 @@ export const useNotificationStore = defineStore("notification", () => {
         ),
       ];
 
-      const hasNewAlert = currentAlerts.some((item) => !existingIds.has(item.id));
+      const hasNewAlert = currentAlerts.some(
+        (item) => !existingIds.has(item.id),
+      );
       if (playSound && hasNewAlert) {
         playNotificationChime();
       }
@@ -703,7 +708,7 @@ export const useNotificationStore = defineStore("notification", () => {
         message: "員工「Alex Smith」送出特休假單申請 (2天)，待主管核簽。",
         type: "info",
         category: "workflow",
-        actionRoute: "/permissions",
+        actionRoute: "/workflow",
       },
       {
         title: "採購訂單到貨通知",

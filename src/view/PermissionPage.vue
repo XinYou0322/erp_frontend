@@ -416,11 +416,9 @@ const handleResetDefaultPermissions = () => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="supplier-page space-y-6">
     <!-- Header Title & Action Bar -->
-    <div
-      class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-    >
+     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <h2
           class="text-2xl font-bold text-white tracking-tight flex items-center gap-2"
@@ -453,91 +451,6 @@ const handleResetDefaultPermissions = () => {
           <span class="material-symbols-outlined text-[18px]">person_add</span>
           <span>開立新帳號</span>
         </button>
-      </div>
-    </div>
-
-    <!-- KPI Summary Ribbon -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-      <div
-        class="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center gap-3"
-      >
-        <div
-          class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400"
-        >
-          <span class="material-symbols-outlined text-[20px]">group</span>
-        </div>
-        <div>
-          <span class="text-[11px] text-slate-400 block font-medium"
-            >總註冊使用者</span
-          >
-          <span
-            class="font-data-mono font-bold text-lg text-white mt-0.5 block"
-          >
-            {{ authStore.users.length }} 位
-          </span>
-        </div>
-      </div>
-
-      <div
-        class="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center gap-3"
-      >
-        <div
-          class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400"
-        >
-          <span class="material-symbols-outlined text-[20px]"
-            >verified_user</span
-          >
-        </div>
-        <div>
-          <span class="text-[11px] text-slate-400 block font-medium"
-            >正常啟用中帳號</span
-          >
-          <span
-            class="font-data-mono font-bold text-lg text-cyan-400 mt-0.5 block"
-          >
-            {{ activeUsersCount }} 位
-          </span>
-        </div>
-      </div>
-
-      <div
-        class="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center gap-3"
-      >
-        <div
-          class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400"
-        >
-          <span class="material-symbols-outlined text-[20px]">checklist</span>
-        </div>
-        <div>
-          <span class="text-[11px] text-slate-400 block font-medium"
-            >當前角色有效權限</span
-          >
-          <span
-            class="font-data-mono font-bold text-lg text-purple-400 mt-0.5 block"
-          >
-            {{ authStore.userPermissions.length }} 項許可
-          </span>
-        </div>
-      </div>
-
-      <div
-        class="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center gap-3"
-      >
-        <div
-          class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400"
-        >
-          <span class="material-symbols-outlined text-[20px]">security</span>
-        </div>
-        <div>
-          <span class="text-[11px] text-slate-400 block font-medium"
-            >安全審計日誌</span
-          >
-          <span
-            class="font-data-mono font-bold text-lg text-amber-400 mt-0.5 block"
-          >
-            {{ authStore.auditLogs.length }} 筆
-          </span>
-        </div>
       </div>
     </div>
 
