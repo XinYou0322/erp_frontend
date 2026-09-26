@@ -636,6 +636,9 @@ const getActionLabel = (action) => {
     SALE_DEDUCT:
       '銷售扣減',
 
+    SALE_RETURN:
+      '銷售作廢回補',
+
     WASTE:
       '耗損',
 
@@ -669,6 +672,7 @@ const getActionStatus = (action) => {
     // 庫存增加 → 綠色
     case 'STOCK_IN':
     case 'ADJUSTMENT_IN':
+    case 'SALE_RETURN':
       return 'normal'
 
 

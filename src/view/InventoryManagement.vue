@@ -1,7 +1,27 @@
 <template>
   <div class="space-y-6 pb-12">
 
-  
+    <Transition name="inventory-filter">
+      <div
+        v-show="filtersExpanded"
+        class="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--outline)] bg-[var(--surface-container)] p-4 shadow-level-1"
+        aria-label="庫存狀態篩選"
+      >
+        <button
+          v-for="option in inventoryStatusOptions"
+          :key="option.value"
+          type="button"
+          class="rounded-xl border px-5 py-2.5 text-[length:var(--font-body)] font-bold transition-colors"
+          :class="selectedInventoryStatus === option.value
+            ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--on-primary)]'
+            : 'border-[var(--outline)] bg-[var(--surface)] text-[var(--on-surface-variant)] hover:border-[var(--primary)] hover:text-[var(--primary)]'"
+          :aria-pressed="selectedInventoryStatus === option.value"
+          @click="toggleInventoryStatus(option.value)"
+        >
+          {{ option.label }}
+        </button>
+      </div>
+    </Transition>
 
 
     <!-- Loading -->
@@ -672,7 +692,7 @@
   </div>
 </template>
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 
 import {
   Package,
@@ -694,6 +714,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  filtersExpanded: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const purchaseOrderReceivingEnabled = computed(
@@ -708,8 +732,30 @@ const notificationStore = useNotificationStore();
 
 const inventory = ref([]);
 
+const selectedInventoryStatus = ref("");
+
+const inventoryStatusOptions = [
+  { label: "正常", value: "NORMAL" },
+  { label: "低庫存", value: "LOW" },
+  { label: "緊急／缺貨", value: "URGENT" },
+];
+
+const toggleInventoryStatus = (status) => {
+  selectedInventoryStatus.value =
+    selectedInventoryStatus.value === status ? "" : status;
+};
+
+const filteredInventory = computed(() => {
+  return inventory.value.filter((item) => {
+    return (
+      !selectedInventoryStatus.value ||
+      item.status === selectedInventoryStatus.value
+    );
+  });
+});
+
 const sortedInventory = computed(() => {
-  return [...inventory.value].sort((a, b) => {
+  return [...filteredInventory.value].sort((a, b) => {
     const aInactive =
       a.materialStatus === "INACTIVE" ? 1 : 0;
 
@@ -725,6 +771,15 @@ const sortedInventory = computed(() => {
 // ==============================
 
 const currentPage = ref(1);
+
+watch(
+  selectedInventoryStatus,
+  () => {
+    currentPage.value = 1;
+    expandedMaterialId.value = null;
+    batches.value = [];
+  },
+);
 
 const pageSize = 6;
 

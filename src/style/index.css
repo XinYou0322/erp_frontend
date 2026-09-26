@@ -21,14 +21,14 @@
    * 採用 Material Design 3 / Bento 暗黑科技風設計語彙
    * =================================================================== */
   :root {
-    /* 主題色 (Primary - 翠綠翡翠色，代表通過、安全、啟動) */
-    --primary: #10b981;
-    --primary-container: #059669;
-    --on-primary: #020617;
+    /* 主題色 (Primary - 進貨作業使用的明亮藍色) */
+    --primary: #007bff;
+    --primary-container: #0059bb;
+    --on-primary: #ffffff;
 
-    /* 次要色 (Secondary - 科技青藍色，代表操作、分析、亮點) */
-    --secondary: #06b6d4;
-    --secondary-container: #0891b2;
+    /* 次要色 (Secondary - 與主色搭配的亮青色) */
+    --secondary: #00d2ff;
+    --secondary-container: #009ec2;
 
     /* 輔助警示色 (Tertiary - 琥珀金橘色，代表審核中、警告、缺料) */
     --tertiary: #f59e0b;

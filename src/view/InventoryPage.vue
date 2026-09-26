@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6 pb-12">
+  <div class="space-y-6 px-6 pt-6 pb-12">
 
     <!-- 頁籤與進料模式整合在共用導覽列 -->
     <HeadNavBar :show-total="false" :show-add="false">
@@ -60,6 +60,7 @@
       v-if="activeTab === 'inventory'"
       ref="inventoryViewRef"
       :purchase-order-receiving-enabled="purchaseOrderReceivingEnabled"
+      :filters-expanded="filtersExpanded"
     />
 
 
@@ -81,6 +82,7 @@ ref="materialIssueViewRef"
 <MaterialManagement
 v-else-if="activeTab === 'Material'"
 ref="materialViewRef"
+:filters-expanded="filtersExpanded"
 />
 
 
@@ -123,7 +125,7 @@ const inventoryViewRef = ref(null);
 const inventoryLogViewRef = ref(null);
 const materialIssueViewRef = ref(null);
 const showFilterToggle = computed(() =>
-  activeTab.value === "logs" || activeTab.value === "MaterialIssue",
+  ["Material", "inventory", "logs", "MaterialIssue"].includes(activeTab.value),
 );
 
 function changeInventoryTab(tab) {
