@@ -45,8 +45,8 @@
                   class="supplier-note-card__action supplier-note-card__action--danger"
                   :aria-label="`刪除備註 ${index + 1}`"
                   title="刪除備註"
-                  :disabled="isSavingEdit || deletingNoteId !== null"
-                  @click="deleteNote(note)"
+                  :disabled="isSavingEdit || deletingNoteId !== null || deleteConfirmOpen"
+                  @click="openDeleteConfirm(note)"
                 >
                   <LoaderCircle v-if="deletingNoteId === note.id" :size="18" class="supplier-note-card__spinner" aria-hidden="true" />
                   <Trash2 v-else :size="18" aria-hidden="true" />
@@ -90,15 +90,32 @@
         @close="closeEditModal"
         @confirm="saveEdit"
       />
+
+      <!-- 【本次修改：供應商備註刪除確認】
+           沿用既有 ConfirmActionModal，取代瀏覽器原生 window.confirm。 -->
+      <ConfirmActionModal
+        :is-open="deleteConfirmOpen"
+        title="確認刪除供應商備註"
+        :message="deleteConfirmMessage"
+        warning="刪除後無法復原，請確認這筆備註已不再需要。"
+        :loading="deletingNoteId !== null"
+        :error-message="deleteError"
+        confirm-text="確認刪除"
+        cancel-text="取消"
+        loading-text="刪除中..."
+        @confirm="confirmDeleteNote"
+        @cancel="closeDeleteConfirm"
+      />
     </section>
 </template>
 <script setup>
-import { onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { LoaderCircle, Pencil, Trash2 } from 'lucide-vue-next'
 import httpClient from '@/service/httpClient'
 
 import Pagination from '@/component/子元件/Pagination.vue'
 import TextInputModal from '@/component/子元件/TextInputModal.vue'
+import ConfirmActionModal from '@/component/子元件/ConfirmActionModal.vue'
 
 const props = defineProps({
   visible: {
@@ -131,6 +148,19 @@ const isSavingEdit = ref(false)
 const editSaved = ref(false)
 const editError = ref('')
 const deletingNoteId = ref(null)
+// 【本次新增：供應商備註刪除確認】保存待刪除資料及共用確認視窗狀態。
+const deleteConfirmOpen = ref(false)
+const pendingDeleteNote = ref(null)
+const deleteError = ref('')
+
+const deleteConfirmMessage = computed(() => {
+  const remark = String(pendingDeleteNote.value?.remark || '').trim()
+  const preview = remark.length > 40 ? `${remark.slice(0, 40)}…` : remark
+  return preview
+    ? `確定要刪除備註「${preview}」嗎？`
+    : '確定要刪除這筆供應商備註嗎？'
+})
+
 let latestNoteRequest = 0
 onBeforeUnmount(() => { latestNoteRequest += 1 })
 
@@ -144,6 +174,9 @@ watch(
     noteTotalElements.value = 0
     notesError.value = ''
     isLoadingNotes.value = false
+    deleteConfirmOpen.value = false
+    pendingDeleteNote.value = null
+    deleteError.value = ''
     if (!visible || !supplierId) {
       return
     }
@@ -275,18 +308,38 @@ async function saveEdit(value) {
   }
 }
 
-async function deleteNote(note) {
-  if (!isNoteOwner(note) || deletingNoteId.value !== null || isSavingEdit.value) return
-  if (!window.confirm('確定要刪除這筆供應商備註嗎？')) return
+// 【本次修改：供應商備註刪除確認】先開啟系統共用確認視窗，不直接呼叫刪除 API。
+function openDeleteConfirm(note) {
+  if (!isNoteOwner(note) || deletingNoteId.value !== null ||
+      isSavingEdit.value || deleteConfirmOpen.value) return
+
+  pendingDeleteNote.value = note
+  deleteError.value = ''
+  deleteConfirmOpen.value = true
+}
+
+function closeDeleteConfirm() {
+  if (deletingNoteId.value !== null) return
+
+  deleteConfirmOpen.value = false
+  pendingDeleteNote.value = null
+  deleteError.value = ''
+}
+
+async function confirmDeleteNote() {
+  const note = pendingDeleteNote.value
+  if (!note || !isNoteOwner(note) || deletingNoteId.value !== null || isSavingEdit.value) return
 
   deletingNoteId.value = note.id
-  notesError.value = ''
+  deleteError.value = ''
   try {
     await httpClient.delete(`/api/supplierNote/${note.id}`)
+    deleteConfirmOpen.value = false
+    pendingDeleteNote.value = null
     await fetchSupplierNotes()
   } catch (error) {
     const data = error.response?.data
-    notesError.value = data?.message || data?.detail ||
+    deleteError.value = data?.message || data?.detail ||
       (typeof data === 'string' ? data : '刪除備註失敗，請稍後再試。')
   } finally {
     deletingNoteId.value = null
@@ -306,3 +359,4 @@ function formatDate(date) {
   return dateObject.toLocaleString('zh-TW')
 }
 </script>
+

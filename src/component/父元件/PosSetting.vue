@@ -1,14 +1,3 @@
-<script setup>
-import { ref } from 'vue'
-import { RefreshCw } from 'lucide-vue-next'
-
-const salesInventorySyncEnabled = ref(false)
-
-function toggleSalesInventorySync() {
-  salesInventorySyncEnabled.value = !salesInventorySyncEnabled.value
-}
-</script>
-
 <template>
   <section class="pos-setting">
     <article class="pos-setting__sync-card bento-card">
@@ -28,7 +17,7 @@ function toggleSalesInventorySync() {
           :class="{ 'is-enabled': salesInventorySyncEnabled }"
         >
           <span class="pos-setting__sync-status-dot"></span>
-          {{ salesInventorySyncEnabled ? '已開啟' : '已關閉' }}
+          {{ loading ? '讀取中' : (salesInventorySyncEnabled ? '已開啟' : '已關閉') }}
         </span>
       </header>
 
@@ -47,11 +36,69 @@ function toggleSalesInventorySync() {
           :class="{ 'is-enabled': salesInventorySyncEnabled }"
           :aria-checked="salesInventorySyncEnabled"
           :aria-label="salesInventorySyncEnabled ? '關閉銷售與庫存同步' : '開啟銷售與庫存同步'"
+          :disabled="loading || saving"
           @click="toggleSalesInventorySync"
         >
           <span class="pos-setting__sync-switch-knob"></span>
         </button>
       </div>
+
+      <p v-if="pageErrorMessage" class="pos-setting__message is-error">
+        {{ pageErrorMessage }}
+      </p>
+      <p v-else-if="successMessage" class="pos-setting__message is-success">
+        {{ successMessage }}
+      </p>
     </article>
   </section>
 </template>
+
+
+
+<script setup>
+import { onMounted, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { RefreshCw } from 'lucide-vue-next'
+import { useSystemSettingStore } from '@/stores/systemSetting.store'
+
+const systemSettingStore = useSystemSettingStore()
+const {
+  salesInventorySyncEnabled,
+  loading,
+  saving,
+  errorMessage: storeErrorMessage
+} = storeToRefs(systemSettingStore)
+
+const pageErrorMessage = ref('')
+const successMessage = ref('')
+
+async function loadSalesInventorySyncSetting() {
+  pageErrorMessage.value = ''
+  try {
+    await systemSettingStore.loadSalesInventorySyncSetting(true)
+  } catch (error) {
+    pageErrorMessage.value = storeErrorMessage.value || '讀取銷售與庫存同步設定失敗'
+  }
+}
+
+async function toggleSalesInventorySync() {
+  if (saving.value) return
+
+  pageErrorMessage.value = ''
+  successMessage.value = ''
+  try {
+    await systemSettingStore.updateSalesInventorySyncEnabled(
+      !salesInventorySyncEnabled.value
+    )
+    successMessage.value = salesInventorySyncEnabled.value
+      ? '銷售與庫存同步已開啟'
+      : '銷售與庫存同步已關閉'
+  } catch (error) {
+    pageErrorMessage.value = storeErrorMessage.value || '更新銷售與庫存同步設定失敗'
+  }
+}
+
+onMounted(loadSalesInventorySyncSetting)
+</script>
+
+

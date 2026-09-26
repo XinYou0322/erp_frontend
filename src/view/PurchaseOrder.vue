@@ -136,6 +136,8 @@
       />
     </template>
 
+    <!-- 【本次串接：採購單修改成功視窗】
+         沿用既有 ConfirmSuccessfulModal，取代瀏覽器原生成功提示。 -->
     <ConfirmSuccessfulModal
       :is-open="showUpdateSuccess"
       item-name="採購單"
@@ -156,6 +158,7 @@ import OnePurchaseOrder from '@/component/子元件/OnePurchaseOrder.vue'
 import Pagination from '@/component/子元件/Pagination.vue'
 import PurchaseOrderDetail from '@/view/PurchaseOrderDetail.vue'
 import AddPurchaseOrder from '@/component/子元件/AddPurchaseOrder.vue'
+// 【本次串接：採購單修改成功視窗】使用專案既有共用成功提示元件。
 import ConfirmSuccessfulModal from '@/component/子元件/ConfirmSuccessfulModal.vue'
 
 onMounted(() => {
@@ -232,6 +235,7 @@ const selectedPurchaseOrder = ref(null)
 const detailRefreshKey = ref(0)
 const isCancelling = ref(false)
 const isUpdating = ref(false)
+// 【本次串接：採購單修改成功視窗】控制共用成功提示元件開關。
 const showUpdateSuccess = ref(false)
 // 【新增】控制草稿送簽的忙碌狀態。
 const isSubmitting = ref(false)
@@ -423,6 +427,8 @@ async function handlePurchaseOrdersSaved() {
 
 async function submitUpdate(updateData) {
   if (isUpdating.value) return
+  // 每次送出修改前先清除上一次的成功狀態。
+  showUpdateSuccess.value = false
   const purchaseOrderId = updateData.id
 
   //id 放在 URL，不重複放進 RequestBody。
@@ -455,6 +461,7 @@ async function submitUpdate(updateData) {
     closeUpdate()
     detailRefreshKey.value += 1
     await fetchData()
+    // 【本次串接：採購單修改成功視窗】資料刷新完成後再顯示成功視窗。
     showUpdateSuccess.value = true
   } catch (error) {
     console.error('修改採購單失敗：', error)
@@ -492,6 +499,7 @@ function closeUpdate() {
 }
 
 function closeUpdateSuccess() {
+  // 確認按鈕或點擊遮罩皆使用同一個關閉流程。
   showUpdateSuccess.value = false
 }
 
@@ -593,3 +601,4 @@ function normalizePurchaseOrder(purchaseOrder) {
 
 <style>
 </style>
+

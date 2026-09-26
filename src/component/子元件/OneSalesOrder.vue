@@ -302,6 +302,11 @@ const canVoid = computed(() => {
 
 function resolveStatusInfo(status) {
   const statusMap = {
+    // 【本次新增：ECPay 測試金流】待付款訂單顯示中文狀態，且 canVoid 仍限制只有已完成才能作廢。
+    PENDING_PAYMENT: {
+      label: '待付款',
+      className: 'sales-order-inline-detail__status--default'
+    },
     COMPLETED: {
       label: '已完成',
       className: 'sales-order-inline-detail__status--completed'
@@ -409,3 +414,4 @@ function voidSalesOrder() {
   emit('void-sales-order', props.id)
 }
 </script>
+

@@ -124,6 +124,7 @@ const totalPages = ref(0)
 //const selectedStatus = ref('')
 // const startDate = ref('')
 // const endDate = ref('')
+// 【本次修改：ECPay 測試金流】讓網址預設條件能辨識待付款狀態。
 const {
   startDate,
   endDate,
@@ -131,12 +132,17 @@ const {
   showPresetHint,
   presetLabel,
   clearPreset,
-} = useQueryPreset({ COMPLETED: '已完成', VOIDED: '已作廢' })
+} = useQueryPreset({ PENDING_PAYMENT: '待付款', COMPLETED: '已完成', VOIDED: '已作廢' })
 const searchText = ref('')
 let isResettingFilters = false
 const selectedStatus = presetStatus
 
 const salesOrderStatusOptions = [
+  // 【本次新增：ECPay 測試金流】讓銷售單列表可篩選尚未收到付款成功通知的訂單。
+  {
+    label: '待付款',
+    value: 'PENDING_PAYMENT'
+  },
   {
     label: '已完成',
     value: 'COMPLETED'
