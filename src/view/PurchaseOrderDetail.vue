@@ -30,7 +30,9 @@
         <article class="purchase-order-detail__main bento-card">
           <header class="purchase-order-detail__header">
             <div>
-              <p class="purchase-order-detail__eyebrow">PURCHASE ORDER DETAIL</p>
+              <p class="purchase-order-detail__eyebrow">
+                {{ editing ? 'EDIT PURCHASE ORDER' : 'PURCHASE ORDER DETAIL' }}
+              </p>
               <h1 class="purchase-order-detail__title">
                 {{ purchaseOrderData.orderNumber || `PO-${purchaseOrderData.id}` }}
               </h1>
@@ -45,6 +47,14 @@
             </span>
           </header>
 
+          <PurchaseOrderEditForm
+            v-if="editing"
+            :purchase-order="purchaseOrderData"
+            :saving="saving"
+            @save="emit('update', $event)"
+            @cancel="emit('cancel-edit')"
+          />
+          <template v-else>
           <section class="purchase-order-detail__section">
             <h2 class="purchase-order-detail__section-title">採購單資料</h2>
 
@@ -159,24 +169,33 @@
             </p>
           </section>
 
-          <!-- 「取消／修改」。 -->
-          <footer class="purchase-order-detail__actions">
+          <!-- 【修改】依狀態顯示可用操作；已核准、已到貨不顯示操作列。 -->
+          <footer v-if="canCancel || canEdit || canSubmit" class="purchase-order-detail__actions">
             <button
               type="button"
+              v-if="canCancel"
               class="purchase-order-detail__button purchase-order-detail__button--cancel"
-              :disabled="!canCancel || cancelling"
+              :disabled="cancelling || submitting"
               :title="canCancel ? '取消這張採購單' : '此狀態不可取消'"
               @click="requestCancel"
             >{{ cancelling ? '取消中…' : '取消' }}</button>
 
             <button
               type="button"
+              v-if="canEdit"
               class="purchase-order-detail__button purchase-order-detail__button--edit"
-              :disabled="!canEdit || cancelling"
+              :disabled="cancelling || submitting"
               :title="canEdit ? '修改這張採購單' : '此狀態不可修改'"
               @click="emit('edit', purchaseOrderData)"
             >修改</button>
+            <!-- 【新增】草稿可送出簽核，交由父頁面呼叫既有後端 API。 -->
+            <button v-if="canSubmit" type="button"
+              class="purchase-order-detail__button purchase-order-detail__button--edit"
+              :disabled="cancelling || submitting"
+              @click="emit('submit', purchaseOrderData)"
+            >{{ submitting ? '送出中…' : '送出' }}</button>
           </footer>
+          </template>
         </article>
 
         <!-- 圖一右側：優先顯示 Workflow 紀錄，無 workflowId 時顯示採購狀態備援流程。 -->
@@ -224,6 +243,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import httpClient from '@/service/httpClient'
+import PurchaseOrderEditForm from '@/component/父元件/PurchaseOrderEditForm.vue'
 import {
   getWorkflowById,
   getWorkflowLogs
@@ -239,14 +259,28 @@ const props = defineProps({
     type: Object,
     default: null
   },
+  loginUserId: {
+    type: [String, Number],
+    default: null
+  },
+  editing: {
+    type: Boolean,
+    default: false
+  },
+  saving: {
+    type: Boolean,
+    default: false
+  },
+  // 【新增】送出期間停用操作，避免重複請求。
+  submitting: { type: Boolean, default: false },
   cancelling: {
     type: Boolean,
     default: false
   }
 })
 
-// back 返回列表；edit 開啟修改視窗；cancel 交由 PurchaseOrder.vue 呼叫取消 API。
-const emit = defineEmits(['back', 'edit', 'cancel'])
+// 修改模式仍保留在明細左欄，右側簽核流程不切換。
+const emit = defineEmits(['back', 'edit', 'cancel-edit', 'update', 'cancel', 'submit'])
 
 const loading = ref(true)
 const errorMessage = ref('')
@@ -317,15 +351,18 @@ const formattedTotal = computed(() => {
   )
 })
 
-const canCancel = computed(() => {
-  return !['CANCELLED', 'VOID', 'COMPLETED'].includes(normalizedStatus.value)
+const isOwner = computed(() => {
+  if (props.loginUserId == null || purchaseOrderData.value.createdByUserId == null) {
+    return false
+  }
+  return String(props.loginUserId) === String(purchaseOrderData.value.createdByUserId)
 })
 
-const canEdit = computed(() => {
-  return !['APPROVED', 'RECEIVED', 'COMPLETED', 'CANCELLED', 'VOID'].includes(
-    normalizedStatus.value
-  )
-})
+// 只有建立人本人能取消、修改或送出；狀態限制仍維持原規則。
+const canCancel = computed(() => isOwner.value
+  && ['DRAFT', 'PENDING', 'PENDING_APPROVAL', 'REJECTED'].includes(normalizedStatus.value))
+const canEdit = computed(() => canCancel.value)
+const canSubmit = computed(() => isOwner.value && normalizedStatus.value === 'DRAFT')
 
 const workflowCode = computed(() => {
   const id = workflow.value?.id ?? purchaseOrderData.value.workflowId

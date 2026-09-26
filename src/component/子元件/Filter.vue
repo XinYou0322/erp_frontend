@@ -57,6 +57,48 @@
       </select>
     </div>
 
+    <!-- 金額區間。 -->
+    <div
+      v-if="showAmountRange"
+      class="filter-group filter-group--amount-range"
+    >
+      <span class="filter-label">
+        {{ amountLabel }}
+      </span>
+
+      <div class="filter-date-range filter-amount-range">
+        <input
+          :id="`${idPrefix}-min-amount`"
+          :value="minAmount"
+          type="number"
+          min="0"
+          step="0.01"
+          inputmode="decimal"
+          class="filter-input input-glow"
+          placeholder="金額起"
+          aria-label="金額起"
+          @input="handleMinAmountInput"
+        />
+
+        <span class="filter-date-sep">
+          {{ amountSeparator }}
+        </span>
+
+        <input
+          :id="`${idPrefix}-max-amount`"
+          :value="maxAmount"
+          type="number"
+          min="0"
+          step="0.01"
+          inputmode="decimal"
+          class="filter-input input-glow"
+          placeholder="金額止"
+          aria-label="金額止"
+          @input="handleMaxAmountInput"
+        />
+      </div>
+    </div>
+
     <!-- 採購日期區間。 -->
     <div
       v-if="showDateRange"
@@ -351,6 +393,28 @@ const props = defineProps({
     default: "",
   },
 
+  // ---------- 金額區間 props ----------
+  showAmountRange: {
+    type: Boolean,
+    default: false,
+  },
+  amountLabel: {
+    type: String,
+    default: "金額",
+  },
+  minAmount: {
+    type: [Number, String],
+    default: "",
+  },
+  maxAmount: {
+    type: [Number, String],
+    default: "",
+  },
+  amountSeparator: {
+    type: String,
+    default: "至",
+  },
+
   // ---------- 日期區間 props ----------
   showDateRange: {
     type: Boolean,
@@ -455,6 +519,8 @@ const emit = defineEmits([
   // 以下事件提供類似 HeadNavBar 的多組 v-model 寫法。
   "update:statusValue",
   "update:supplierValue",
+  "update:minAmount",
+  "update:maxAmount",
   "update:startDate",
   "update:endDate",
   "update:searchValue",
@@ -508,6 +574,14 @@ function handleSupplierChange(event) {
   const selectedOption = props.supplierOptions[optionIndex];
 
   emit("update:supplierValue", selectedOption?.value ?? "");
+}
+
+function handleMinAmountInput(event) {
+  emit("update:minAmount", event.target.value);
+}
+
+function handleMaxAmountInput(event) {
+  emit("update:maxAmount", event.target.value);
 }
 
 //將日期與搜尋內容同步回父元件。
@@ -565,6 +639,8 @@ function handleReset() {
   //從這裡修改
   emit("update:statusValue", resetFilters.status ?? "");
   emit("update:supplierValue", resetFilters.supplier ?? "");
+  emit("update:minAmount", resetFilters.minAmount ?? "");
+  emit("update:maxAmount", resetFilters.maxAmount ?? "");
   emit("update:startDate", resetFilters.dateFrom ?? "");
   emit("update:endDate", resetFilters.dateTo ?? "");
   emit("update:searchValue", resetFilters.keyword ?? "");

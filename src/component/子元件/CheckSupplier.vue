@@ -30,7 +30,12 @@
         </section>
       </article>
       <aside>
-        <SupplierNote :key="`${supplier.id}-${noteRefreshKey}`" :supplier="supplier" :visible="true" />
+        <SupplierNote
+          :key="`${supplier.id}-${noteRefreshKey}`"
+          :supplier="supplier"
+          :visible="true"
+          :login-user-id="authStore.currentUser?.id ?? null"
+        />
       </aside>
     </div>
   </section>

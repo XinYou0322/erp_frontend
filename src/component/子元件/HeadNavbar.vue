@@ -11,6 +11,17 @@
       <span v-if="showTotal" class="head-navbar__count"> {{ total }}</span>
     </button>
     
+      <!-- 【新增】自己頁籤由父元件傳入開關與標題，點擊沿用 change-tab 事件。 -->
+      <button
+        v-if="showMine"
+        type="button"
+        class="head-navbar__button"
+        :class="{ 'is-active': activeTab === 'mine' }"
+        @click="changeTab('mine')"
+      >
+        {{ mineTitle }}
+      </button>
+
       <!-- 【新增】POS 商品種類 -->
     <button
       v-if="showCategories"
@@ -70,7 +81,20 @@
     class="head-navbar__search-input"
     >
     
-  </div>
+    </div>
+
+    <!-- 設定按鈕由使用頁面決定是否顯示。 -->
+    <button
+      v-if="showSettings"
+      type="button"
+      class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--outline-variant)] bg-transparent p-0 text-[var(--on-surface-variant)] transition hover:border-[var(--primary)] hover:bg-[var(--surface-container-high)] hover:text-[var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+      :title="settingsTitle"
+      :aria-label="settingsTitle"
+      @click="openSettings"
+    >
+      <Settings :size="20" :stroke-width="2" aria-hidden="true" />
+    </button>
+
   <!-- 狀態篩選 -->
   <select
   v-if="showStatus"
@@ -149,6 +173,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { Settings } from 'lucide-vue-next'
 
 const props = defineProps({
   //左一按鈕 
@@ -192,6 +217,16 @@ const props = defineProps({
     default: null
   },
 
+  // 【新增】預設不顯示，其他使用 HeadNavbar 的頁面維持原本行為。
+  showMine: {
+    type: Boolean,
+    default: false
+  },
+  // 【新增】由父元件注入自己頁籤的顯示文字。
+  mineTitle: {
+    type: String,
+    default: '自己'
+  },
   //新增
   //是否顯示
   showAdd: {
@@ -231,6 +266,15 @@ const props = defineProps({
   searchPlaceholder: {
     type: String,
     default: '搜尋...'
+  },
+  // 是否顯示設定按鈕
+  showSettings: {
+    type: Boolean,
+    default: false
+  },
+  settingsTitle: {
+    type: String,
+    default: '設定'
   },
 
 //-------狀態
@@ -286,7 +330,7 @@ pageSizeOptions: {
 })
 
 const emit = defineEmits([
-  // 切換總覽 / 新增
+  // 【修改】切換總覽 / 自己 / 新增，傳出 overview / mine / add。
   'change-tab',
   //切換商品種類
   'change-category',
@@ -303,7 +347,9 @@ const emit = defineEmits([
 
   'toggle-filter',
 
-  'open-sales-order-record'
+  'open-sales-order-record',
+
+  'open-settings'
 
 ])
 
@@ -376,6 +422,10 @@ function toggleFilter() {
 //HeadNavbar 只負責發出事件，由 pos.vue 決定要開哪個視窗。
 function openSalesOrderRecord() {
   emit('open-sales-order-record')
+}
+
+function openSettings() {
+  emit('open-settings')
 }
 
 </script>

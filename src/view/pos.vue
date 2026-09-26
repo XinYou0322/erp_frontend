@@ -6,19 +6,24 @@
                 :show-total="true"
                 :show-add="false"
                 :show-categories="true"
+                :use-category-overview="true"
                 :category-options="categoryOptionsWithCount"
                 :active-category="activeCategory"
                 :show-sales-order-record="true"
                 sales-order-record-title="近期銷售"
                 :show-search="true"
+                :show-settings="true"
                 v-model:searchValue="searchValue"
                 search-placeholder="搜尋商品..."
                 @change-tab="changeHeadTab"
                 @change-category="changeCategory"
-                @open-sales-order-record="openRecentSales"/>
+                @open-sales-order-record="openRecentSales"
+                @open-settings="openSettings"/>
+
+    <PosSetting v-if="showPosSettings" />
 
     <!-- POS 主內容：左側商品區 + 右側明細區 -->
-    <div class="pos-layout">
+    <div v-else class="pos-layout">
       <section class="pos-layout__products">
         <div class="pos-product-grid">
         <!-- 商品 API 尚未完成時，顯示載入提示 -->
@@ -44,7 +49,7 @@
           </p>
         <template v-else>            
             <Card 
-              v-for="product in filteredProducts"
+              v-for="product in paginatedProducts"
               :key="product.id"
               :name="product.name"
               :image="getProductImageSrc(product)"
@@ -54,6 +59,12 @@
               @decrease="decreaseProduct(product)"/>
         </template>
         </div>
+
+        <Pagination
+          :current-page="productCurrentPage"
+          :total-pages="productTotalPages"
+          @change-page="changeProductPage"
+        />
       </section>
       <RecentSalesPanel
         v-if="showRecentSales"
@@ -86,19 +97,45 @@
       />
     </div>
 
+    <!-- 【本次新增：ECPay 成功視窗】沿用既有成功 Modal，付款完成導回 POS 後顯示。 -->
+    <ConfirmSuccessfulModal
+      :is-open="ecpaySuccessModalOpen"
+      title="ECPay 交易成功"
+      :message="ecpaySuccessMessage"
+      @confirm="closeEcpaySuccessModal"
+      @cancel="closeEcpaySuccessModal"
+    />
+
   </main>
 </template>
 <script setup>
-import { ref, computed ,onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import httpClient from '@/service/httpClient'
 import Card from '@/component/子元件/Card.vue'
 import HeadNavBar from '@/component/子元件/HeadNavbar.vue'
 import AllRightCard from '@/component/子元件/AllRightCard.vue'
 import RecentSalesPanel from '@/component/父元件/RecentSalesPanel.vue'
+import PosSetting from '@/component/父元件/PosSetting.vue'
+import Pagination from '@/component/子元件/Pagination.vue'
+// 【本次新增：ECPay 成功視窗】使用專案現有成功提示元件，不使用瀏覽器 alert。
+import ConfirmSuccessfulModal from '@/component/子元件/ConfirmSuccessfulModal.vue'
 
 //用於「查看全部銷售單」跳轉到完整銷售單頁面
 const router = useRouter()
+// 【本次新增：ECPay 測試金流】讀取綠界導回 POS 時附帶的付款結果。
+const route = useRoute()
+const showPosSettings = ref(false)
+
+// 點擊導覽列齒輪後切換 POS 設定區。
+function openSettings() {
+  showPosSettings.value = !showPosSettings.value
+
+  // 【本次修改：POS 設定畫面導覽】開啟設定時先關閉近期銷售，避免兩個畫面狀態重疊。
+  if (showPosSettings.value) {
+    showRecentSales.value = false
+  }
+}
 
 const categories = ref([])
 const activeCategory = ref(null)
@@ -111,12 +148,26 @@ const loadingProducts = ref(false)
 const productError = ref('')
 //暫存每項商品目前選擇的數量；key 是 product.id
 const productQuantities = ref({})
+const productCurrentPage = ref(1)
+const PRODUCTS_PER_PAGE = 10
 
 //需要的付款方式與畫面送出狀態
 const paymentMethod = ref('')
 const checkoutLoading = ref(false)
 const checkoutMessage = ref('')
 const checkoutError = ref('')
+// 【本次新增：ECPay 成功視窗】保存導回後的 Modal 狀態與銷售單號。
+const ecpaySuccessModalOpen = ref(false)
+const ecpaySuccessOrderNumber = ref('')
+const ecpaySuccessMessage = computed(() => {
+  return ecpaySuccessOrderNumber.value
+    ? `銷售單號：${ecpaySuccessOrderNumber.value}`
+    : '付款結果已確認，銷售單已完成。'
+})
+
+function closeEcpaySuccessModal() {
+  ecpaySuccessModalOpen.value = false
+}
 
 //近期銷售：視窗、API 分頁與搜尋狀態
 const showRecentSales = ref(false)
@@ -129,8 +180,6 @@ const recentSalesDate = ref('')
 
 const RECENT_SALES_PAGE_SIZE = 5
 
-const TEST_LOGIN_USER_ID = 1
-
 //瀏覽器本地日期轉成後端
 function getTodayText() {
   const today = new Date()
@@ -142,6 +191,8 @@ function getTodayText() {
 }
 //點擊 HeadNavbar 的「近期銷售」時開啟視窗並載入今日第 1 頁。
 async function openRecentSales() {
+  // 【本次修改：POS 設定畫面導覽】從設定畫面點「近期銷售」時，先回到 POS 主內容。
+  showPosSettings.value = false
   showRecentSales.value = true
   recentSalesKeyword.value = ''
   recentSalesDate.value = getTodayText()
@@ -312,12 +363,48 @@ const filteredProducts = computed(() => {
   })
 })
 
+// POS 商品只在前端分頁，後端仍一次回傳完整啟用商品清單。
+const productTotalPages = computed(() => {
+  return Math.ceil(filteredProducts.value.length / PRODUCTS_PER_PAGE)
+})
+
+const paginatedProducts = computed(() => {
+  const startIndex = (productCurrentPage.value - 1) * PRODUCTS_PER_PAGE
+  return filteredProducts.value.slice(
+    startIndex,
+    startIndex + PRODUCTS_PER_PAGE
+  )
+})
+
+function changeProductPage(page) {
+  if (page < 1 || page > productTotalPages.value) return
+  productCurrentPage.value = page
+}
+
+// 搜尋或切換分類後從第 1 頁開始，避免停留在已不存在的頁碼。
+watch([searchValue, activeCategory], () => {
+  productCurrentPage.value = 1
+})
+
+watch(productTotalPages, (totalPages) => {
+  if (totalPages === 0) {
+    productCurrentPage.value = 1
+  } else if (productCurrentPage.value > totalPages) {
+    productCurrentPage.value = totalPages
+  }
+})
+
 function changeCategory(categoryId) {
- activeCategory.value = categoryId
+  // 【本次修改：POS 設定畫面導覽】
+  // 點總覽或任一商品分類時，自動離開設定畫面並回到商品列表。
+  showPosSettings.value = false
+  showRecentSales.value = false
+  activeCategory.value = categoryId
 }
 
 function changeHeadTab(tab) {
   if (tab === 'overview') {
+    // changeCategory(null) 會同時切回商品列表並選取總覽。
     changeCategory(null)
   }
 }
@@ -349,6 +436,63 @@ function clearCheckoutFeedback() {
   checkoutMessage.value = ''
   checkoutError.value = ''
 }
+// 【本次新增：ECPay 測試金流】
+// ECPay AioCheckOut 規定由瀏覽器以 form-urlencoded POST 導向付款頁。
+function submitEcpayForm(checkoutData) {
+  const actionUrl = new URL(checkoutData?.actionUrl || '')
+
+  // 限定只能送往綠界測試站，避免後端回傳異常網址造成表單資料外洩。
+  if (
+    actionUrl.protocol !== 'https:' ||
+    actionUrl.hostname !== 'payment-stage.ecpay.com.tw'
+  ) {
+    throw new Error('ECPay 測試付款網址不正確')
+  }
+
+  const form = document.createElement('form')
+  form.method = 'POST'
+  form.action = actionUrl.toString()
+  form.style.display = 'none'
+
+  Object.entries(checkoutData.formFields || {}).forEach(([name, value]) => {
+    const input = document.createElement('input')
+    input.type = 'hidden'
+    input.name = name
+    input.value = String(value ?? '')
+    form.appendChild(input)
+  })
+
+  document.body.appendChild(form)
+  form.submit()
+}
+
+// 【本次新增：ECPay 測試金流】顯示綠界導回結果，再移除網址上的一次性查詢參數。
+async function showEcpayReturnMessage() {
+  const result = String(route.query.ecpay || '')
+  if (!result) return
+
+  const orderNumber = String(route.query.orderNumber || '')
+  if (result === 'success') {
+    checkoutMessage.value = orderNumber
+      ? `ECPay 測試付款成功，銷售單號：${orderNumber}`
+      : 'ECPay 測試付款成功'
+
+    // 【本次修改：ECPay 成功視窗】回到 POS 後立即開啟既有成功 Modal。
+    ecpaySuccessOrderNumber.value = orderNumber
+    ecpaySuccessModalOpen.value = true
+  } else if (result === 'pending') {
+    checkoutError.value = '這是 ECPay 模擬付款通知，銷售單仍維持待付款狀態'
+  } else if (result === 'cancel') {
+    checkoutError.value = orderNumber
+      ? `已離開 ECPay 付款頁，銷售單 ${orderNumber} 尚未付款`
+      : '已離開 ECPay 付款頁，尚未完成付款'
+  } else {
+    checkoutError.value = 'ECPay 付款未完成或驗證失敗'
+  }
+
+  await router.replace({ path: route.path, query: {} })
+}
+
 //建立銷售單
 async function checkoutOrder(items) {
   if (checkoutLoading.value || items.length === 0) {
@@ -377,24 +521,22 @@ async function checkoutOrder(items) {
   }
 
   try {
-    const response = await httpClient.post(
-      '/api/SalesOrder/add',
-      requestBody,
-      {
-        params: {
-          loginUserId: TEST_LOGIN_USER_ID
-        }
-      } 
-    )
+    // 【本次修改：ECPay 測試金流】現金保留原本 API；信用卡與行動支付才建立 ECPay 表單。
+    if (paymentMethod.value === 'CASH') {
+      const response = await httpClient.post('/api/SalesOrder/add', requestBody)
+      const orderNumber = response.data?.orderNumber
 
-    const orderNumber = response.data?.orderNumber
+      checkoutMessage.value = orderNumber
+        ? `結帳成功，銷售單號：${orderNumber}`
+        : '結帳成功'
+      productQuantities.value = {}
+      return
+    }
 
-    checkoutMessage.value = orderNumber
-      ? `結帳成功，銷售單號：${orderNumber}`
-      : '結帳成功'
-    console.log("成功")
-    // 建立銷售單成功後才清空商品；失敗時保留明細供使用者重試
+    const response = await httpClient.post('/api/ecpay/checkout', requestBody)
+    // 後端已建立待付款銷售單，清空本機購物車後送往綠界測試付款頁。
     productQuantities.value = {}
+    submitEcpayForm(response.data)
   } catch (error) {
     console.error('建立銷售單失敗', error)
     checkoutError.value = getCheckoutErrorMessage(error)
@@ -404,6 +546,8 @@ async function checkoutOrder(items) {
 }
 
 onMounted(async () => {
+  // 【本次新增：ECPay 測試金流】先處理付款頁導回訊息，再載入 POS 基本資料。
+  await showEcpayReturnMessage()
   await Promise.all([
     loadCategories(),
     loadProducts()
@@ -423,3 +567,6 @@ onMounted(async () => {
   color: #ef4444;
 }
 </style>
+
+
+

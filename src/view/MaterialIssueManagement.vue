@@ -552,11 +552,13 @@ const getActionLabel = (action) => {
     STOCK_IN:
       '進貨',
 
+    // 【本次新增：銷售與庫存同步】補上銷售自動扣庫存紀錄的中文名稱。
     SALE_DEDUCT:
       '銷售扣減',
 
-    SALE_RETURN:
-      '銷售作廢回補',
+    // 【本次新增：銷售與庫存同步】補上銷售單報廢回補紀錄的中文名稱。
+    SALE_RESTORE:
+      '銷售報廢回補',
 
     WASTE:
       '耗損',
@@ -591,11 +593,13 @@ const getActionStatus = (action) => {
     // 庫存增加 → 綠色
     case 'STOCK_IN':
     case 'ADJUSTMENT_IN':
-    case 'SALE_RETURN':
+    // 【本次新增：銷售與庫存同步】銷售報廢回補屬於庫存增加，使用正常／綠色狀態。
+    case 'SALE_RESTORE':
       return 'normal'
 
 
     // 正常扣庫 / 人工扣庫 → 黃色
+    // 【本次新增：銷售與庫存同步】銷售扣減屬於正常出庫，使用低庫存／黃色狀態。
     case 'SALE_DEDUCT':
     case 'MANUAL_USE':
     case 'ADJUSTMENT_OUT':
