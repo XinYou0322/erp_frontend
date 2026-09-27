@@ -1189,10 +1189,7 @@ const handleResetDefaultPermissions = () => {
               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-hidden focus:border-emerald-500 cursor-pointer"
             >
               <option value="總管理處">總管理處</option>
-              <option value="營運與行銷部">營運與行銷部</option>
-              <option value="生產研發部">生產研發部</option>
               <option value="門市收銀課">門市收銀課</option>
-              <option value="外部審計顧問">外部審計顧問</option>
             </select>
           </div>
         </div>
