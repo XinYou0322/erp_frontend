@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
 import { useAuthStore } from "../stores/auth.store";
 import { useUIStore } from "../stores/ui.store";
 import { UserProfile, UserRole } from "../types";
@@ -8,10 +9,28 @@ import BaseBadge from "../component/子元件/BaseBadge.vue";
 import BaseModal from "../component/子元件/BaseModal.vue";
 import { useNotificationStore } from "../stores/notification.store";
 import { getDefaultAvatar } from "../data/defaultAvatars";
+// 【本次新增：登入頁品牌顯示】與側邊欄使用同一份系統設定，確保品牌名稱一致
+import {
+  resolveBackendAssetUrl,
+  useSystemSettingStore,
+} from "../stores/systemSetting.store";
+import { CupSoda } from "lucide-vue-next";
 
 const router = useRouter();
 const authStore = useAuthStore();
 const uiStore = useUIStore();
+
+// 【本次新增：登入頁品牌顯示】網站名稱／圖示改由系統設定讀取，不再寫死
+const systemSettingStore = useSystemSettingStore();
+const { siteName, siteLogoUrl } = storeToRefs(systemSettingStore);
+const brandingLogoLoadFailed = ref(false);
+const resolvedBrandLogoUrl = computed(() =>
+  resolveBackendAssetUrl(siteLogoUrl.value),
+);
+
+watch(siteLogoUrl, () => {
+  brandingLogoLoadFailed.value = false;
+});
 
 // 統一具備強型別之展示用使用者清單，防止 TS 推論為 never[]
 const displayUsers = computed<UserProfile[]>(() => (authStore.users || []) as UserProfile[]);
@@ -65,8 +84,15 @@ const resolveBackendRoleLevel = (selectedRole: UserRole): number => {
 };
 
 onMounted(async () => {
-  
-  await authStore.fetchPublicUsersForLogin();
+  // 【本次新增：登入頁品牌顯示】
+  // 登入前即取得系統設定的網站名稱／圖示；即使品牌讀取失敗也不影響可登入帳號清單，
+  // 因此兩者用 allSettled 并行處理，品牌失敗時保留 store 的預設名稱。
+  await Promise.allSettled([
+    systemSettingStore
+      .loadBrandingSettings()
+      .catch((error) => console.error("讀取登入頁網站設定失敗：", error)),
+    authStore.fetchPublicUsersForLogin(),
+  ]);
 });
 
 // Handle Form Submit
@@ -234,14 +260,17 @@ const handleRegisterSubmit = async () => {
             class="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center p-2 border border-emerald-500/30 shadow-lg shadow-emerald-950/40"
           >
             <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPSzRjOVgMOfqYtdalxwMql8EMJ5XUl4edCD4WRoM0JOH6kNYGykoTj68TsWZ7S0coZa5mqtzzAvk-7KVvWxKipQaIrVt8DIHhs-ovm13kLY-T31xn95nORxIK-gfKUnb5XCGJTqc8REKUyctrzoJAn44wI9rxRT9WDSbRg65dRCBa20ep0CMwI7nFESqsh-lH0fWBuxag5aWaj2ihOCAjCsGHmFF4ED8H-2aOubZVrC-mIkdWPA"
-              alt="Logo"
+              v-if="resolvedBrandLogoUrl && !brandingLogoLoadFailed"
+              :src="resolvedBrandLogoUrl"
+              alt="網站圖示"
               class="w-full h-full object-contain"
+              @error="brandingLogoLoadFailed = true"
             />
+            <CupSoda v-else class="h-7 w-7 text-emerald-400" />
           </div>
           <div>
             <h1 class="text-lg font-bold text-white tracking-tight">
-              Humanist ERP
+              {{ siteName }}
             </h1>
             <p
               class="text-[11px] text-emerald-400 font-semibold tracking-wider"
@@ -533,7 +562,7 @@ const handleRegisterSubmit = async () => {
         class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500"
       >
         <span>🔒 傳輸採用 TLS 1.3 端對端加密保護</span>
-        <span>Humanist ERP System</span>
+        <span>{{ siteName }} System</span>
       </div>
     </div>
 
