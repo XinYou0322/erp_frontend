@@ -1,5 +1,7 @@
 <template >
-    <div class="supplier-page">
+    <div class="supplier-page space-y-6">
+    <!-- 【本次修改：管理頁垂直間距】
+         對齊商品 BOM 管理頁，頂部導覽／篩選列與下方內容統一間隔 1.5rem（24px）。 -->
         <Filter
       class="purchase-order-filter"
       id-prefix="purchase-order"
@@ -460,3 +462,6 @@ function resolveErrorMessage(error, fallbackMessage) {
 </script>
 <style >
 </style>
+
+
+s
