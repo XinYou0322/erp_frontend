@@ -1435,7 +1435,8 @@
 /* ---------- 主內容：左商品 / 右明細 ---------- */
 .pos-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  /* 【本次修改：POS 左右欄寬】縮小左側商品區，右側明細放寬以完整顯示客製細項。 */
+  grid-template-columns: minmax(0, 1fr) 400px;
   gap: 1rem;
   align-items: start;
   width: 100%;
@@ -1882,7 +1883,8 @@
 /* ---------- POS RWD ---------- */
 @media (max-width: 1080px) {
   .pos-layout {
-    grid-template-columns: minmax(0, 1fr) 280px;
+    /* 【本次修改：POS 左右欄寬】中型畫面仍保留足夠的明細寬度。 */
+    grid-template-columns: minmax(0, 1fr) 340px;
   }
 }
 
@@ -3598,3 +3600,350 @@
   }
 }
 
+/* =====================================================================
+ * 【本次新增：POS 商品客製選擇畫面】
+ * 共用 bento-card 與既有主題變數；以下僅補上原 index.css 沒有的
+ * 糖度／冰塊／Size 選項、數量鍵盤及操作按鈕版面。
+ * ===================================================================== */
+/* 【本次新增：POS 商品選擇畫面樣式】沿用 ERP 暗色、圓角、細框及主色高亮。 */
+.pos-selection-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 620px;
+  padding: 1.25rem;
+  overflow: hidden;
+}
+
+/* 【本次新增：POS 客製細項】第一欄改為商品名稱與客製內容的上下排列。 */
+.pos-detail__item-info {
+  display: grid;
+  gap: 0.22rem;
+  min-width: 0;
+}
+
+/* 糖度、冰塊與 Size 使用較小、較淡的文字，避免搶過商品名稱。 */
+.pos-detail__item-options {
+  display: block;
+  min-width: 0;
+  overflow: visible;
+  color: var(--on-surface-variant);
+  font-size: 0.66rem;
+  font-weight: 650;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.pos-selection-panel__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 1.25rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.pos-selection-panel__catalog {
+  min-width: 0;
+}
+
+.pos-selection-panel__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.2rem 0 1rem;
+  border-bottom: 1px solid var(--outline);
+}
+
+.pos-selection-panel__eyebrow {
+  margin: 0 0 0.25rem;
+  color: var(--secondary);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+}
+
+.pos-selection-panel__title {
+  margin: 0;
+  color: var(--on-surface);
+  font-size: 1.15rem;
+  font-weight: 850;
+}
+
+.pos-selection-panel__count,
+.pos-selection-group__count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.8rem;
+  height: 1.8rem;
+  padding: 0 0.55rem;
+  border: 1px solid var(--outline);
+  border-radius: 999px;
+  color: var(--on-surface-variant);
+  background: var(--surface-container-high);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.pos-selection-panel__groups {
+  display: grid;
+  gap: 1.15rem;
+  max-height: 520px;
+  padding: 1rem 0.25rem 0.5rem 0;
+  overflow-y: auto;
+}
+
+.pos-selection-group {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.pos-selection-group__header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.pos-selection-group__title {
+  margin: 0;
+  color: var(--on-surface);
+  font-size: 0.86rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.pos-selection-group__line {
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, var(--outline), transparent);
+}
+
+.pos-selection-group__count {
+  min-width: 1.55rem;
+  height: 1.55rem;
+  padding: 0 0.45rem;
+  font-size: 0.67rem;
+}
+
+.pos-selection-group__options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.65rem;
+}
+
+.pos-selection-option {
+  display: grid;
+  gap: 0.25rem;
+  min-height: 66px;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--outline);
+  border-radius: 0.8rem;
+  color: var(--on-surface);
+  background: rgba(9, 13, 22, 0.78);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease,
+    background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.pos-selection-option:hover {
+  transform: translateY(-1px);
+  border-color: rgba(16, 185, 129, 0.48);
+  background: var(--surface-container-high);
+}
+
+.pos-selection-option.is-selected {
+  border-color: rgba(16, 185, 129, 0.72);
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.24),
+    rgba(0, 210, 255, 0.1)
+  );
+  box-shadow: 0 8px 22px -12px rgba(16, 185, 129, 0.9);
+}
+
+.pos-selection-option__name {
+  overflow: hidden;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pos-selection-option__description {
+  color: var(--secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.pos-selection-panel__empty {
+  display: grid;
+  place-items: center;
+  min-height: 260px;
+  margin: 0;
+  color: var(--on-surface-variant);
+}
+
+.pos-selection-keypad {
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  min-height: 470px;
+  padding: 1rem;
+  border: 1px solid var(--outline);
+  border-radius: 1.4rem;
+  background:
+    linear-gradient(160deg, rgba(30, 41, 59, 0.9), rgba(9, 13, 22, 0.96));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.pos-selection-keypad__summary {
+  min-height: 106px;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--outline);
+}
+
+.pos-selection-keypad__label {
+  margin: 0 0 0.35rem;
+  color: var(--on-surface-variant);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.pos-selection-keypad__product {
+  margin: 0;
+  overflow: hidden;
+  color: var(--on-surface);
+  font-size: 1rem;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pos-selection-keypad__price {
+  margin: 0.45rem 0 0;
+  color: var(--secondary);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.pos-selection-keypad__quantity {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.85rem 0;
+  color: var(--on-surface-variant);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.pos-selection-keypad__quantity input {
+  width: 100%;
+  height: 56px;
+  padding: 0 0.85rem;
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  border-radius: 0.8rem;
+  outline: none;
+  color: var(--on-surface);
+  background: rgba(2, 6, 23, 0.78);
+  font-size: 1.55rem;
+  font-weight: 900;
+  text-align: right;
+}
+
+.pos-selection-keypad__keys {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.55rem;
+  flex: 1;
+}
+
+.pos-selection-keypad__key {
+  min-height: 50px;
+  padding: 0;
+  border: 1px solid var(--outline);
+  border-radius: 0.72rem;
+  color: var(--on-surface);
+  background: var(--surface-container-high);
+  font-size: 0.95rem;
+  font-weight: 850;
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.pos-selection-keypad__key:hover {
+  transform: translateY(-1px);
+  border-color: rgba(16, 185, 129, 0.55);
+  background: var(--surface-container-highest);
+}
+
+.pos-selection-keypad__key--utility {
+  color: var(--secondary);
+  font-size: 0.78rem;
+}
+
+.pos-selection-panel__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1.1rem;
+}
+
+.pos-selection-panel__button {
+  min-width: 88px;
+  padding: 0.7rem 1.1rem;
+  border-radius: 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 850;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease,
+    box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+.pos-selection-panel__button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.pos-selection-panel__button--secondary {
+  border: 1px solid var(--outline);
+  color: var(--on-surface);
+  background: var(--surface-container-high);
+}
+
+.pos-selection-panel__button--primary {
+  border: 1px solid rgba(16, 185, 129, 0.55);
+  color: var(--on-primary);
+  background: linear-gradient(135deg, var(--primary), var(--primary-container));
+  box-shadow: 0 9px 22px -10px rgba(16, 185, 129, 0.85);
+}
+
+.pos-selection-panel__button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+@media (max-width: 1120px) {
+  .pos-selection-panel__body {
+    grid-template-columns: minmax(0, 1fr) 235px;
+  }
+}
+
+@media (max-width: 760px) {
+  .pos-selection-panel {
+    min-height: auto;
+  }
+
+  .pos-selection-panel__body {
+    grid-template-columns: 1fr;
+  }
+
+  .pos-selection-panel__groups {
+    max-height: none;
+  }
+
+  .pos-selection-keypad {
+    width: 100%;
+    min-height: 440px;
+  }
+}
