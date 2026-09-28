@@ -13,6 +13,16 @@ const props = defineProps({
 });
 
 const actionLabel = { SUBMIT: "送出申請", APPROVE: "核准", REJECT: "駁回" };
+
+function formatDateTime(dateTime) {
+  return new Date(dateTime).toLocaleString("zh-TW", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 </script>
 
 <template>
@@ -29,7 +39,7 @@ const actionLabel = { SUBMIT: "送出申請", APPROVE: "核准", REJECT: "駁回
           <span class="timeline__action">{{
             actionLabel[log.action] || log.action
           }}</span>
-          <span class="timeline__time">{{ log.createdAt }}</span>
+          <span class="timeline__time">{{ formatDateTime(log.createdAt) }}</span>
         </div>
         <p class="timeline__remark">{{ log.remark }}</p>
         <span class="timeline__operator">{{ log.operator }}</span>
@@ -44,7 +54,9 @@ const actionLabel = { SUBMIT: "送出申請", APPROVE: "核准", REJECT: "駁回
             >等待審核</span
           >
         </div>
-        <span class="timeline__operator">{{ pendingNext }}</span>
+        <span class="timeline__operator timeline__operator--pending">
+          {{ pendingNext }}
+        </span>
       </div>
     </li>
   </ol>
@@ -83,21 +95,24 @@ const actionLabel = { SUBMIT: "送出申請", APPROVE: "核准", REJECT: "駁回
 }
 
 .timeline__dot {
+  /* 已完成 */
   position: absolute;
   left: 0;
   top: 4px;
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--wf-ink);
 }
 
 .timeline__item--approve .timeline__dot {
-  background: var(--wf-seal);
+   background: #10b981;
+   box-shadow: 0 0 8px rgba(16,185,129,.45);
 }
 
 .timeline__item--reject .timeline__dot {
-  background: var(--wf-rejected);
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239,68,68,.35);
 }
 
 .timeline__dot--hollow {
@@ -131,6 +146,21 @@ const actionLabel = { SUBMIT: "送出申請", APPROVE: "核准", REJECT: "駁回
   font-weight: 500;
 }
 
+.timeline__item--waiting .timeline__action {
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.timeline__item--waiting .timeline__dot {
+  background: #22d3ee;
+  box-shadow: 0 0 10px rgba(34,211,238,.45);
+}
+
+.timeline__operator--pending {
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
 .timeline__time {
   font-size: 11.5px;
   font-family: var(--wf-font-mono);
@@ -149,4 +179,6 @@ const actionLabel = { SUBMIT: "送出申請", APPROVE: "核准", REJECT: "駁回
   font-size: 12px;
   color: var(--wf-ink-faint);
 }
+
+
 </style>

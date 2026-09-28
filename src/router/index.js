@@ -33,6 +33,21 @@ const routes = [
   name: "revenue-detail",
   component: () => import("../view/RevenueDetailView.vue"), 
  },
+ {
+  path: '/dashboard/order-value-analysis',
+  name: 'OrderValueAnalysis',
+  component: () => import('@/view/OrderValueAnalysisView.vue'),
+  },
+   {
+  path: '/dashboard/cost',
+  name: 'cost-detail',
+  component: () => import('@/view/CostDetail.vue'),
+  },
+  {
+  path: '/dashboard/profit',
+  name: 'profit-detail',
+  component: () => import('@/view/ProfitDetail.vue'),
+  },
   {
     path: "/admin",
     name: "admin",

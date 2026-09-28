@@ -203,7 +203,7 @@ onMounted(loadWorkflows);
         <h1 class="dashboard__title">簽核中心</h1>
         <p class="dashboard__subtitle">管理請假與採購單據的簽核流程</p>
       </div>
-      <button type="button" class="dashboard__export">匯出報表</button>
+      <!-- <button type="button" class="dashboard__export">匯出報表</button> -->
     </header>
 
     <section class="dashboard__stats">
