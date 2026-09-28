@@ -452,6 +452,7 @@ export const useAuthStore = defineStore("auth", () => {
       name: u.name,
       username: u.username,
       email: u.email,
+      salary: u.salary != null ? Number(u.salary) : null,
       avatar: normalizeAvatarUrl(u.avatar || getDefaultAvatar()),
       role: mapRoleLevelToSystemRoleKey(u.roleLevel),
       roleName: mapRoleLevelToName(u.roleLevel),
@@ -540,6 +541,10 @@ export const useAuthStore = defineStore("auth", () => {
       name: userDto.name,
       email: userDto.email,
       roleLevel: Number(userDto.roleLevel) || 1,
+      salary:
+        userDto.salary !== undefined && userDto.salary !== "" && userDto.salary !== null
+          ? Number(userDto.salary)
+          : null,
       avatar: userDto.avatar || "",
     };
 
