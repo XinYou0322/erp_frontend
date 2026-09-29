@@ -198,6 +198,7 @@ const userForm = ref<{
   email: string;
   password?: string;
   role: UserRole;
+  salary?: number | string;
   department: string;
   phone: string;
   avatar: string;
@@ -206,6 +207,7 @@ const userForm = ref<{
   email: "",
   password: "",
   role: "employee",
+  salary: "",
   department: "門市收銀課",
   phone: "",
   avatar: "",
@@ -264,6 +266,7 @@ const handleOpenAddUser = () => {
     email: "",
     password: "Test1234!",
     role: "employee",
+    salary: "",
     department: "門市收銀課",
     phone: "+886 9",
     avatar: defaultAvatars[Math.floor(Math.random() * defaultAvatars.length)],
@@ -274,6 +277,12 @@ const handleOpenAddUser = () => {
 const handleSaveNewUser = async () => {
   if (!userForm.value.name || !userForm.value.email) {
     uiStore.showToast("請完整填寫姓名與電子郵件", "error");
+    return;
+  }
+
+  // 非最高權限防護驗證
+  if (!authStore.isAdmin && userForm.value.salary) {
+    uiStore.showToast("權限不足，僅系統最高權限管理者可填寫薪資！", "warning");
     return;
   }
 
@@ -290,11 +299,12 @@ const handleSaveNewUser = async () => {
     password: userForm.value.password || "Test1234!",
     role: userForm.value.role,
     roleLevel: targetRoleLevel, // ✨ 欄位已更換為 roleLevel
+    salary: authStore.isAdmin ? userForm.value.salary : null,
     department: userForm.value.department,
     phone: userForm.value.phone,
     avatar: userForm.value.avatar,
-});
- uiStore.showToast(`已成功開立新帳號「${userForm.value.name}」！`);
+  });
+  uiStore.showToast(`已成功開立新帳號「${userForm.value.name}」！`);
   isAddUserModalOpen.value = false;
 };
 
@@ -1165,7 +1175,7 @@ const handleResetDefaultPermissions = () => {
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label class="block text-slate-400 mb-1 font-semibold"
               >指派系統角色</label
@@ -1189,11 +1199,35 @@ const handleResetDefaultPermissions = () => {
               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-hidden focus:border-emerald-500 cursor-pointer"
             >
               <option value="總管理處">總管理處</option>
-              <option value="營運與行銷部">營運與行銷部</option>
-              <option value="生產研發部">生產研發部</option>
               <option value="門市收銀課">門市收銀課</option>
-              <option value="外部審計顧問">外部審計顧問</option>
             </select>
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-slate-400 font-semibold"
+                >薪資 (NTD)</label
+              >
+              <span
+                v-if="!authStore.isAdmin"
+                class="text-[10px] text-rose-400 font-medium"
+              >
+                最高權限限制
+              </span>
+            </div>
+            <input
+              v-model.number="userForm.salary"
+              type="number"
+              min="0"
+              step="100"
+              :placeholder="authStore.isAdmin ? '例如：36000' : '無填寫權限'"
+              :disabled="!authStore.isAdmin"
+              class="w-full bg-slate-950 border rounded-xl px-3 py-2 text-white font-data-mono focus:outline-hidden"
+              :class="
+                authStore.isAdmin
+                  ? 'border-slate-800 focus:border-emerald-500'
+                  : 'border-slate-800/50 bg-slate-900/50 text-slate-500 cursor-not-allowed'
+              "
+            />
           </div>
         </div>
 
