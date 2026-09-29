@@ -6,6 +6,8 @@ const props = defineProps({
   leave: { type: Object, required: true },
 });
 
+const formatHM = (time) => time?.substring(0, 5) || "";
+
 const emit = defineEmits(["click"]);
 
 const dayCount = computed(() => {
@@ -13,6 +15,13 @@ const dayCount = computed(() => {
   const end = new Date(props.leave.endDate);
   const diff = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
   return diff > 0 ? diff : 1;
+});
+
+const dateDisplay = computed(() => {
+  if (props.leave.startDate === props.leave.endDate) {
+    return props.leave.startDate;
+  }
+  return `${props.leave.startDate} → ${props.leave.endDate}`;
 });
 
 const leaveTypeLabel = computed(() => {
@@ -24,6 +33,14 @@ const leaveTypeLabel = computed(() => {
   };
   return map[props.leave.leaveType] ?? props.leave.leaveType;
 });
+
+const durationLabel = computed(() => {
+  if (props.leave.leaveDurationType === "PARTIAL_DAY") {
+    return `${formatHM(props.leave.startTime)}–${formatHM(props.leave.endTime)}`;
+  }
+
+  return `${dayCount.value} 天`;
+});
 </script>
 
 <template>
@@ -34,14 +51,16 @@ const leaveTypeLabel = computed(() => {
     </div>
 
     <div class="leave-card__dates font-data-mono">
-      {{ leave.startDate }} → {{ leave.endDate }}
+      {{ dateDisplay }}
     </div>
 
     <p v-if="leave.reason" class="leave-card__reason">{{ leave.reason }}</p>
 
     <div class="leave-card__footer">
-      <span class="material-symbols-outlined">calendar_month</span>
-      <span>{{ dayCount }} 天</span>
+      <span class="material-symbols-outlined">
+        {{ leave.leaveDurationType === "PARTIAL_DAY" ? "schedule" : "calendar_month" }}
+      </span>
+      <span>{{ durationLabel }}</span>
     </div>
   </button>
 </template>

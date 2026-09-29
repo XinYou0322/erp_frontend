@@ -19,31 +19,37 @@ const typeLabel = { LEAVE: "請假", ORDER: "採購", EXPENSE: "費用" };
         <tr>
           <th>單號</th>
           <th>類型</th>
-          <th>摘要</th>
           <th>申請人</th>
           <th>簽核人</th>
           <th>申請日期</th>
           <th>狀態</th>
-          <th></th>
+          <th>操作</th>
         </tr>
       </thead>
+
       <tbody>
         <tr v-for="item in items" :key="item.id">
           <td class="mono">{{ item.code }}</td>
+
           <td>
-            <span class="type-tag">{{
-              typeLabel[item.documentType] || item.documentType
-            }}</span>
+            <span class="type-tag">
+              {{ typeLabel[item.documentType] || item.documentType }}
+            </span>
           </td>
-          <td class="summary">{{ item.summary }}</td>
+
           <td>{{ item.applicant }}</td>
           <td>{{ item.approver }}</td>
+
           <td class="mono">{{ item.date }}</td>
-          <td><WorkflowStatusBadge :status="item.status" size="sm" /></td>
+
+          <td>
+            <WorkflowStatusBadge :status="item.status" size="sm" />
+          </td>
+
           <td class="actions">
-            <router-link :to="`/workflows/${item.id}`" class="view-link"
-              >查看</router-link
-            >
+            <router-link :to="`/workflows/${item.id}`" class="view-link">
+              查看
+            </router-link>
           </td>
         </tr>
       </tbody>
@@ -122,4 +128,18 @@ const typeLabel = { LEAVE: "請假", ORDER: "採購", EXPENSE: "費用" };
 .view-link:hover {
   text-decoration: underline;
 }
+
+/* 日期欄寬一點 */
+.wf-table th:nth-child(5),
+.wf-table td:nth-child(5) {
+  min-width: 170px;
+}
+
+/* 操作欄固定 */
+.wf-table th:last-child,
+.wf-table td:last-child {
+  width: 90px;
+  text-align: center;
+}
+
 </style>

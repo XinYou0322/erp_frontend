@@ -14,6 +14,7 @@ import DashboardCustomize from "@/component/子元件/DashboardCustomize.vue";
 import HourPeakChart from "@/component/父元件/HourPeakChart.vue";
 import MaterialConsumptionChart from "@/component/父元件/MaterialConsumptionChart.vue";
 
+
 const authStore = useAuthStore();
 const systemSettingStore = useSystemSettingStore();
 
@@ -37,7 +38,12 @@ const showMaterialConsumption = computed(
 function loadWidgetSettings() {
   const saved = localStorage.getItem("dashboardWidgets");
   if (saved) {
-    widgets.value = JSON.parse(saved);
+     try {
+      // 和預設值合併：舊的 localStorage 沒有 costSummary 時，仍使用預設值 true
+      widgets.value = { ...widgets.value, ...JSON.parse(saved) };
+    } catch {
+      localStorage.removeItem("dashboardWidgets");
+    }
   }
 }
 
@@ -121,6 +127,7 @@ onMounted(() => {
             <HourPeakChart :data="dashboard.hourlySales" />
         </div>
 
+
         <div
           v-if="widgets.revenueChart"
           class="card span-2"
@@ -132,32 +139,7 @@ onMounted(() => {
           <MaterialConsumptionChart :data="dashboard.materialConsumption" />
         </div>
 
-        <!--
-        <div
-          v-if="widgets.approvals"
-          class="card span-2"
-        >
-          <div class="section-title">
-            <row gap=1 align=center>
-                <icon name=approval color=info />
-                <h3>待簽核清單</h3>
-            </row>
-          </div>
-
-          <WorkflowTable
-            v-if="workflows.length"
-            :items="workflows"
-          />
-
-          <div
-            v-else
-            class="empty"
-          >
-            目前沒有待簽核單據
-          </div>
         
-        </div>
-        -->
       </div>
 
     </template>

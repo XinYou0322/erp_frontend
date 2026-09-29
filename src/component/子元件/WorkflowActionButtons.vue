@@ -38,7 +38,14 @@ function handleApprove() {
 
 <template>
   <div class="actions" v-if="status === 'pending'">
-    <label class="actions__label" for="wf-remark">簽核意見</label>
+    <div class="actions__header">
+      <div class="actions__title">
+        <span class="material-symbols-outlined">edit_note</span>
+        <label class="actions__label" for="wf-remark">簽核意見</label>
+      </div>
+      <span class="actions__hint">選填（駁回必填）</span>
+    </div>
+
     <textarea
       id="wf-remark"
       v-model="remark"
@@ -46,7 +53,7 @@ function handleApprove() {
       rows="3"
       placeholder="輸入給申請人的說明或備註"
       :disabled="submitting"
-    ></textarea>
+    />
     <div class="actions__buttons">
       <!-- 駁回按鈕綁定新的處理函數 -->
       <button 
@@ -201,14 +208,13 @@ function handleApprove() {
 }
 
 .btn--reject {
+  border: 1px solid #ef4444;
+  color: #ef4444;
   background: transparent;
-  border-color: var(--wf-line-strong);
-  color: var(--wf-ink-soft);
 }
 
 .btn--reject:hover {
-  border-color: var(--wf-ink-soft);
-  color: var(--wf-ink);
+  background: rgba(239, 68, 68, 0.12);
 }
 
 .btn--approve {
@@ -232,5 +238,34 @@ function handleApprove() {
   border-radius: var(--wf-radius-sm);
   font-size: 13px;
   color: var(--wf-ink-soft);
+}
+
+.actions__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.actions__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actions__title .material-symbols-outlined {
+  color: #22d3ee;
+  font-size: 22px;
+}
+
+.actions__label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.actions__hint {
+  font-size: 12px;
+  color: #64748b;
 }
 </style>

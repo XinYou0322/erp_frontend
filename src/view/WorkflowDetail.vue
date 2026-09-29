@@ -10,6 +10,11 @@ import {
   approveWorkflow,
   rejectWorkflow,
 } from "@/service/workflowService";
+import AttendanceSummary from "@/component/子元件/AttendanceSummary.vue";
+import LeaveDetailCard from "@/component/子元件/LeaveDetailCard.vue";
+import PurchaseDetailCard from "@/component/子元件/PurchaseDetailCard.vue";
+
+
 
 const props = defineProps({
   id: { type: [String, Number], required: true },
@@ -46,6 +51,7 @@ async function loadData() {
       remark: l.remark,
       createdAt: l.createdAt,
     }));
+
   } catch (err) {
     errorMessage.value = "讀取單據內容失敗，請稍後再試";
   } finally {
@@ -77,6 +83,16 @@ async function handleReject(remark) {
   } finally {
     submitting.value = false;
   }
+}
+
+function formatDateTime(dateTime) {
+  return new Date(dateTime).toLocaleString("zh-TW", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 onMounted(loadData);
@@ -115,7 +131,7 @@ onMounted(loadData);
           </div>
           <div class="detail__info-row">
             <dt>申請日期</dt>
-            <dd class="mono">{{ workflow.createdAt }}</dd>
+            <dd class="mono">{{ formatDateTime(workflow.createdAt) }}</dd>
           </div>
         </dl>
 
@@ -124,13 +140,22 @@ onMounted(loadData);
           <p class="detail__remark-text">{{ workflow.documentDescription }}</p>
         </div>
 
-        <WorkflowActionButtons
-          :status="workflow.status"
-          :submitting="submitting"
-          @approve="handleApprove"
-          @reject="handleReject"
+        <LeaveDetailCard
+          v-if="workflow.documentType === 'LEAVE'"
+          :leave-id="workflow.documentId"
+        />
+
+        <AttendanceSummary
+          v-if="workflow.documentType === 'LEAVE'"
+          :user-id="workflow.applicantId"
+        />
+
+        <PurchaseDetailCard
+          v-if="workflow.documentType === 'ORDER'"
+          :purchase-order-id="workflow.documentId"
         />
       </section>
+
 
       <aside class="detail__side">
         <h2 class="detail__side-title">簽核歷程</h2>
@@ -140,6 +165,16 @@ onMounted(loadData);
             workflow.status === 'pending' ? `${workflow.approverName}` : ''
           "
         />
+
+        <div class="detail__approval">
+          <WorkflowActionButtons
+          :status="workflow.status"
+          :submitting="submitting"
+          @approve="handleApprove"
+          @reject="handleReject"
+        />
+       </div>
+        
       </aside>
     </div>
   </div>
@@ -152,6 +187,12 @@ onMounted(loadData);
   min-height: 100vh;
   padding: 32px 40px;
   box-sizing: border-box;
+}
+
+.detail__approval {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .detail__back {

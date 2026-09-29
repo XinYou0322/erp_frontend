@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { getRevenueDetail } from "@/service/dashboardService";
+import { getCostDetail } from "@/service/dashboardService";
 
 const router = useRouter();
 
@@ -20,12 +20,40 @@ const currency = new Intl.NumberFormat("zh-TW", {
 });
 function formatCurrency(value) { return currency.format(Number(value) || 0); }
 
-// --- 日期處理與快捷按鈕 ---
+// --- 日期處理 ---
 function toLocalDateStr(d) {
   const p = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 const todayStr = toLocalDateStr(new Date());
+
+// 依目前區間決定可選的顯示方式
+const availableGroups = computed(() => {
+  switch (activePreset.value) {
+    case "month":
+      return ["DAY"];
+    case "year":
+      return ["DAY", "MONTH"];
+    case "custom": {
+      if (!startDate.value || !endDate.value) return ["DAY"];
+      const start = new Date(startDate.value + "T00:00:00");
+      const end = new Date(endDate.value + "T00:00:00");
+      const days = Math.floor((end - start) / 86400000) + 1;
+      if (days <= 31) return ["DAY"];
+      if (days <= 365) return ["DAY", "MONTH"];
+      return ["DAY", "MONTH", "YEAR"];
+    }
+    default:
+      return ["DAY"];
+  }
+});
+
+// 目前選的顯示方式若不在可用範圍內（例如縮短自訂區間），退回可用的最粗粒度
+function clampGroupBy() {
+  if (!availableGroups.value.includes(groupBy.value)) {
+    groupBy.value = availableGroups.value[availableGroups.value.length - 1];
+  }
+}
 
 function applyPreset(preset) {
   activePreset.value = preset;
@@ -40,21 +68,23 @@ function applyPreset(preset) {
     start = new Date(today.getFullYear(), 0, 1);
     end = today;
     defaultGroup = "MONTH";
-  } else if (preset === "custom") {
-    // 修正：只有「還沒選過日期」時才帶入今天，否則沿用現有選擇
-    start = startDate.value ? new Date(startDate.value) : today;
-    end = endDate.value ? new Date(endDate.value) : today;
+  } else {
+    // custom：沿用現有日期；加上 T00:00:00 避免被當成 UTC 解析
+    start = startDate.value ? new Date(startDate.value + "T00:00:00") : today;
+    end = endDate.value ? new Date(endDate.value + "T00:00:00") : today;
     defaultGroup = groupBy.value;
   }
 
   startDate.value = toLocalDateStr(start);
   endDate.value = toLocalDateStr(end);
   groupBy.value = defaultGroup;
+  clampGroupBy();
   load();
 }
 
 function changeGroupBy(newGroup) {
   if (groupBy.value === newGroup) return;
+  if (!availableGroups.value.includes(newGroup)) return;
   groupBy.value = newGroup;
   load();
 }
@@ -66,34 +96,9 @@ function onCustomDateChange() {
     data.value = null;
     return;
   }
+  clampGroupBy();
   load();
 }
-
-const availableGroups = computed(() => {
-  switch (activePreset.value) {
-
-    case "month":
-      return ["DAY"];
-
-    case "year":
-      return ["DAY", "MONTH"];
-
-    case "custom": {
-      if (!startDate.value || !endDate.value) return ["DAY"];
-
-      const start = new Date(startDate.value + "T00:00:00");
-      const end = new Date(endDate.value + "T00:00:00");
-      const days = Math.floor((end - start) / 86400000) + 1;
-
-      if (days <= 31) return ["DAY"];
-      if (days <= 365) return ["DAY", "MONTH"];
-      return ["DAY", "MONTH", "YEAR"];
-    }
-
-    default:
-      return ["DAY"];
-  }
-});
 
 // --- 競態保護 ---
 let requestSeq = 0;
@@ -110,76 +115,50 @@ async function load() {
   loading.value = true;
   errorMessage.value = "";
   try {
-    const result = await getRevenueDetail(startDate.value, endDate.value, groupBy.value);
-    if (seq !== requestSeq) return; // 已經有更新的請求發出，丟棄這次結果
+    const result = await getCostDetail(startDate.value, endDate.value, groupBy.value);
+    if (seq !== requestSeq) return; // 已有更新的請求，丟棄舊結果
     data.value = result;
   } catch (e) {
     if (seq !== requestSeq) return;
     console.error("❌ API 呼叫失敗:", e);
-    errorMessage.value = "載入營收資料失敗";
+    errorMessage.value = "載入成本資料失敗";
     data.value = null;
   } finally {
     if (seq === requestSeq) loading.value = false;
   }
 }
 
-// --- 圖表與統計計算（不變） ---
-const maxRevenue = computed(() => {
-  const list = data.value?.dailyTrend ?? [];
-  return Math.max(...list.map((d) => Number(d.revenue) || 0), 1);
+// --- 統計計算 ---
+const trend = computed(() => data.value?.dailyTrend ?? []);
+
+const maxCost = computed(() =>
+  Math.max(...trend.value.map((d) => Number(d.cost) || 0), 1),
+);
+
+// 平均：依顯示方式決定是日均、月均還是年均
+const avgCost = computed(() => {
+  if (!trend.value.length) return 0;
+  return Number(data.value.totalCost) / trend.value.length;
 });
 
-const avgRevenue = computed(() => {
-  const list = data.value?.dailyTrend ?? [];
-  if (!list.length) return 0;
-  return Number(data.value.totalRevenue) / list.length;
+const avgLabel = computed(() => {
+  if (groupBy.value === "MONTH") return "月均成本";
+  if (groupBy.value === "YEAR") return "年均成本";
+  return "日均成本";
 });
 
-const bestDay = computed(() => {
-  const list = data.value?.dailyTrend ?? [];
-  if (!list.length) return null;
-  return list.reduce((a, b) => (Number(b.revenue) > Number(a.revenue) ? b : a));
+// 成本最高的時間桶；全部為 0 時不顯示
+const peak = computed(() => {
+  if (!trend.value.length) return null;
+  const top = trend.value.reduce((a, b) => (Number(b.cost) > Number(a.cost) ? b : a));
+  return Number(top.cost) > 0 ? top : null;
 });
 
-const useLineChart = computed(() => {
-  return (data.value?.dailyTrend?.length ?? 0) > 31;
+const peakLabel = computed(() => {
+  if (groupBy.value === "MONTH") return "成本最高月份";
+  if (groupBy.value === "YEAR") return "成本最高年度";
+  return "成本最高單日";
 });
-
-const chartWidth = 1000;
-const chartHeight = 280;
-const topPadding = 20;
-const bottomPadding = 30;
-const usableHeight = chartHeight - topPadding - bottomPadding;
-
-function pointX(index, total) {
-  return (index / Math.max(total - 1, 1)) * chartWidth;
-}
-
-function pointY(revenue) {
-  return topPadding +
-    (1 - (Number(revenue) || 0) / maxRevenue.value) * usableHeight;
-}
-
-const linePoints = computed(() => {
-  const list = data.value?.dailyTrend ?? [];
-  if (!list.length) return "";
-
-  return list
-    .map((d, i) => `${pointX(i, list.length)},${pointY(d.revenue)}`)
-    .join(" ");
-});
-
-function barHeight(revenue) {
-  return `${(Number(revenue) / maxRevenue.value) * 100}%`;
-}
-
-function labelOf(dateStr) {
-  if (!dateStr) return "";
-  if (groupBy.value === "YEAR") return dateStr.substring(0, 4);
-  if (groupBy.value === "MONTH") return dateStr.substring(0, 7);
-  const d = new Date(dateStr + 'T00:00:00');
-  return activePreset.value === "month" ? `${d.getDate()}` : `${d.getMonth() + 1}/${d.getDate()}`;
-}
 
 const compareLabel = computed(() => {
   if (activePreset.value === "year") return "較去年同期";
@@ -187,40 +166,74 @@ const compareLabel = computed(() => {
   return "較前一期間";
 });
 
+// --- 圖表 ---
+const useLineChart = computed(() => trend.value.length > 31);
+
+const chartWidth = 1000;
+const chartHeight = 280;
+const topPadding = 20;
+const bottomPadding = 30;
+const usableHeight = chartHeight - topPadding - bottomPadding;
+const baseY = chartHeight - bottomPadding;
+
+function pointX(index, total) {
+  return (index / Math.max(total - 1, 1)) * chartWidth;
+}
+
+function pointY(cost) {
+  return topPadding + (1 - (Number(cost) || 0) / maxCost.value) * usableHeight;
+}
+
+const linePoints = computed(() =>
+  trend.value.map((d, i) => `${pointX(i, trend.value.length)},${pointY(d.cost)}`).join(" "),
+);
+
+// 4 條水平網格線，橫跨整個圖表寬度
+const gridYs = computed(() =>
+  [0, 1, 2, 3].map((k) => topPadding + (usableHeight * k) / 3),
+);
+
+// 每個資料點的 hover 感應寬度
+const hitWidth = computed(() => chartWidth / Math.max(trend.value.length - 1, 1));
+
+function barHeight(cost) {
+  return `${(Number(cost) / maxCost.value) * 100}%`;
+}
+
+function labelOf(dateStr) {
+  if (!dateStr) return "";
+  if (groupBy.value === "YEAR") return dateStr.substring(0, 4);
+  if (groupBy.value === "MONTH") return dateStr.substring(0, 7);
+  const d = new Date(dateStr + "T00:00:00");
+  return activePreset.value === "month" ? `${d.getDate()}` : `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
 function isToday(dateStr) {
   return dateStr === todayStr && groupBy.value === "DAY";
 }
 
 function tooltipOf(day) {
-  const base = `${day.date} ${formatCurrency(day.revenue)}`;
+  const base = `${day.date} ${formatCurrency(day.cost)}`;
   return isToday(day.date) ? `${base}（今日進行中）` : base;
 }
 
-const bestLabel = computed(() => {
-  if (groupBy.value === "DAY") return "最佳單日";
-  if (groupBy.value === "MONTH") return "最佳月份";
-  return "最佳年度";
-});
-
 const hoveredIndex = ref(null);
-
-const hoveredDay = computed(() => {
-  if (hoveredIndex.value == null) return null;
-  return data.value?.dailyTrend?.[hoveredIndex.value] ?? null;
-});
+const hoveredDay = computed(() =>
+  hoveredIndex.value == null ? null : trend.value[hoveredIndex.value] ?? null,
+);
 
 onMounted(() => applyPreset("month"));
 </script>
 
 <template>
-  <div class="revenue-detail">
+  <div class="revenue-detail cost-detail">
     <button class="back-link" @click="router.back()">
       <span class="material-symbols-outlined">arrow_back</span>
       返回 Dashboard
     </button>
 
     <div class="page-head">
-      <h1>營收報表</h1>
+      <h1>成本報表</h1>
     </div>
 
     <!-- 篩選器：快捷按鈕 + 自訂日期 -->
@@ -230,20 +243,17 @@ onMounted(() => applyPreset("month"));
         <button :class="{ active: activePreset === 'year' }" @click="applyPreset('year')">本年</button>
         <button :class="{ active: activePreset === 'custom' }" @click="applyPreset('custom')">自訂</button>
       </div>
-      
-      <!-- B. 自訂日期輸入 (僅在自訂時顯示) -->
+
       <div v-if="activePreset === 'custom'" class="custom-date-range">
         <input type="date" v-model="startDate" @change="onCustomDateChange" class="input-glow" />
         <span class="date-separator">至</span>
         <input type="date" v-model="endDate" @change="onCustomDateChange" class="input-glow" />
       </div>
 
-      <!-- C. 顯示粒度切換 (獨立出來，隨時可切換！) -->
       <div class="group-by-tabs">
         <span class="group-by-label">顯示方式：</span>
-
         <button
-          v-for="option in ['DAY','MONTH','YEAR']"
+          v-for="option in ['DAY', 'MONTH', 'YEAR']"
           :key="option"
           :class="{ active: groupBy === option }"
           :disabled="!availableGroups.includes(option)"
@@ -258,53 +268,56 @@ onMounted(() => applyPreset("month"));
     <p v-else-if="errorMessage" class="state-text state-text--error">{{ errorMessage }}</p>
 
     <template v-else-if="data && Array.isArray(data.dailyTrend)">
+      <!-- 缺成本提醒 -->
+      <p v-if="data.missingCostCount > 0" class="cost-warning">
+        <span class="material-symbols-outlined">warning</span>
+        本區間有 {{ data.missingCostCount }} 筆銷售明細缺少成本資料，實際成本可能更高
+      </p>
+
       <!-- 統計卡片 -->
       <div class="summary-grid">
         <div class="bento-card summary-card">
-          <dt>總營收</dt>
-          <dd class="summary-value">{{ formatCurrency(data.totalRevenue) }}</dd>
+          <dt>總成本</dt>
+          <dd class="summary-value">{{ formatCurrency(data.totalCost) }}</dd>
           <dd class="summary-compare">
-            <span v-if="data.changeRate == null" class="compare compare--na">上期無營收資料</span>
-            <span v-else :class="['compare', data.changeRate >= 0 ? 'compare--up' : 'compare--down']">
+            <span v-if="data.changeRate == null" class="compare compare--na">上期無成本資料</span>
+            <!-- 成本上升是壞事，所以顏色與營收頁相反：上升用 down 樣式（警示色），下降用 up 樣式 -->
+            <span v-else :class="['compare', data.changeRate > 0 ? 'compare--down' : 'compare--up']">
               <span class="material-symbols-outlined">{{ data.changeRate >= 0 ? "trending_up" : "trending_down" }}</span>
               {{ data.changeRate >= 0 ? "+" : "" }}{{ data.changeRate }}%
               <em>{{ compareLabel }}</em>
             </span>
           </dd>
-          <dd v-if="data.previousRevenue != null" class="summary-sub">上期：{{ formatCurrency(data.previousRevenue) }}</dd>
+          <dd v-if="data.previousCost != null" class="summary-sub">上期：{{ formatCurrency(data.previousCost) }}</dd>
         </div>
         <div class="bento-card summary-card">
-          <dt>日均營收</dt>
-          <dd class="summary-value">{{ formatCurrency(avgRevenue) }}</dd>
+          <dt>{{ avgLabel }}</dt>
+          <dd class="summary-value">{{ formatCurrency(avgCost) }}</dd>
         </div>
-        <div v-if="bestDay" class="bento-card summary-card">
-          <dt>{{ bestLabel }}</dt>
-          <dd class="summary-value">{{ labelOf(bestDay.date) }}</dd>
-          <dd class="summary-sub">{{ formatCurrency(bestDay.revenue) }}</dd>
+        <div v-if="peak" class="bento-card summary-card">
+          <dt>{{ peakLabel }}</dt>
+          <dd class="summary-value">{{ labelOf(peak.date) }}</dd>
+          <dd class="summary-sub">{{ formatCurrency(peak.cost) }}</dd>
         </div>
       </div>
 
       <!-- 圖表 -->
       <div class="bento-card chart-card">
         <h2>
-          營收趨勢
+          成本趨勢
           ({{ groupBy === 'DAY' ? '每日' : groupBy === 'MONTH' ? '每月' : '每年' }})
         </h2>
 
         <!-- 長條圖 -->
         <div v-if="!useLineChart" class="chart">
           <div
-            v-for="day in data.dailyTrend"
+            v-for="day in trend"
             :key="day.date"
             class="chart__col"
             :class="{ 'chart__col--today': isToday(day.date) }"
             :title="tooltipOf(day)"
           >
-            <div
-              class="chart__bar"
-              :style="{ height: barHeight(day.revenue) }"
-            ></div>
-
+            <div class="chart__bar" :style="{ height: barHeight(day.cost) }"></div>
             <span class="chart__label">
               {{ isToday(day.date) ? "今日" : labelOf(day.date) }}
             </span>
@@ -315,36 +328,42 @@ onMounted(() => applyPreset("month"));
         <div v-else class="line-chart-wrapper">
           <div v-if="hoveredDay" class="chart-tooltip">
             <strong>{{ hoveredDay.date }}</strong>
-            <span>{{ formatCurrency(hoveredDay.revenue) }}</span>
+            <span>{{ formatCurrency(hoveredDay.cost) }}</span>
           </div>
-          <svg viewBox="0 0 1000 280" class="line-chart">
 
+          <svg :viewBox="`0 0 ${chartWidth} ${chartHeight}`" class="line-chart">
             <defs>
-              <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#16c6f2" stop-opacity="0.35"/>
-                <stop offset="100%" stop-color="#16c6f2" stop-opacity="0"/>
+              <linearGradient id="costGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.35" />
+                <stop offset="100%" stop-color="#f59e0b" stop-opacity="0" />
               </linearGradient>
             </defs>
 
             <!-- 網格線 -->
-            <line x1="0" y1="15" x2="100" y2="15" class="grid-line"/>
-            <line x1="0" y1="45" x2="100" y2="45" class="grid-line"/>
-            <line x1="0" y1="75" x2="100" y2="75" class="grid-line"/>
+            <line
+              v-for="y in gridYs"
+              :key="y"
+              x1="0"
+              :x2="chartWidth"
+              :y1="y"
+              :y2="y"
+              class="grid-line"
+            />
 
             <!-- Hover 垂直線 -->
             <line
               v-if="hoveredIndex !== null"
-              :x1="pointX(hoveredIndex, data.dailyTrend.length)"
-              :x2="pointX(hoveredIndex, data.dailyTrend.length)"
-              y1="10"
-              y2="85"
+              :x1="pointX(hoveredIndex, trend.length)"
+              :x2="pointX(hoveredIndex, trend.length)"
+              :y1="topPadding"
+              :y2="baseY"
               class="hover-line"
             />
 
             <!-- 漸層 -->
             <polygon
-              :points="`${linePoints} ${chartWidth},${chartHeight} 0,${chartHeight}`"
-              fill="url(#revenueGradient)"
+              :points="`${linePoints} ${chartWidth},${baseY} 0,${baseY}`"
+              fill="url(#costGradient)"
               pointer-events="none"
             />
 
@@ -352,7 +371,7 @@ onMounted(() => applyPreset("month"));
             <polyline
               :points="linePoints"
               fill="none"
-              stroke="#16c6f2"
+              stroke="#f59e0b"
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -360,41 +379,38 @@ onMounted(() => applyPreset("month"));
               pointer-events="none"
             />
 
-            <!-- Hover 熱區 -->
-            <g v-for="(day, index) in data.dailyTrend" :key="day.date">
-              <circle
-                :cx="pointX(index, data.dailyTrend.length)"
-                :cy="pointY(day.revenue)"
-                r="4"
-                fill="transparent"
-                @mouseenter="hoveredIndex = index"
-                @mouseleave="hoveredIndex = null"
-              />
+            <!-- 高亮點 -->
+            <circle
+              v-if="hoveredIndex !== null && trend[hoveredIndex]"
+              :cx="pointX(hoveredIndex, trend.length)"
+              :cy="pointY(trend[hoveredIndex].cost)"
+              r="5"
+              fill="#f59e0b"
+              stroke="white"
+              stroke-width="2"
+              pointer-events="none"
+            />
 
-              <!-- 高亮點 -->
-              <circle
-                v-if="hoveredIndex === index"
-                :cx="pointX(index, data.dailyTrend.length)"
-                :cy="pointY(day.revenue)"
-                r="0.9"
-                fill="#16c6f2"
-                stroke="white"
-                stroke-width="0.25"
-                pointer-events="none"
-              />
-            </g>
+            <!-- Hover 感應區：每個資料點一條垂直長條，最後畫才會在最上層 -->
+            <rect
+              v-for="(day, index) in trend"
+              :key="'hit-' + day.date"
+              :x="pointX(index, trend.length) - hitWidth / 2"
+              y="0"
+              :width="hitWidth"
+              :height="chartHeight"
+              fill="transparent"
+              @mouseenter="hoveredIndex = index"
+              @mouseleave="hoveredIndex = null"
+            />
           </svg>
 
           <div class="line-labels">
-            <span>{{ labelOf(data.dailyTrend[0]?.date) }}</span>
-            <span>{{ labelOf(data.dailyTrend.at(-1)?.date) }}</span>
+            <span>{{ labelOf(trend[0]?.date) }}</span>
+            <span>{{ labelOf(trend.at(-1)?.date) }}</span>
           </div>
-
-        
         </div>
       </div>
-
-      
     </template>
   </div>
 </template>
@@ -623,5 +639,22 @@ onMounted(() => applyPreset("month"));
 .chart-tooltip span {
   color: #16c6f2;
   font-weight: 600;
+}
+
+.cost-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.9rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  font-size: 0.85rem;
+}
+
+.cost-warning .material-symbols-outlined {
+  font-size: 18px;
 }
 </style>

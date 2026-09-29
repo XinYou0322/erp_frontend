@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -11,11 +12,32 @@ function goToTodayOrders() {
   router.push({ name: "SalesOrder", query: { date: "today" } });
 }
 
+function goToOrderValueAnalysis() {
+  router.push('/dashboard/order-value-analysis');
+}
+
+function goToCostDetail() {
+  router.push({ name: "cost-detail" });
+}
+
+function goToProfitDetail() {
+  router.push({ name: "profit-detail" });
+}
+
 const props = defineProps({
   data: {
     type: Object,
     required: true,
   },
+});
+
+const todayProfit = computed(
+  () => (Number(props.data.todayRevenue) || 0) - (Number(props.data.todayCost) || 0),
+);
+
+const todayMargin = computed(() => {
+  const revenue = Number(props.data.todayRevenue) || 0;
+  return revenue > 0 ? (todayProfit.value / revenue) * 100 : null; // 沒營收就不算毛利率
 });
 
 function formatCurrency(value) {
@@ -59,12 +81,85 @@ function formatCurrency(value) {
             {{ data.revenueChangeRate >= 0 ? "trending_up" : "trending_down" }}
           </span>
           {{ data.revenueChangeRate >= 0 ? "+" : "" }}{{ data.revenueChangeRate }}%
-          <em>較昨日同期</em>
+          <!-- <em>較昨日同期</em> -->
         </span>
       </span>
+    </div> 
+  </div>
+
+    <!-- 今日成本 -->
+  <div
+    class="stat-card cost clickable"
+    role="button"
+    tabindex="0"
+    title="點擊查看成本報表"
+    @click="goToCostDetail"
+    @keyup.enter="goToCostDetail"
+  >
+    <div class="stat-card__icon">
+      <span class="material-symbols-outlined">inventory_2</span>
     </div>
 
-    
+    <div class="stat-card__content">
+      <span class="stat-card__label">今日成本</span>
+      <h2>{{ formatCurrency(data.todayCost) }}</h2>
+
+      <span class="stat-compare">
+        <span v-if="data.costChangeRate == null" class="compare compare--na">
+          昨日無成本資料
+        </span>
+        <!-- 成本上升是壞事：顏色與營收相反 -->
+        <span
+          v-else
+          :class="['compare', data.costChangeRate > 0 ? 'compare--down' : 'compare--up']"
+        >
+          <span class="material-symbols-outlined">
+            {{ data.costChangeRate >= 0 ? "trending_up" : "trending_down" }}
+          </span>
+          {{ data.costChangeRate >= 0 ? "+" : "" }}{{ data.costChangeRate }}%
+          <!-- <em>較昨日同期</em> -->
+        </span>
+      </span>
+
+      <span v-if="data.todayMissingCostCount > 0" class="stat-warning">
+        <span class="material-symbols-outlined">warning</span>
+        {{ data.todayMissingCostCount }} 筆缺成本
+      </span>
+    </div>
+  </div>
+
+  <!-- 今日毛利 -->
+      <div
+      class="stat-card profit clickable"
+      role="button"
+      tabindex="0"
+      title="點擊查看毛利報表"
+      @click="goToProfitDetail"
+      @keyup.enter="goToProfitDetail"
+    >
+    <div class="stat-card__icon">
+      <span class="material-symbols-outlined">savings</span>
+    </div>
+
+    <div class="stat-card__content">
+      <span class="stat-card__label">今日毛利</span>
+      <h2>{{ formatCurrency(todayProfit) }}</h2>
+
+      <span class="stat-compare">
+        <span v-if="todayMargin == null" class="compare compare--na">今日無營收</span>
+        <span
+          v-else
+          :class="['compare', todayProfit >= 0 ? 'compare--up' : 'compare--down']"
+        >
+          毛利率 {{ todayMargin.toFixed(1) }}%
+        </span>
+      </span>
+
+      <span v-if="data.todayMissingCostCount > 0" class="stat-warning">
+        <span class="material-symbols-outlined">warning</span>
+        成本不完整，毛利可能偏高
+      </span>
+    </div>
   </div>
 
     <!-- 今日訂單 -->
@@ -85,7 +180,14 @@ function formatCurrency(value) {
     </div>
 
     <!-- 平均客單價 -->
-    <div class="stat-card average">
+    <div 
+      class="stat-card average clickable"
+      role="button"                  
+      tabindex="0"                   
+      title="點擊查看客單價詳細分析"  
+      @click="goToOrderValueAnalysis"
+      @keyup.enter="goToOrderValueAnalysis" 
+    >
       <div class="stat-card__icon">
         <span class="material-symbols-outlined">shopping_cart</span>
       </div>
@@ -96,17 +198,7 @@ function formatCurrency(value) {
       </div>
     </div>
 
-    <!-- 待簽核
-    <div class="stat-card approval">
-      <div class="stat-card__icon">
-        <span class="material-symbols-outlined">approval</span>
-      </div>
-
-      <div class="stat-card__content">
-        <span class="stat-card__label">待簽核</span>
-        <h2>{{ data.pendingApprovals ?? 0 }}</h2>
-      </div>
-    </div>--> 
+    
     
   </section>
 </template>
@@ -114,7 +206,7 @@ function formatCurrency(value) {
 <style scoped>
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 18px;
   margin-bottom: 24px;
 }
@@ -188,6 +280,16 @@ function formatCurrency(value) {
   color: #818cf8;
 }
 
+.cost .stat-card__icon {
+  background: rgba(244, 63, 94, .15);
+  color: #fb7185;
+}
+
+.profit .stat-card__icon {
+  background: rgba(99, 102, 241, .15);
+  color: #818cf8;
+}
+
 /* 可點擊卡片的樣式 */
 .stat-card.clickable {
   cursor: pointer;
@@ -212,6 +314,18 @@ function formatCurrency(value) {
 
 .stat-card.clickable:hover .stat-card__hint {
   opacity: 1;
+}
+
+.stat-warning {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: #fbbf24;
+}
+
+.stat-warning .material-symbols-outlined {
+  font-size: 14px;
 }
 
 .stat-compare {
@@ -244,7 +358,7 @@ function formatCurrency(value) {
 
 @media (max-width: 900px) {
   .stats-grid {
-    grid-template-columns: repeat(1fr);
+    grid-template-columns: 1fr;
   }
 }
 
