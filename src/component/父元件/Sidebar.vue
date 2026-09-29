@@ -340,13 +340,7 @@ const navItems = [
     path: "/workflows",
      adminOnly: true,
   },
-  {
-    id: "SystemSettings",
-    label: "SystemSettings",
-    icon: ReceiptText,
-    path: "/system-settings",
-     adminOnly: true,
-  },
+
 
 ];
 
