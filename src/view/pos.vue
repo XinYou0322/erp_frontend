@@ -25,7 +25,17 @@
     <!-- POS 主內容：左側商品區 + 右側明細區 -->
     <div v-else class="pos-layout">
       <section class="pos-layout__products">
-        <div class="pos-product-grid">
+        <!-- 【本次新增：POS 商品選擇畫面】
+             點商品卡後只替換左側區塊，右側 AllRightCard 仍保持顯示。 -->
+        <PosProductSelection
+          v-if="selectedProductForSetup"
+          :product="selectedProductForSetup"
+          @back="closeProductSelection"
+          @add="addProductSelection"
+        />
+
+        <template v-else>
+          <div class="pos-product-grid">
         <!-- 商品 API 尚未完成時，顯示載入提示 -->
         <p
             v-if="loadingProducts"
@@ -54,17 +64,17 @@
               :name="product.name"
               :image="getProductImageSrc(product)"
               :price="product.sellingPrice"
-              :quantity="productQuantities[product.id] || 0"
-              @increase="increaseProduct(product)"
-              @decrease="decreaseProduct(product)"/>
+              :quantity="getProductCartQuantity(product.id)"
+              @select="openProductSelection(product)"/>
         </template>
-        </div>
+          </div>
 
-        <Pagination
-          :current-page="productCurrentPage"
-          :total-pages="productTotalPages"
-          @change-page="changeProductPage"
-        />
+          <Pagination
+            :current-page="productCurrentPage"
+            :total-pages="productTotalPages"
+            @change-page="changeProductPage"
+          />
+        </template>
       </section>
       <RecentSalesPanel
         v-if="showRecentSales"
@@ -117,6 +127,8 @@ import HeadNavBar from '@/component/子元件/HeadNavbar.vue'
 import AllRightCard from '@/component/子元件/AllRightCard.vue'
 import RecentSalesPanel from '@/component/父元件/RecentSalesPanel.vue'
 import PosSetting from '@/component/父元件/PosSetting.vue'
+// 【本次新增：POS 商品選擇畫面】左側商品卡點選後使用的客製選項與數字鍵盤。
+import PosProductSelection from '@/component/父元件/PosProductSelection.vue'
 import Pagination from '@/component/子元件/Pagination.vue'
 // 【本次新增：ECPay 成功視窗】使用專案現有成功提示元件，不使用瀏覽器 alert。
 import ConfirmSuccessfulModal from '@/component/子元件/ConfirmSuccessfulModal.vue'
@@ -126,6 +138,8 @@ const router = useRouter()
 // 【本次新增：ECPay 測試金流】讀取綠界導回 POS 時附帶的付款結果。
 const route = useRoute()
 const showPosSettings = ref(false)
+// 【本次新增：POS 商品選擇畫面】有值時以選品畫面取代左側商品卡。
+const selectedProductForSetup = ref(null)
 
 // 點擊導覽列齒輪後切換 POS 設定區。
 function openSettings() {
@@ -134,6 +148,7 @@ function openSettings() {
   // 【本次修改：POS 設定畫面導覽】開啟設定時先關閉近期銷售，避免兩個畫面狀態重疊。
   if (showPosSettings.value) {
     showRecentSales.value = false
+    selectedProductForSetup.value = null
   }
 }
 
@@ -146,8 +161,11 @@ const products = ref([])
 //控制商品載入與錯誤提示
 const loadingProducts = ref(false)
 const productError = ref('')
-//暫存每項商品目前選擇的數量；key 是 product.id
+// 【本次修改：POS 客製細項】key 包含 productId、糖度、冰塊與 Size，
+// 讓同一商品的不同客製組合能在右側分開顯示。
 const productQuantities = ref({})
+// 保存每一筆客製明細所對應的商品與顯示文字。
+const productCustomizations = ref({})
 const productCurrentPage = ref(1)
 const PRODUCTS_PER_PAGE = 10
 
@@ -193,6 +211,7 @@ function getTodayText() {
 async function openRecentSales() {
   // 【本次修改：POS 設定畫面導覽】從設定畫面點「近期銷售」時，先回到 POS 主內容。
   showPosSettings.value = false
+  selectedProductForSetup.value = null
   showRecentSales.value = true
   recentSalesKeyword.value = ''
   recentSalesDate.value = getTodayText()
@@ -281,18 +300,27 @@ const categoryOptionsWithCount = computed(() => {
 })
 //新增的商品整理成陣列 > AllRightCard
 const orderItems = computed(() => {
-  return products.value
-    .filter((product) => {
-      return (productQuantities.value[product.id] || 0) > 0
-    })
-    .map((product) => {
+  return Object.entries(productQuantities.value)
+    .filter(([, quantity]) => Number(quantity) > 0)
+    .map(([lineId, quantity]) => {
+      const customization = productCustomizations.value[lineId]
+      const product = products.value.find((item) => {
+        return String(item.id) === String(customization?.productId)
+      })
+
+      if (!product) return null
+
       return {
+        lineId,
         id: product.id,
         name: product.name,
         price: product.sellingPrice,
-        quantity: productQuantities.value[product.id]
+        quantity,
+        options: customization?.options || {},
+        optionText: customization?.optionText || ''
       }
     })
+    .filter(Boolean)
 })
 
 async function loadCategories() {
@@ -399,6 +427,7 @@ function changeCategory(categoryId) {
   // 點總覽或任一商品分類時，自動離開設定畫面並回到商品列表。
   showPosSettings.value = false
   showRecentSales.value = false
+  selectedProductForSetup.value = null
   activeCategory.value = categoryId
 }
 
@@ -410,13 +439,71 @@ function changeHeadTab(tab) {
 }
 
 function increaseProduct(product) {
-  const currentQuantity = productQuantities.value[product.id] || 0
-  productQuantities.value[product.id] = currentQuantity + 1
+  const lineId = product.lineId || String(product.id)
+  const currentQuantity = productQuantities.value[lineId] || 0
+  productQuantities.value[lineId] = currentQuantity + 1
 }
 
 function decreaseProduct(product) {
-  const currentQuantity = productQuantities.value[product.id] || 0
-  productQuantities.value[product.id] = Math.max(0, currentQuantity - 1)
+  const lineId = product.lineId || String(product.id)
+  const currentQuantity = productQuantities.value[lineId] || 0
+  const nextQuantity = Math.max(0, currentQuantity - 1)
+  productQuantities.value[lineId] = nextQuantity
+
+  if (nextQuantity === 0) {
+    delete productCustomizations.value[lineId]
+  }
+}
+
+function getProductCartQuantity(productId) {
+  return Object.entries(productCustomizations.value).reduce(
+    (total, [lineId, customization]) => {
+      if (String(customization.productId) !== String(productId)) {
+        return total
+      }
+
+      return total + Number(productQuantities.value[lineId] || 0)
+    },
+    0
+  )
+}
+
+// 【本次新增：POS 商品選擇畫面】由商品卡進入左側選品／數量畫面。
+function openProductSelection(product) {
+  selectedProductForSetup.value = product
+  showRecentSales.value = false
+}
+
+function closeProductSelection() {
+  selectedProductForSetup.value = null
+}
+
+// 新增時沿用既有 productQuantities，右側訂單明細會立即同步更新。
+function addProductSelection({ product, quantity, options, optionText }) {
+  const addQuantity = Number(quantity)
+  if (!product?.id || !Number.isInteger(addQuantity) || addQuantity <= 0) {
+    return
+  }
+
+  const lineId = [
+    product.id,
+    options.sugar,
+    options.ice,
+    options.size
+  ].join(':')
+  const currentQuantity = productQuantities.value[lineId] || 0
+  productQuantities.value[lineId] = currentQuantity + addQuantity
+
+  // 【本次新增：POS 客製細項】提供右側 AllRightCard 顯示小字內容。
+  productCustomizations.value[lineId] = {
+    productId: product.id,
+    options: { ...options },
+    optionText
+  }
+
+  // 【本次保留：後端相容】銷售單 API 目前仍只接收 productId、quantity；
+  // 客製選項先保留於 POS 購物車畫面，待後端欄位完成後再一併送出。
+  selectedProductForSetup.value = null
 }
 
 //將後端錯誤內容整理成畫面可顯示的文字
@@ -508,14 +595,23 @@ async function checkoutOrder(items) {
   checkoutLoading.value = true
   clearCheckoutFeedback()
 
+  // 【本次修改：POS 客製細項】後端尚未保存客製選項；送出前依 productId
+  // 合併相同商品的不同客製列，維持既有 SalesOrderItemCreDTO 相容。
+  const quantitiesByProduct = items.reduce((result, item) => {
+    const productId = item.id
+    const currentQuantity = result.get(productId) || 0
+    result.set(productId, currentQuantity + Number(item.quantity))
+    return result
+  }, new Map())
+
   // 固定欄位名稱必須對應 SalesOrderCreDTO 與 SalesOrderItemCreDTO
   const requestBody = {
     paymentMethod: paymentMethod.value,
     note: null,
-    items: items.map((item) => {
+    items: Array.from(quantitiesByProduct.entries()).map(([productId, quantity]) => {
       return {
-        productId: item.id,
-        quantity: Number(item.quantity)
+        productId,
+        quantity
       }
     })
   }
@@ -530,12 +626,14 @@ async function checkoutOrder(items) {
         ? `結帳成功，銷售單號：${orderNumber}`
         : '結帳成功'
       productQuantities.value = {}
+      productCustomizations.value = {}
       return
     }
 
     const response = await httpClient.post('/api/ecpay/checkout', requestBody)
     // 後端已建立待付款銷售單，清空本機購物車後送往綠界測試付款頁。
     productQuantities.value = {}
+    productCustomizations.value = {}
     submitEcpayForm(response.data)
   } catch (error) {
     console.error('建立銷售單失敗', error)

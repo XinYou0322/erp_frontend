@@ -1,5 +1,5 @@
 <template>
-  <div class="supplier-page">
+  <div class="supplier-page space-y-6">
     <PurchaseOrderDetail
       v-if="showPurchaseOrderDetail && selectedPurchaseOrder"
       :key="`${selectedPurchaseOrder.id}-${detailRefreshKey}`"
@@ -601,4 +601,6 @@ function normalizePurchaseOrder(purchaseOrder) {
 
 <style>
 </style>
+
+
 

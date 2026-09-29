@@ -23,12 +23,21 @@
       >
         <li
           v-for="item in items"
-          :key="item.id"
+          :key="item.lineId || item.id"
           class="pos-detail__item"
         >
-          <span class="pos-detail__item-name">
-            {{ item.name }}
-          </span>
+          <!-- 【本次修改：POS 客製細項】商品名稱下方顯示糖度、冰塊與 Size。 -->
+          <div class="pos-detail__item-info">
+            <span class="pos-detail__item-name">
+              {{ item.name }}
+            </span>
+            <small
+              v-if="item.optionText"
+              class="pos-detail__item-options"
+            >
+              {{ item.optionText }}
+            </small>
+          </div>
           <div class="pos-detail__quantity-controls">
             <button
               type="button"
