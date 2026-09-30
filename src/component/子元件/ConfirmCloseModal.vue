@@ -9,9 +9,13 @@
         bg-black/50
       "
       @click.self="emit('cancel')"
+      @keydown.esc.stop.prevent="emit('cancel')"
     >
 
       <div
+        role="alertdialog"
+        aria-modal="true"
+        :aria-label="title"
         class="
           w-[90%]
           max-w-sm
@@ -30,17 +34,18 @@
             text-[var(--on-surface)]
           "
         >
-          確定要關閉嗎？
+          {{ title }}
         </h3>
 
         <p
           class="
             mt-2
+            whitespace-pre-line
             text-[length:var(--font-body)]
             text-[var(--on-surface-variant)]
           "
         >
-          尚未儲存的資料將會遺失。
+          {{ message }}
         </p>
 
 
@@ -48,6 +53,8 @@
 
           <button
             type="button"
+            ref="cancelButton"
+            @keydown.shift.tab.prevent="confirmButton?.focus()"
             class="btn-secondary"
             @click="emit('cancel')"
           >
@@ -56,10 +63,12 @@
 
           <button
             type="button"
+            ref="confirmButton"
+            @keydown.tab.exact.prevent="cancelButton?.focus()"
             class="btn-primary"
             @click="emit('confirm')"
           >
-            確定關閉
+            {{ confirmLabel }}
           </button>
 
         </div>
@@ -74,12 +83,31 @@
 
 <script setup>
 
-defineProps({
+// Codex 修改：沿用關閉確認視窗外觀，允許薪資確認自訂內容及按鈕。
+import { ref, watch, nextTick } from 'vue';
+const props = defineProps({
+  title: { type: String, default: '確定要關閉嗎？' },
+  message: { type: String, default: '尚未儲存的資料將會遺失。' },
+  confirmLabel: { type: String, default: '確定關閉' },
   isOpen: {
     type: Boolean,
     default: false
   }
 })
+
+// Codex 修改：開啟時聚焦繼續編輯，關閉後還原焦點，支援鍵盤操作。
+const cancelButton = ref(null);
+const confirmButton = ref(null);
+let previousFocus = null;
+watch(() => props.isOpen, async (open) => {
+  if (open) {
+    previousFocus = document.activeElement;
+    await nextTick();
+    cancelButton.value?.focus();
+  } else {
+    previousFocus?.focus?.();
+  }
+});
 
 const emit = defineEmits([
   'cancel',

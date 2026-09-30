@@ -218,6 +218,13 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     "workflows.submit",
   ],
   guest: ["overview.view"],
+  // Codex 修改：新增六個職務的預設權限，使用既有模組權限鍵。
+  procurement: ["overview.view", "suppliers.view", "suppliers.create_po", "suppliers.manage", "workflows.view", "workflows.submit"],
+  warehouse: ["overview.view", "bom.view", "suppliers.view", "workflows.view", "workflows.submit"],
+  research: ["overview.view", "bom.view", "bom.edit", "bom.create", "bom.export", "workflows.view", "workflows.submit"],
+  finance: ["overview.view", "overview.export", "suppliers.view", "workflows.view", "workflows.submit"],
+  hr: ["overview.view", "workflows.view", "workflows.submit"],
+  supervisor: ["overview.view", "overview.export", "bom.view", "suppliers.view", "pos.view", "workflows.view", "workflows.submit"],
 };
 export const INITIAL_SECURITY_AUDIT_LOGS = [
   {
