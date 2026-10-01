@@ -1,4 +1,14 @@
 export const PERMISSION_MODULES = [
+  // Codex 修改：補齊 Sidebar 原本缺少的獨立功能開關。
+  { id: "inventory", name: "庫存管理", icon: "inventory_2", description: "庫存與異動紀錄入口",
+    permissions: [{ key: "inventory.view", label: "查看庫存與異動紀錄", description: "顯示庫存管理選單並允許進入", module: "inventory" }] },
+  { id: "sales", name: "銷售單管理", icon: "receipt", description: "銷售單查詢入口",
+    permissions: [{ key: "sales.view", label: "查看銷售單", description: "顯示銷售單管理選單並允許進入", module: "sales" }] },
+  { id: "attendance", name: "出勤與打卡", icon: "schedule", description: "出勤行事曆與打卡功能",
+    permissions: [
+      { key: "attendance.view", label: "查看出勤行事曆", description: "顯示打卡紀錄列表入口", module: "attendance" },
+      { key: "attendance.clock", label: "使用上下班打卡", description: "顯示 Sidebar 打卡按鈕", module: "attendance" },
+    ] },
   {
     id: "overview",
     name: "總覽與儀表板 (Overview)",
@@ -226,6 +236,13 @@ export const DEFAULT_ROLE_PERMISSIONS = {
   hr: ["overview.view", "workflows.view", "workflows.submit"],
   supervisor: ["overview.view", "overview.export", "bom.view", "suppliers.view", "pos.view", "workflows.view", "workflows.submit"],
 };
+// Codex 修改：新安裝／重設權限時使用職務預設值，既有手動設定由 store 保留。
+for (const role of ["admin", "manager", "warehouse", "procurement"]) DEFAULT_ROLE_PERMISSIONS[role].push("inventory.view");
+for (const role of ["admin", "manager", "employee", "finance", "supervisor"]) DEFAULT_ROLE_PERMISSIONS[role].push("sales.view");
+// Codex 修改：所有角色（包含訪客）預設均可打卡及查看出勤紀錄。
+for (const role of Object.keys(DEFAULT_ROLE_PERMISSIONS)) {
+  DEFAULT_ROLE_PERMISSIONS[role].push("attendance.view", "attendance.clock");
+}
 export const INITIAL_SECURITY_AUDIT_LOGS = [
   {
     id: "log-101",

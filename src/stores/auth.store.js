@@ -34,6 +34,18 @@ export const useAuthStore = defineStore("auth", () => {
     StorageService.get("security_audit_logs", INITIAL_SECURITY_AUDIT_LOGS),
   );
 
+  // Codex 修改：一次性補齊既有角色快取的出勤權限，避免舊設定蓋掉新預設。
+  // 遷移完成後仍尊重管理員後續手動停用，不會每次登入重新開啟。
+  if (!StorageService.get("attendance_all_roles_v1", false)) {
+    for (const role of Object.keys(rolePermissions.value)) {
+      rolePermissions.value[role] = [...new Set([
+        ...(rolePermissions.value[role] || []), "attendance.view", "attendance.clock",
+      ])];
+    }
+    StorageService.set("role_permissions_matrix", rolePermissions.value);
+    StorageService.set("attendance_all_roles_v1", true);
+  }
+
   // 後端真實角色清單
   /** @type {import('vue').Ref<any[]>} */
   const serverRoles = ref([]);
@@ -284,13 +296,11 @@ export const useAuthStore = defineStore("auth", () => {
       const { user, message } = response.data || {};
       const backendUserId = user?.id;
       const authenticatedUser = {
-        ...user,
+        // Codex 修改：帳密登入沿用清單／Session 的 roleLevel 轉換，避免角色空值而被擋在首頁外。
+        ...mapBackendUserToFrontend(user),
         id: isValidBackendUserId(backendUserId)
           ? Number(backendUserId)
           : backendUserId,
-        avatar: normalizeAvatarUrl(user?.avatar || DEFAULT_AVATAR),
-        role: user?.role?.name || user?.role,
-        roleName: user?.role?.description || user?.role?.name || "使用者",
       };
 
       const loginResult = login(authenticatedUser);

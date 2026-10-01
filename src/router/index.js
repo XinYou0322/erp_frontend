@@ -1,10 +1,14 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/auth.store";
+// Codex 修改：直接輸入網址也遵守 Sidebar 相同權限。
+import { canAccessPath, permissionForPath, accessibleHome } from "@/data/navigationPermissions";
 
 const routes = [
+  { path: "/access-denied", component: () => import("@/view/AccessDeniedView.vue"), meta: { requiresAuth: true } },
   {
     path: "/",
-    redirect: "/permissions",
+    // Codex 修改：登入後及網站首頁以門市營運儀表板為入口。
+    redirect: "/dashboard",
   },
   {
     path: "/login",
@@ -190,16 +194,18 @@ router.beforeEach(async (to, from) => {
   }
 
   // 1. 如果沒登入，且要去需要驗證的頁面 -> 強制導向登入頁
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  if ((to.meta.requiresAuth || permissionForPath(to.path)) && !authStore.isAuthenticated) {
     return "/login";
   }
 
   // 2. 如果已經登入，且要去訪客限定的頁面（例如登入頁） -> 自動彈回後台
   if (to.meta.guestOnly && authStore.isAuthenticated) {
-    return "/permissions";
+    return accessibleHome(authStore);
   }
 
   // 3. 管理員權限檢查
+  // Codex 修改：防止繞過隱藏選單直接開啟停用功能。
+  if (authStore.isAuthenticated && !canAccessPath(authStore, to.path)) return accessibleHome(authStore);
   if (to.meta.adminOnly) {
     const isAdminUser =
       authStore.isAdmin || authStore.hasPermission("users.manage");
