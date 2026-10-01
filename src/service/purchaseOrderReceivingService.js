@@ -7,10 +7,10 @@ export async function getReceivablePurchaseOrders(date) {
   return Array.isArray(response.data) ? response.data : [];
 }
 
-export async function receivePurchaseOrder(purchaseOrderId, items) {
+export async function receivePurchaseOrder(purchaseOrderId, items, supplierRemark = null) {
   const response = await httpClient.post(
     `/api/purchaseOrder/${purchaseOrderId}/receive`,
-    { items },
+    { items, supplierRemark },
   );
   return response.data;
 }
