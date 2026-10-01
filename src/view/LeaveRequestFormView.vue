@@ -33,6 +33,13 @@ const form = reactive({
   reason: "",
 });
 
+const roleNameMap = {
+  1: "系統管理員",
+  2: "店長",
+  3: "一般員工",
+  4: "訪客",
+};
+
 const approverId = ref("");
 const approvers = ref([]);
 const saving = ref(false);
@@ -48,10 +55,26 @@ const leaveTypes = [
   { value: "MARRIAGE", label: "婚假" },
 ];
 
-// 簽核人清單排除自己（用 computed，applicantId 晚載入也會自動更新）
-const availableApprovers = computed(() =>
-  approvers.value.filter((u) => u.id !== applicantId.value),
-);
+// 只能選擇權限比申請人高的簽核人
+const availableApprovers = computed(() => {
+  const currentRoleLevel = Number(
+    authStore.currentUser?.roleLevel
+  );
+
+  if (!currentRoleLevel) return [];
+
+  return approvers.value.filter((user) => {
+    const userRoleLevel = Number(user.roleLevel);
+
+    // 最高權限者：可以選自己或其他最高權限者
+    if (currentRoleLevel === 1) {
+      return userRoleLevel === 1;
+    }
+
+    // 其他角色：只能選比自己權限高的人
+    return userRoleLevel < currentRoleLevel;
+  });
+});
 
 // --- 表單連動 ---
 // 切換請假方式：部分時段 → 結束日期跟著開始日期；全天 → 清掉時間
@@ -106,13 +129,10 @@ async function loadExisting() {
 async function loadApprovers() {
   try {
     const res = await httpClient.get("/api/users/all");
-    approvers.value = res.data;
 
-    // 如果之後要限制只有主管能簽核，可以改成：
-    // approvers.value = res.data.filter(u =>
-    //   ["HEADQUARTERS_ADMIN", "STORE_MANAGER", "FRANCHISE_OWNER"]
-    //     .includes(u.role?.name)
-    // );
+    //console.log("簽核人資料：", res.data);
+
+    approvers.value = res.data;
   } catch (e) {
     console.error("載入簽核人失敗", e);
     errorMessage.value = "載入簽核人清單失敗，請重新整理頁面";
@@ -399,8 +419,12 @@ onMounted(async () => {
         <select v-model="approverId" class="input-glow">
           <option value="">請選擇簽核人</option>
 
-          <option v-for="user in availableApprovers" :key="user.id" :value="user.id">
-            {{ user.name }}（{{ user.roleLevel }}）
+          <option
+            v-for="user in availableApprovers"
+            :key="user.id"
+            :value="user.id"
+          >
+            {{ user.name }}（{{ roleNameMap[user.roleLevel] }}）
           </option>
         </select>
       </div>
