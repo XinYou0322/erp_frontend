@@ -781,15 +781,22 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
+  // Codex 修改：送出期間阻擋連點；打卡前先查本人今日紀錄。
+  let clockSubmitting = false;
   async function toggleClock() {
+    if (clockSubmitting) return { success: false, message: "打卡處理中，請勿重複點擊。" };
     if (!currentUser.value?.id) {
       console.warn("沒有登入使用者，無法打卡。");
       return;
     }
 
-    const currentStatus = isClockedIn.value ? "IN" : "OUT";
-
+    clockSubmitting = true;
     try {
+      const today = await httpClient.get("/api/clock/today");
+      isClockedIn.value = Boolean(today.data.isClockedIn);
+      StorageService.set("is_clocked_in", isClockedIn.value);
+      if (today.data.completed) return { success: false, message: "今天已完成上班與下班打卡，不能重複打卡。" };
+      const currentStatus = isClockedIn.value ? "IN" : "OUT";
       const res = await httpClient.post("/api/clock/toggle", {
         userId: currentUser.value.id,
         currentStatus,
@@ -847,7 +854,7 @@ export const useAuthStore = defineStore("auth", () => {
         clockTime: serverClockTime,
       };
     } catch (error) {
-      const message = error?.response?.data || "打卡失敗，請稍後再試。";
+      const message = (typeof error?.response?.data === "string" ? error.response.data : error?.response?.data?.message) || "打卡失敗，請稍後再試。";
       recordAuditLog(
         "打卡失敗",
         "attendance",
@@ -858,6 +865,8 @@ export const useAuthStore = defineStore("auth", () => {
         success: false,
         message,
       };
+    } finally {
+      clockSubmitting = false;
     }
   }
 
