@@ -77,7 +77,8 @@
       <!-- ============================== -->
       <!-- 快捷功能 -->
       <!-- ============================== -->
-      <div class="px-2 pt-2 space-y-2">
+      <!-- Codex 修改：POS 快捷入口同步角色的查看權限。 -->
+      <div v-if="authStore.hasPermission('pos.view')" class="px-2 pt-2 space-y-2">
         <!-- POS -->
         <button
           type="button"
@@ -91,7 +92,8 @@
       </div>
     </div>
     <!-- Bottom Widget: Punch Clock & Settings -->
-    <div class="space-y-3 pt-4 border-t border-slate-800/80">
+    <!-- Codex 修改：打卡與出勤紀錄依各自功能開關顯示。 -->
+    <div v-if="authStore.hasPermission('attendance.clock') || authStore.hasPermission('attendance.view')" class="space-y-3 pt-4 border-t border-slate-800/80">
       <!-- Punch Clock Badge Widget -->
       <div
         class="p-3 bg-slate-950/60 rounded-2xl border border-slate-800/80 text-xs"
@@ -115,6 +117,7 @@
           {{ authStore.clockTime }}
         </div>
         <button
+          v-if="authStore.hasPermission('attendance.clock')"
           @click="authStore.toggleClock"
           class="w-full py-1.5 rounded-lg font-bold text-[11px] transition-all flex items-center justify-center gap-1 cursor-pointer"
           :class="
@@ -134,12 +137,13 @@
         <button
           type="button"
           @click="router.push('/attendance')"
+          v-if="authStore.hasPermission('attendance.view')"
           class="mt-2 w-full py-1.5 rounded-lg border border-slate-700 bg-slate-900/80 text-slate-200 font-semibold text-[10px] transition-all hover:bg-slate-800 cursor-pointer"
         >
           查看打卡紀錄列表
         </button>
 
-        <div class="mt-2 pt-2 border-t border-slate-800/80">
+        <div v-if="authStore.hasPermission('attendance.view')" class="mt-2 pt-2 border-t border-slate-800/80">
           <div class="flex items-center justify-between mb-1.5">
             <span
               class="text-[10px] font-semibold uppercase tracking-wider text-slate-400"
@@ -189,6 +193,8 @@ import { computed, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth.store";
+// Codex 修改：Sidebar 和網址入口使用同一組角色權限規則。
+import { canAccessPath, accessibleHome } from "@/data/navigationPermissions";
 import {
   resolveBackendAssetUrl,
   useSystemSettingStore,
@@ -338,7 +344,6 @@ const navItems = [
     label: "簽核系統",
     icon: ReceiptText,
     path: "/workflows",
-     adminOnly: true,
   },
 
 
@@ -346,7 +351,7 @@ const navItems = [
 
 const visibleNavItems = computed(() =>
   navItems
-    .filter((item) => !item.adminOnly || authStore.isAdmin)
+    .filter((item) => canAccessPath(authStore, item.path))
     .map((item) =>
       item.id === "inventory"
         ? {
@@ -356,6 +361,13 @@ const visibleNavItems = computed(() =>
         : item,
     ),
 );
+
+// Codex 修改：切換角色或停用目前頁面的權限後，立即離開失去權限的頁面。
+watch(() => [authStore.normalizedRole, [...authStore.userPermissions], route.path], () => {
+  if (authStore.isAuthenticated && !canAccessPath(authStore, route.path)) {
+    router.replace(accessibleHome(authStore));
+  }
+});
 
 onMounted(() => {
   systemSettingStore.loadRetailModeSetting().catch((error) => {

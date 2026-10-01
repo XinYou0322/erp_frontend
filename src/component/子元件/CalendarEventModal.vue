@@ -13,6 +13,7 @@ const form = ref({
   title: "",
   description: "",
   category: "meeting",
+  employeeId: "",
   date: "",
   startTime: "09:00",
   endTime: "10:00",
@@ -48,6 +49,7 @@ watch(
         title: e.title || "",
         description: e.description || "",
         category: e.category || "meeting",
+        employeeId: e.employeeId != null ? String(e.employeeId) : "",
         date: e.date || calendarStore.selectedDate,
         startTime: e.startTime || "09:00",
         endTime: e.endTime || "10:00",
@@ -66,11 +68,13 @@ watch(
       id: "",
       title: "",
       description: "",
-      category: "meeting",
+      // Codex 修改：快捷入口預選上班分類。
+      category: calendarStore.createCategory || "meeting",
+      employeeId: "",
       date: calendarStore.selectedDate || "2026-09-06",
       startTime: "09:00",
-      endTime: "10:00",
-      location: "台北總部 3F 會議室",
+      endTime: calendarStore.createCategory === "shift" ? "18:00" : "10:00",
+      location: calendarStore.createCategory === "shift" ? "" : "台北總部 3F 會議室",
       organizer: userName,
       attendeesStr: userName,
       priority: "medium",
@@ -101,6 +105,16 @@ const applyTemplate = (tpl: (typeof quickTemplates)[0]) => {
 };
 
 const handleSave = async () => {
+  // Codex 修改：班表自動帶入員工姓名並驗證同日上下班時間。
+  if (form.value.category === "shift") {
+    const employee = authStore.users.find((user: any) => String(user.id) === form.value.employeeId);
+    if (!employee) { uiStore.showToast("請選擇排班員工", "warning"); return; }
+    if (!form.value.startTime || !form.value.endTime || form.value.endTime <= form.value.startTime) {
+      uiStore.showToast("下班時間須晚於上班時間，目前支援同日班次", "warning"); return;
+    }
+    form.value.title = `${employee.name} · 上班排班`;
+    form.value.attendeesStr = employee.name;
+  }
   if (!authStore.isAdmin) {
     uiStore.showToast("只有最高權限可新增或修改排程", "warning");
     return;
@@ -123,6 +137,7 @@ const handleSave = async () => {
     title: form.value.title.trim(),
     description: form.value.description.trim(),
     category: form.value.category,
+    employeeId: form.value.category === "shift" ? Number(form.value.employeeId) : null,
     date: form.value.date,
     startTime: form.value.startTime,
     endTime: form.value.endTime,
@@ -135,12 +150,17 @@ const handleSave = async () => {
     reminderMinutes: Number(form.value.reminderMinutes) || 15,
   };
 
+  // Codex 修改：儲存失敗保留表單並提示。
+  try {
   if (isEditMode.value && form.value.id) {
     await calendarStore.updateEvent(form.value.id, payload);
     uiStore.showToast(`已更新排程「${payload.title}」`, "success");
   } else {
     await calendarStore.addEvent(payload);
     uiStore.showToast(`已建立新排程「${payload.title}」`, "success");
+  }
+  } catch (error: any) {
+    uiStore.showToast(error?.response?.data?.message || error?.response?.data?.detail || "排班儲存失敗，請檢查時段或稍後再試", "error");
   }
 };
 
@@ -151,8 +171,13 @@ const handleDelete = async () => {
   }
   if (!form.value.id) return;
   if (confirm(`確定要永久刪除此排程「${form.value.title}」嗎？`)) {
+    // Codex 修改：資料庫刪除失敗時保留班次並提示。
+    try {
     await calendarStore.deleteEvent(form.value.id);
     uiStore.showToast("已刪除排程項目", "info");
+    } catch {
+      uiStore.showToast("班次刪除失敗，請稍後再試", "error");
+    }
   }
 };
 
@@ -294,6 +319,15 @@ const closeModal = () => {
         </div>
 
         <!-- Category & Priority Row -->
+        <!-- Codex 修改：班次從真實員工帳號中選擇。 -->
+        <div v-if="form.category === 'shift'">
+          <label class="block font-semibold text-slate-300 mb-1.5">排班員工 *</label>
+          <select v-model="form.employeeId" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
+            <option value="" disabled>請選擇員工</option>
+            <option v-for="user in authStore.users" :key="user.id" :value="String(user.id)">{{ user.name }} · {{ user.department }}</option>
+          </select>
+          <p class="mt-2 text-xs text-slate-400">請填寫日期、上下班時間與工作地點，目前支援同日班次。</p>
+        </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
             <label class="block font-semibold text-slate-300 mb-1.5">
@@ -306,6 +340,7 @@ const closeModal = () => {
               <option value="procurement">採購供鏈 (供應商交期與驗收)</option>
               <option value="production">生產排程 (BOM試產與耗損盤點)</option>
               <option value="meeting">會議例會 (月會與跨部覆盤)</option>
+              <option value="shift">員工上班排班</option>
               <option value="leave">差假排班 (員工休假與代理)</option>
               <option value="maintenance">設備保養 (機器清洗與耗損檢測)</option>
               <option value="marketing">促銷活動 (POS門市會員促銷)</option>

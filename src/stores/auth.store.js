@@ -12,6 +12,8 @@ import {
   normalizeAvatarUrl,
 } from "../data/defaultAvatars";
 import { useNotificationStore } from "./notification.store";
+// Codex 修改：新增角色與既有角色使用共用對照表。
+import { SYSTEM_ROLES } from "../data/roleData";
 
 const DEFAULT_AVATAR = getDefaultAvatar();
 
@@ -24,11 +26,25 @@ export const useAuthStore = defineStore("auth", () => {
   const isAuthenticated = ref(StorageService.get("is_authenticated", false));
   const isInitialized = ref(false);
   const rolePermissions = ref(
-    StorageService.get("role_permissions_matrix", DEFAULT_ROLE_PERMISSIONS),
+    // Codex 修改：補入新增角色預設值，同時保留使用者已調整的權限。
+    { ...structuredClone(DEFAULT_ROLE_PERMISSIONS),
+      ...StorageService.get("role_permissions_matrix", {}) },
   );
   const auditLogs = ref(
     StorageService.get("security_audit_logs", INITIAL_SECURITY_AUDIT_LOGS),
   );
+
+  // Codex 修改：一次性補齊既有角色快取的出勤權限，避免舊設定蓋掉新預設。
+  // 遷移完成後仍尊重管理員後續手動停用，不會每次登入重新開啟。
+  if (!StorageService.get("attendance_all_roles_v1", false)) {
+    for (const role of Object.keys(rolePermissions.value)) {
+      rolePermissions.value[role] = [...new Set([
+        ...(rolePermissions.value[role] || []), "attendance.view", "attendance.clock",
+      ])];
+    }
+    StorageService.set("role_permissions_matrix", rolePermissions.value);
+    StorageService.set("attendance_all_roles_v1", true);
+  }
 
   // 後端真實角色清單
   /** @type {import('vue').Ref<any[]>} */
@@ -44,6 +60,9 @@ export const useAuthStore = defineStore("auth", () => {
   function mapRoleToSystemRole(role) {
     if (!role) return "guest";
     const str = String(role).trim().toLowerCase();
+    // Codex 修改：優先辨識十個標準角色，避免新增角色被當成訪客。
+    const definedRole = SYSTEM_ROLES.find((item) => item.key === str || item.name.toLowerCase() === str);
+    if (definedRole) return definedRole.key;
     if (str === "admin" || str.includes("店長") || str.includes("管理員"))
       return "admin";
     if (str === "manager" || str.includes("經理") || str.includes("組長"))
@@ -60,34 +79,13 @@ export const useAuthStore = defineStore("auth", () => {
     return "guest";
   }
 
+  // Codex 修改：依後端等級還原十個角色，未知等級不授予員工權限。
   function mapRoleLevelToSystemRoleKey(level) {
-    switch (Number(level)) {
-      case 1:
-        return "admin";
-      case 2:
-        return "manager";
-      case 3:
-        return "employee";
-      case 4:
-        return "guest";
-      default:
-        return "employee";
-    }
+    return SYSTEM_ROLES.find((role) => role.level === Number(level))?.key || "guest";
   }
 
   function mapRoleLevelToName(level) {
-    switch (Number(level)) {
-      case 1:
-        return "系統管理員 (Admin)";
-      case 2:
-        return "營運經理 / 店長 (Manager)";
-      case 3:
-        return "現場員工 / 收銀員 (Employee)";
-      case 4:
-        return "訪客 / 外部審計 (Guest)";
-      default:
-        return "一般員工";
-    }
+    return SYSTEM_ROLES.find((role) => role.level === Number(level))?.name || "未知角色";
   }
 
   // --- Computed Roles ---
@@ -298,13 +296,11 @@ export const useAuthStore = defineStore("auth", () => {
       const { user, message } = response.data || {};
       const backendUserId = user?.id;
       const authenticatedUser = {
-        ...user,
+        // Codex 修改：帳密登入沿用清單／Session 的 roleLevel 轉換，避免角色空值而被擋在首頁外。
+        ...mapBackendUserToFrontend(user),
         id: isValidBackendUserId(backendUserId)
           ? Number(backendUserId)
           : backendUserId,
-        avatar: normalizeAvatarUrl(user?.avatar || DEFAULT_AVATAR),
-        role: user?.role?.name || user?.role,
-        roleName: user?.role?.description || user?.role?.name || "使用者",
       };
 
       const loginResult = login(authenticatedUser);
@@ -457,7 +453,9 @@ export const useAuthStore = defineStore("auth", () => {
       role: mapRoleLevelToSystemRoleKey(u.roleLevel),
       roleName: mapRoleLevelToName(u.roleLevel),
       roleLevel: u.roleLevel,
-      department: u.department?.name || "門市營運部",
+      // Codex 修改：讀回已儲存的電話與部門，供名冊和編輯表單使用。
+      phone: u.phone || "",
+      department: u.department?.name ?? "門市營運部",
       status: normalizeUserStatus(u.status || "ACTIVE"),
       createdAt: u.createdAt
         ? u.createdAt.slice(0, 10)
@@ -541,6 +539,8 @@ export const useAuthStore = defineStore("auth", () => {
       name: userDto.name,
       email: userDto.email,
       roleLevel: Number(userDto.roleLevel) || 1,
+      // Codex 修改：申請與開立帳號都保存選定部門。
+      department: userDto.department,
       salary:
         userDto.salary !== undefined && userDto.salary !== "" && userDto.salary !== null
           ? Number(userDto.salary)
@@ -561,15 +561,21 @@ export const useAuthStore = defineStore("auth", () => {
   /** 呼叫後端修改使用者 API */
   async function updateUserApi(id, userDto) {
     try {
-      const statusUpper = (userDto.status || "active").toUpperCase();
+      // Codex 修改：完整傳送編輯資料，未指定狀態時保留後端原值。
       const res = await httpClient.put(`/api/users/${id}`, {
         name: userDto.name,
         email: userDto.email,
         roleLevel: Number(userDto.roleLevel) || 1,
-        status: statusUpper === "INACTIVE" ? "INACTIVE" : "ACTIVE",
+        ...(userDto.status ? { status: userDto.status.toUpperCase() } : {}),
+        phone: userDto.phone,
+        department: userDto.department,
+        ...(userDto.salary !== undefined && userDto.salary !== "" && userDto.salary !== null
+          ? { salary: Number(userDto.salary) } : {}),
+        ...(userDto.password ? { password: userDto.password } : {}),
         avatar: userDto.avatar || "",
       });
-      await fetchUsersFromApi();
+      // Codex 修改：以後端成功保存的回應同步名冊及目前使用者。
+      updateUser(id, mapBackendUserToFrontend(res.data));
       recordAuditLog(
         "修改使用者",
         "permissions",
@@ -577,7 +583,8 @@ export const useAuthStore = defineStore("auth", () => {
       );
       return res.data;
     } catch (err) {
-      return updateUser(id, userDto);
+      // Codex 修改：儲存失敗必須交由畫面提示，避免只修改本機卻顯示成功。
+      throw err;
     }
   }
 
@@ -786,15 +793,22 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
+  // Codex 修改：送出期間阻擋連點；打卡前先查本人今日紀錄。
+  let clockSubmitting = false;
   async function toggleClock() {
+    if (clockSubmitting) return { success: false, message: "打卡處理中，請勿重複點擊。" };
     if (!currentUser.value?.id) {
       console.warn("沒有登入使用者，無法打卡。");
       return;
     }
 
-    const currentStatus = isClockedIn.value ? "IN" : "OUT";
-
+    clockSubmitting = true;
     try {
+      const today = await httpClient.get("/api/clock/today");
+      isClockedIn.value = Boolean(today.data.isClockedIn);
+      StorageService.set("is_clocked_in", isClockedIn.value);
+      if (today.data.completed) return { success: false, message: "今天已完成上班與下班打卡，不能重複打卡。" };
+      const currentStatus = isClockedIn.value ? "IN" : "OUT";
       const res = await httpClient.post("/api/clock/toggle", {
         userId: currentUser.value.id,
         currentStatus,
@@ -852,7 +866,7 @@ export const useAuthStore = defineStore("auth", () => {
         clockTime: serverClockTime,
       };
     } catch (error) {
-      const message = error?.response?.data || "打卡失敗，請稍後再試。";
+      const message = (typeof error?.response?.data === "string" ? error.response.data : error?.response?.data?.message) || "打卡失敗，請稍後再試。";
       recordAuditLog(
         "打卡失敗",
         "attendance",
@@ -863,6 +877,8 @@ export const useAuthStore = defineStore("auth", () => {
         success: false,
         message,
       };
+    } finally {
+      clockSubmitting = false;
     }
   }
 

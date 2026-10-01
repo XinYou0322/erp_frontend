@@ -16,6 +16,8 @@ import httpClient from "../service/httpClient";
 import { StorageService } from "../service/storage.service";
 import { useNotificationStore } from "./notification.store";
 import { useAuthStore } from "./auth.store";
+// Codex 修改：班次狀態更新失敗時顯示提示。
+import { useUIStore } from "./ui.store";
 
 /** 預設初始行事曆事件資料集 (基準時間聚焦於 2026 年 9 月) */
 const INITIAL_CALENDAR_EVENTS = [
@@ -265,6 +267,8 @@ export const useCalendarStore = defineStore("calendar", () => {
       title: event.title || "未命名排程事件",
       description: event.description || "",
       category: event.category || "meeting",
+      // Codex 修改：保留上班班次的員工 ID。
+      employeeId: event.employeeId ?? null,
       date: String(safeDate).slice(0, 10),
       startTime: normalizeTimeValue(event.startTime, "09:00"),
       endTime: normalizeTimeValue(event.endTime, "10:00"),
@@ -291,6 +295,7 @@ export const useCalendarStore = defineStore("calendar", () => {
     title: eventData.title || "未命名排程事件",
     description: eventData.description || "",
     category: eventData.category || "meeting",
+    employeeId: eventData.employeeId ?? null,
     date: eventData.date || selectedDate.value,
     startTime: normalizeTimeValue(eventData.startTime, "09:00"),
     endTime: normalizeTimeValue(eventData.endTime, "10:00"),
@@ -333,6 +338,8 @@ export const useCalendarStore = defineStore("calendar", () => {
   // 2. 分類定義與色彩語義 (Category Metadata)
   // =====================================================================
   const CATEGORY_MAP = {
+    // Codex 修改：員工上班班表獨立分類。
+    shift: { label: "員工上班排班", icon: "badge", color: "sky", badgeClass: "bg-sky-500/10 text-sky-300 border-sky-500/30" },
     all: {
       label: "全部類別",
       icon: "apps",
@@ -701,7 +708,10 @@ export const useCalendarStore = defineStore("calendar", () => {
   };
 
   /** 開啟新增事件彈窗 */
-  const openCreateModal = (defaultDate = "") => {
+  // Codex 修改：上班排班快捷入口預選分類。
+  const createCategory = ref("meeting");
+  const openCreateModal = (defaultDate = "", category = "meeting") => {
+    createCategory.value = category;
     editingEvent.value = null;
     isDayDetailModalOpen.value = false;
     if (defaultDate) {
@@ -759,6 +769,7 @@ export const useCalendarStore = defineStore("calendar", () => {
       title: eventData.title || "未命名排程事件",
       description: eventData.description || "",
       category: eventData.category || "meeting",
+      employeeId: eventData.employeeId ?? null,
       date: eventData.date || selectedDate.value,
       startTime: normalizeTimeValue(eventData.startTime, "09:00"),
       endTime: normalizeTimeValue(eventData.endTime, "10:00"),
@@ -802,6 +813,8 @@ export const useCalendarStore = defineStore("calendar", () => {
       return savedEvent;
     } catch (error) {
       console.error("新增行事曆事件失敗，改用本地資料：", error);
+      // Codex 修改：排班儲存失敗不得假裝成功。
+      if (eventData.category === "shift") throw error;
       events.value.unshift(newEvent);
       authStore.recordAuditLog(
         "行事曆新增排程",
@@ -855,6 +868,7 @@ export const useCalendarStore = defineStore("calendar", () => {
       return updatedEvent;
     } catch (error) {
       console.error("更新行事曆事件失敗，改用本地資料：", error);
+      if (patchData.category === "shift" || events.value[idx]?.category === "shift") throw error;
       if (idx !== -1) {
         events.value[idx] = {
           ...events.value[idx],
@@ -895,6 +909,7 @@ export const useCalendarStore = defineStore("calendar", () => {
       return true;
     } catch (error) {
       console.error("刪除行事曆事件失敗，改用本地資料：", error);
+      if (target?.category === "shift") throw error;
       if (target) {
         events.value = events.value.filter((e) => e.id !== id);
       }
@@ -932,6 +947,10 @@ export const useCalendarStore = defineStore("calendar", () => {
       return updatedEvent || { ...target, status: nextStatus };
     } catch (error) {
       console.error("切換狀態失敗，改用本地資料：", error);
+      if (target.category === "shift") {
+        useUIStore().showToast("班次狀態更新失敗，請確認時段沒有重疊", "error");
+        return null;
+      }
       target.status = nextStatus;
       return { ...target, status: nextStatus };
     }
@@ -1088,6 +1107,7 @@ export const useCalendarStore = defineStore("calendar", () => {
     goToToday,
     selectDate,
     openCreateModal,
+    createCategory,
     openEditModal,
     addEvent,
     updateEvent,

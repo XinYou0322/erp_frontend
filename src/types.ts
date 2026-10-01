@@ -5,7 +5,8 @@
  * 提供 Vue SFC (lang="ts") 靜態型別支援，消除編輯器型別與值混淆之紅字報錯。
  */
 
-export type UserRole = 'admin' | 'manager' | 'employee' | 'guest' | string;
+// Codex 修改：列出十個標準角色，保留既有自訂角色的相容性。
+export type UserRole = 'admin' | 'manager' | 'employee' | 'guest' | 'procurement' | 'warehouse' | 'research' | 'finance' | 'hr' | 'supervisor' | string;
 
 export type PermissionKey = string;
 

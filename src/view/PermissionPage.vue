@@ -1,8 +1,16 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
+// Codex 修改：薪資確認沿用專案既有深色確認視窗。
+import ConfirmCloseModal from "../component/子元件/ConfirmCloseModal.vue";
 import { useAuthStore } from "../stores/auth.store";
 import { useUIStore } from "../stores/ui.store";
 import { UserProfile, UserRole, PermissionKey } from "../types";
+// Codex 修改：共用十個角色的定義。
+import { SYSTEM_ROLES } from "../data/roleData";
+// Codex 修改：與員工帳號申請共用部門選項。
+import { DEPARTMENTS, departmentOptions } from "../data/departmentData";
+// Codex 修改：薪資輸入檢查及確認金額的共用格式。
+import { validateSalary, formatSalary } from "../data/salarySafety";
 import { PERMISSION_MODULES } from "../data/permissionData";
 import { DEFAULT_AVATARS, normalizeAvatarUrl } from "../data/defaultAvatars";
 import BaseCard from "../component/子元件/BaseCard.vue";
@@ -18,42 +26,8 @@ const activeTab = ref<"matrix" | "users" | "approval" | "audit-logs">("matrix");
 
 // Role selector for matrix view
 const selectedRoleForMatrix = ref<UserRole>("manager");
-const availableRoles: {
-  key: UserRole;
-  name: string;
-  desc: string;
-  icon: string;
-  badge: "success" | "warning" | "info" | "neutral";
-}[] = [
-  {
-    key: "admin",
-    name: "系統管理員 (Admin)",
-    desc: "擁有全系統最高存取與配置授權",
-    icon: "shield_person",
-    badge: "success",
-  },
-  {
-    key: "manager",
-    name: "營運經理 / 店長 (Manager)",
-    desc: "負責門市營運、配方編修、採購核准及財務分析",
-    icon: "manage_accounts",
-    badge: "info",
-  },
-  {
-    key: "employee",
-    name: "現場員工 / 收銀員 (Employee)",
-    desc: "負責現場 POS 點餐、打卡及假單提交",
-    icon: "badge",
-    badge: "warning",
-  },
-  {
-    key: "guest",
-    name: "訪客 / 外部審計 (Guest)",
-    desc: "僅限檢視部分報表與總覽唯讀數據",
-    icon: "visibility",
-    badge: "neutral",
-  },
-];
+// Codex 修改：原有四個角色加上六個職務角色。
+const availableRoles = SYSTEM_ROLES;
 
 const currentRoleKey = computed(() => {
   return authStore.normalizedRole || authStore.currentUser?.role || "guest";
@@ -71,12 +45,23 @@ const isPermissionMatrixEditable = computed(() => canManageAllRoles.value);
 
 const visibleRolesForCurrentUser = computed(() => {
  if (canManageAllRoles.value) {
-    return availableRoles.filter((role) => role.key !== "admin");
+    return availableRoles;
   }
   return availableRoles.filter(
-    (role) => role.key === currentRoleKey.value && role.key !== "admin"
+    (role) => role.key === currentRoleKey.value
   );
 });
+
+// Codex 修改：預設五張卡片，展開顯示全部；收合時同步選取可見角色。
+const isRoleListExpanded = ref(false);
+const displayedRoles = computed(() => isRoleListExpanded.value
+  ? visibleRolesForCurrentUser.value : visibleRolesForCurrentUser.value.slice(0, 5));
+const toggleRoleList = () => {
+  isRoleListExpanded.value = !isRoleListExpanded.value;
+  if (!displayedRoles.value.some((role) => role.key === selectedRoleForMatrix.value)) {
+    selectedRoleForMatrix.value = displayedRoles.value[0]?.key || "guest";
+  }
+};
 
 const visiblePermissionModules = computed(() => {
   const allowedSet = new Set(
@@ -112,12 +97,11 @@ const userSearchTerm = ref("");
 const selectedDepartmentFilter = ref("全部");
 const departments = [
   "全部",
-  "總管理處",
-  "營運與行銷部",
-  "生產研發部",
-  "門市收銀課",
-  "外部審計顧問",
+  ...DEPARTMENTS,
 ];
+
+// Codex 修改：部門選項包含既有資料，避免重新編輯時下拉選單空白。
+const editableDepartments = computed(() => departmentOptions(authStore.users, userForm.value.department));
 
 type BadgeVariant = "success" | "warning" | "danger" | "info" | "neutral";
 
@@ -215,6 +199,42 @@ const userForm = ref<{
 
 const defaultAvatars = DEFAULT_AVATARS;
 
+// Codex 修改：薪資有變動時須再次輸入，並核對新舊金額後才送出。
+const originalSalary = ref<number | null>(null);
+const salaryConfirmation = ref("");
+const salaryChanged = computed(() => authStore.isAdmin && userForm.value.salary !== ""
+  && userForm.value.salary != null && Number(userForm.value.salary) !== originalSalary.value);
+watch(() => userForm.value.salary, () => { salaryConfirmation.value = ""; });
+// Codex 修改：等待自訂視窗的選擇，取消時保留編輯內容且不送出 API。
+const isSalaryConfirmOpen = ref(false);
+const salaryConfirmMessage = ref("");
+let resolveSalaryConfirmation: ((confirmed: boolean) => void) | null = null;
+const finishSalaryConfirmation = (confirmed: boolean) => {
+  isSalaryConfirmOpen.value = false;
+  resolveSalaryConfirmation?.(confirmed);
+  resolveSalaryConfirmation = null;
+};
+onBeforeUnmount(() => finishSalaryConfirmation(false));
+const confirmSalaryChange = async () => {
+  if (resolveSalaryConfirmation) return false;
+  if (!authStore.isAdmin) return true;
+  const error = validateSalary(userForm.value.salary);
+  if (error) { uiStore.showToast(error, "error"); return false; }
+  if (!salaryChanged.value) return true;
+  if (!salaryConfirmation.value || validateSalary(salaryConfirmation.value)
+      || Number(salaryConfirmation.value) !== Number(userForm.value.salary)) {
+    uiStore.showToast("請再次輸入相同薪資，確認沒有多打或少打數字。", "error");
+    return false;
+  }
+  const next = Number(userForm.value.salary);
+  const largeChange = originalSalary.value != null && originalSalary.value > 0
+    && Math.abs(next - originalSalary.value) / originalSalary.value >= 0.3;
+  const warning = next === 0 ? "\n注意：新薪資為 0 元。" : largeChange ? "\n注意：薪資變動達 30% 以上，請特別核對。" : "";
+  salaryConfirmMessage.value = `請確認「${userForm.value.name}」的薪資：\n原薪資：${formatSalary(originalSalary.value)}\n新薪資：${formatSalary(next)}${warning}`;
+  isSalaryConfirmOpen.value = true;
+  return new Promise<boolean>((resolve) => { resolveSalaryConfirmation = resolve; });
+};
+
 const handleAvatarFileChange = async (event: Event) => {
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0];
@@ -261,6 +281,9 @@ onMounted(() => {
 });
 
 const handleOpenAddUser = () => {
+  // Codex 修改：每次開啟表單都重新核對薪資。
+  originalSalary.value = null;
+  salaryConfirmation.value = "";
   userForm.value = {
     name: "",
     email: "",
@@ -287,11 +310,10 @@ const handleSaveNewUser = async () => {
   }
 
   // 決定對應後端 roleId
-  let targetRoleLevel = 4;
-  if (userForm.value.role === "admin") targetRoleLevel = 1;
-  else if (userForm.value.role === "manager") targetRoleLevel = 2;
-  else if (userForm.value.role === "employee") targetRoleLevel = 3;
-  else if (userForm.value.role === "guest") targetRoleLevel = 4;
+  // Codex 修改：薪資驗證與人工確認通過後才新增。
+  if (!(await confirmSalaryChange())) return;
+  // Codex 修改：新增帳號可保存十個角色的等級。
+  const targetRoleLevel = availableRoles.find((role) => role.key === userForm.value.role)?.level || 4;
 
   await authStore.createUserApi({
     name: userForm.value.name,
@@ -309,12 +331,17 @@ const handleSaveNewUser = async () => {
 };
 
 const handleOpenEditUser = (user: any) => {
+  // Codex 修改：保留原金額供薪資變動比對。
+  originalSalary.value = user.salary == null ? null : Number(user.salary);
+  salaryConfirmation.value = "";
   userForm.value = {
     id: user.id,
     name: user.name,
     email: user.email,
-    password: user.password || "",
+    // Codex 修改：密碼只供重設，不讀回或顯示既有密碼。
+    password: "",
     role: user.role,
+    salary: authStore.isAdmin ? (user.salary ?? "") : "",
     department: user.department,
     phone: user.phone || "",
     avatar: user.avatar,
@@ -324,24 +351,30 @@ const handleOpenEditUser = (user: any) => {
 
 const handleSaveEditUser = async () => {
   if (!userForm.value.id) return;
+  // Codex 修改：薪資驗證與人工確認通過後才修改。
+  if (!(await confirmSalaryChange())) return;
 
-   let targetRoleLevel = 4;
-  if (userForm.value.role === "admin") targetRoleLevel = 1;
-  else if (userForm.value.role === "manager") targetRoleLevel = 2;
-  else if (userForm.value.role === "employee") targetRoleLevel = 3;
-  else if (userForm.value.role === "guest") targetRoleLevel = 4;
+  // Codex 修改：編輯帳號可保存十個角色的等級。
+  const targetRoleLevel = availableRoles.find((role) => role.key === userForm.value.role)?.level || 4;
 
+  // Codex 修改：失敗保留表單並提示，成功後才關閉視窗。
+  try {
    await authStore.updateUserApi(userForm.value.id, {
     name: userForm.value.name,
     email: userForm.value.email,
     role: userForm.value.role,
-    roleLevel: targetRoleLevel, 
+    roleLevel: targetRoleLevel,
+    password: userForm.value.password,
+    ...(authStore.isAdmin ? { salary: userForm.value.salary } : {}),
     department: userForm.value.department,
     phone: userForm.value.phone,
     avatar: userForm.value.avatar,
   });
   uiStore.showToast(`已更新「${userForm.value.name}」使用者資料！`);
   isEditUserModalOpen.value = false;
+  } catch (error: any) {
+    uiStore.showToast(error?.response?.data?.message || error?.message || "儲存失敗，請稍後再試", "error");
+  }
 };
 
 const handleApproveRequest = (user: any) => {
@@ -511,9 +544,9 @@ const handleResetDefaultPermissions = () => {
     <!-- TAB 1: Role-Permission Matrix View -->
     <div v-if="activeTab === 'matrix'" class="space-y-6">
       <!-- Role Switcher Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div id="rbac-role-cards" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
         <div
-          v-for="role in visibleRolesForCurrentUser"
+          v-for="role in displayedRoles"
           :key="role.key"
           @click="selectedRoleForMatrix = role.key"
           class="p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-2"
@@ -549,6 +582,16 @@ const handleResetDefaultPermissions = () => {
             {{ role.desc }}
           </p>
         </div>
+      </div>
+
+      <!-- Codex 修改：超過五個角色才顯示展開／收合按鈕。 -->
+      <div v-if="visibleRolesForCurrentUser.length > 5" class="flex justify-center">
+        <button type="button" @click="toggleRoleList"
+          :aria-expanded="isRoleListExpanded" aria-controls="rbac-role-cards"
+          class="flex items-center gap-2 px-5 py-2 rounded-xl border border-slate-700 bg-slate-900 text-emerald-400 hover:bg-slate-800 text-xs font-semibold cursor-pointer transition-colors">
+          <span class="material-symbols-outlined" aria-hidden="true">{{ isRoleListExpanded ? 'expand_less' : 'expand_more' }}</span>
+          {{ isRoleListExpanded ? '收合角色' : `展開其餘 ${visibleRolesForCurrentUser.length - 5} 個角色` }}
+        </button>
       </div>
 
       <!-- Permission Matrix Table Card -->
@@ -1184,10 +1227,8 @@ const handleResetDefaultPermissions = () => {
               v-model="userForm.role"
               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-hidden focus:border-emerald-500 cursor-pointer"
             >
-              <option value="admin">系統管理員 (Admin)</option>
-              <option value="manager">營運經理 / 店長 (Manager)</option>
-              <option value="employee">現場員工 / 收銀員 (Employee)</option>
-              <option value="guest">訪客 / 外部審計 (Guest)</option>
+              <!-- Codex 修改：角色選單與角色卡片保持一致。 -->
+              <option v-for="role in availableRoles" :key="role.key" :value="role.key">{{ role.name }}</option>
             </select>
           </div>
           <div>
@@ -1198,8 +1239,8 @@ const handleResetDefaultPermissions = () => {
               v-model="userForm.department"
               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-hidden focus:border-emerald-500 cursor-pointer"
             >
-              <option value="總管理處">總管理處</option>
-              <option value="門市收銀課">門市收銀課</option>
+              <!-- Codex 修改：顯示所有可選部門及已保存的部門。 -->
+              <option v-for="department in editableDepartments" :key="department" :value="department">{{ department }}</option>
             </select>
           </div>
           <div>
@@ -1218,7 +1259,9 @@ const handleResetDefaultPermissions = () => {
               v-model.number="userForm.salary"
               type="number"
               min="0"
-              step="100"
+              max="99999999.99"
+              step="0.01"
+              @wheel="($event.target as HTMLInputElement).blur()"
               :placeholder="authStore.isAdmin ? '例如：36000' : '無填寫權限'"
               :disabled="!authStore.isAdmin"
               class="w-full bg-slate-950 border rounded-xl px-3 py-2 text-white font-data-mono focus:outline-hidden"
@@ -1228,6 +1271,16 @@ const handleResetDefaultPermissions = () => {
                   : 'border-slate-800/50 bg-slate-900/50 text-slate-500 cursor-not-allowed'
               "
             />
+            <!-- Codex 修改：移除金額預覽與說明，僅在驗證或再次確認時顯示內容。 -->
+            <div v-if="authStore.isAdmin && (salaryChanged || validateSalary(userForm.salary))" class="mt-2 space-y-2">
+              <p v-if="validateSalary(userForm.salary)" class="text-rose-400" role="alert">{{ validateSalary(userForm.salary) }}</p>
+              <label v-if="salaryChanged" class="block text-amber-300">
+                再次輸入薪資以確認
+                <input v-model="salaryConfirmation" type="text" inputmode="decimal" autocomplete="off"
+                  required placeholder="請再次輸入相同金額"
+                  class="mt-1 w-full bg-slate-950 border border-amber-500/50 rounded-xl px-3 py-2 text-white" />
+              </label>
+            </div>
           </div>
         </div>
 
@@ -1350,7 +1403,7 @@ const handleResetDefaultPermissions = () => {
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label class="block text-slate-400 mb-1 font-semibold"
               >指派系統角色</label
@@ -1359,10 +1412,8 @@ const handleResetDefaultPermissions = () => {
               v-model="userForm.role"
               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-hidden focus:border-emerald-500 cursor-pointer"
             >
-              <option value="admin">系統管理員 (Admin)</option>
-              <option value="manager">營運經理 / 店長 (Manager)</option>
-              <option value="employee">現場員工 / 收銀員 (Employee)</option>
-              <option value="guest">訪客 / 外部審計 (Guest)</option>
+              <!-- Codex 修改：角色選單與角色卡片保持一致。 -->
+              <option v-for="role in availableRoles" :key="role.key" :value="role.key">{{ role.name }}</option>
             </select>
           </div>
           <div>
@@ -1373,12 +1424,48 @@ const handleResetDefaultPermissions = () => {
               v-model="userForm.department"
               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-hidden focus:border-emerald-500 cursor-pointer"
             >
-              <option value="總管理處">總管理處</option>
-              <option value="營運與行銷部">營運與行銷部</option>
-              <option value="生產研發部">生產研發部</option>
-              <option value="門市收銀課">門市收銀課</option>
-              <option value="外部審計顧問">外部審計顧問</option>
+              <!-- Codex 修改：顯示所有可選部門及已保存的部門。 -->
+              <option v-for="department in editableDepartments" :key="department" :value="department">{{ department }}</option>
             </select>
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-slate-400 font-semibold"
+                >薪資 (NTD)</label
+              >
+              <span
+                v-if="!authStore.isAdmin"
+                class="text-[10px] text-rose-400 font-medium"
+              >
+                最高權限限制
+              </span>
+            </div>
+            <input
+              v-model.number="userForm.salary"
+              type="number"
+              min="0"
+              max="99999999.99"
+              step="0.01"
+              @wheel="($event.target as HTMLInputElement).blur()"
+              :placeholder="authStore.isAdmin ? '例如：36000' : '無填寫權限'"
+              :disabled="!authStore.isAdmin"
+              class="w-full bg-slate-950 border rounded-xl px-3 py-2 text-white font-data-mono focus:outline-hidden"
+              :class="
+                authStore.isAdmin
+                  ? 'border-slate-800 focus:border-emerald-500'
+                  : 'border-slate-800/50 bg-slate-900/50 text-slate-500 cursor-not-allowed'
+              "
+            />
+            <!-- Codex 修改：移除金額預覽與說明，僅在驗證或再次確認時顯示內容。 -->
+            <div v-if="authStore.isAdmin && (salaryChanged || validateSalary(userForm.salary))" class="mt-2 space-y-2">
+              <p v-if="validateSalary(userForm.salary)" class="text-rose-400" role="alert">{{ validateSalary(userForm.salary) }}</p>
+              <label v-if="salaryChanged" class="block text-amber-300">
+                再次輸入薪資以確認
+                <input v-model="salaryConfirmation" type="text" inputmode="decimal" autocomplete="off"
+                  required placeholder="請再次輸入相同金額"
+                  class="mt-1 w-full bg-slate-950 border border-amber-500/50 rounded-xl px-3 py-2 text-white" />
+              </label>
+            </div>
           </div>
         </div>
 
@@ -1427,6 +1514,16 @@ const handleResetDefaultPermissions = () => {
         </div>
       </form>
     </BaseModal>
+
+    <!-- Codex 修改：取代瀏覽器原生薪資確認，套用既有深色視窗與藍色按鈕。 -->
+    <ConfirmCloseModal
+      :isOpen="isSalaryConfirmOpen"
+      title="確定要儲存薪資嗎？"
+      :message="salaryConfirmMessage"
+      confirmLabel="確定儲存"
+      @cancel="finishSalaryConfirmation(false)"
+      @confirm="finishSalaryConfirmation(true)"
+    />
 
     <!-- Modal 3: Confirm Reset Matrix Permissions -->
     <BaseModal

@@ -22,7 +22,8 @@
 // =====================================================================
 
 /**
- * @typedef {'admin' | 'manager' | 'employee' | 'guest'} UserRole
+ * Codex 修改：補齊十個角色的型別文件。
+ * @typedef {'admin' | 'manager' | 'employee' | 'guest' | 'procurement' | 'warehouse' | 'research' | 'finance' | 'hr' | 'supervisor'} UserRole
  * 系統支援的使用者角色等級：
  * - admin: 系統管理員 (全權限)
  * - manager: 部門主管 (審批、修改、匯出)

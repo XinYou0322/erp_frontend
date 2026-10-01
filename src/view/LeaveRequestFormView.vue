@@ -290,6 +290,11 @@ async function deleteDraft() {
 }
 
 onMounted(async () => {
+  // Codex 修改：從出勤行事曆新增時預填日期，仍透過既有請假 API 儲存與送審。
+  if (!isEdit.value && typeof route.query.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(route.query.date)) {
+    form.startDate = route.query.date;
+    form.endDate = route.query.date;
+  }
   await loadExisting();
   await loadApprovers();
 });
@@ -297,6 +302,8 @@ onMounted(async () => {
 
 <template>
   <div class="leave-form">
+    <!-- Codex 修改：提供行事曆入口的返回連結，返回後重新讀取最新假單狀態。 -->
+    <RouterLink v-if="route.query.from === 'attendance'" :to="{ name: 'attendance' }" class="text-emerald-400">返回出勤行事曆</RouterLink>
     <header class="leave-form__header">
       <button class="btn-back" @click="goBack">
         <span class="material-symbols-outlined">arrow_back</span>

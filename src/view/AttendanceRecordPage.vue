@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import { useAuthStore } from "@/stores/auth.store";
+// Codex 修改：新增請假與查看假單均使用既有請假系統。
+import { useRouter } from "vue-router";
+const router = useRouter();
+const leaveTypeLabels: Record<string, string> = { ANNUAL: "特休", SICK: "病假", PERSONAL: "事假", MARRIAGE: "婚假" };
+type CalendarLeave = { id: number; leaveType: string; status: string; durationType: string; startTime: string | null; endTime: string | null };
+const leaveLabel = (leave: CalendarLeave) => `${leaveTypeLabels[leave.leaveType] || leave.leaveType} · ${leave.status === 'APPROVED' ? '已核准' : '審核中'}`;
+const createLeave = (date?: string) => router.push({ name: "leave-create", query: { from: "attendance", ...(date ? { date } : {}) } });
 
 type ClockRecordItem = {
   id?: number | string;
@@ -11,6 +18,7 @@ type ClockRecordItem = {
 };
 
 type AttendanceStatus =
+  | "LEAVE"
   | "NORMAL"
   | "LATE"
   | "EARLY_LEAVE"
@@ -21,6 +29,8 @@ type AttendanceStatus =
   | "FUTURE";
 
 type DailyAttendance = {
+  // Codex 修改：由出勤 API 帶回同日期的請假系統資料。
+  leaves?: CalendarLeave[];
   date: string; // yyyy-MM-dd
   status: AttendanceStatus | null;
   statusLabel: string | null;
@@ -59,6 +69,7 @@ const STATUS_META: Record<
   AttendanceStatus,
   { label: string; dot: string; badge: string }
 > = {
+  LEAVE: { label: "已核准請假", dot: "bg-violet-400", badge: "bg-violet-500/10 text-violet-300 border border-violet-500/30" },
   NORMAL: {
     label: "正常出勤",
     dot: "bg-emerald-400",
@@ -120,6 +131,7 @@ const summary = computed(() => {
     LATE_AND_EARLY_LEAVE: 0,
     ABSENT: 0,
     NORMAL: 0,
+    LEAVE: 0,
   };
   for (const day of calendarDays.value) {
     if (day.status && counts[day.status] !== undefined) {
@@ -153,6 +165,8 @@ const loadCalendar = async () => {
     return;
   }
   loading.value = true;
+  // Codex 修改：切換月份或員工後關閉舊明細，避免顯示上一筆資料。
+  selectedDay.value = null;
   errorMessage.value = "";
   try {
     const res = await fetch(
@@ -232,6 +246,10 @@ onMounted(async () => {
           <p class="text-xs uppercase tracking-[0.18em]">Attendance</p>
         </div>
         <h1 class="mt-1 text-2xl font-black text-white">出勤行事曆</h1>
+        <!-- Codex 修改：僅能替自己新增請假，沿用既有申請與簽核流程。 -->
+        <button v-if="String(targetUserId) === String(authStore.currentUser?.id)" type="button"
+          @click="createLeave()" class="mt-3 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-bold text-slate-950">新增請假</button>
+        <button type="button" @click="loadCalendar" class="ml-3 text-xs text-emerald-400">重新整理</button>
       </div>
 
       <!-- 管理員可從下拉選單挑選員工查詢別人的行事曆，一般員工只能看自己 -->
@@ -279,7 +297,7 @@ onMounted(async () => {
     </div>
 
     <!-- 當月統計摘要 -->
-    <div class="grid grid-cols-2 gap-2 md:grid-cols-5">
+    <div class="grid grid-cols-2 gap-2 md:grid-cols-6">
       <div
         v-for="(item, key) in [
           { key: 'NORMAL', label: '正常出勤' },
@@ -287,6 +305,7 @@ onMounted(async () => {
           { key: 'EARLY_LEAVE', label: '早退' },
           { key: 'LATE_AND_EARLY_LEAVE', label: '遲到/早退' },
           { key: 'ABSENT', label: '缺勤' },
+          { key: 'LEAVE', label: '核准全天假' },
         ]"
         :key="key"
         class="rounded-xl border border-slate-800 bg-slate-900/60 px-3 py-2 text-center"
@@ -339,6 +358,10 @@ onMounted(async () => {
             >
               {{ statusMeta(day.status).label }}
             </span>
+            <!-- Codex 修改：日期格呈現假別及狀態，多張假單皆可在明細查看。 -->
+            <span v-for="leave in (day.leaves || []).slice(0, 2)" :key="leave.id"
+              :title="leaveLabel(leave)" class="truncate text-[9px] text-violet-300">{{ leaveLabel(leave) }}</span>
+            <span v-if="(day.leaves?.length || 0) > 2" class="text-[9px] text-slate-400">更多請假…</span>
           </button>
         </div>
       </template>
@@ -365,6 +388,15 @@ onMounted(async () => {
         </div>
 
         <div class="mt-4 space-y-2">
+          <!-- Codex 修改：查看假別、全天／時段及原請假單，點選日期可直接申請。 -->
+          <button v-if="String(targetUserId) === String(authStore.currentUser?.id)" type="button"
+            @click="createLeave(selectedDay.date)" class="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-bold text-slate-950">當日新增請假</button>
+          <button v-for="leave in selectedDay.leaves || []" :key="leave.id" type="button"
+            @click="router.push({ name: 'leave-detail', params: { id: leave.id } })"
+            class="block w-full rounded-lg border border-violet-500/30 p-3 text-left text-xs text-violet-300">
+            <div>{{ leaveLabel(leave) }}</div>
+            <div class="mt-1">{{ leave.durationType === 'FULL_DAY' ? '全天' : `${leave.startTime?.slice(0, 5)}～${leave.endTime?.slice(0, 5)}` }} · 查看請假單 #{{ leave.id }}</div>
+          </button>
           <div v-if="!selectedDay.records || selectedDay.records.length === 0" class="text-xs text-slate-400">
             當天沒有打卡紀錄。
           </div>

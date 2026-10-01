@@ -13,6 +13,8 @@ const uiStore = useUIStore();
 // 頁面載入時從後端資料庫取得排程資料
 onMounted(async () => {
   await calendarStore.loadEvents();
+  // Codex 修改：排班選單讀取真實員工。
+  if (authStore.isAdmin) await authStore.fetchUsersFromApi();
 });
 
 type CalendarStatEvent = {
@@ -295,6 +297,9 @@ const handleExportCSV = () => {
         </div>
 
         <!-- Add Event Button -->
+        <!-- Codex 修改：員工上班排班快捷入口。 -->
+        <button v-if="canEdit" type="button" @click="calendarStore.openCreateModal(calendarStore.selectedDate, 'shift')"
+          class="px-3.5 py-2 rounded-xl bg-sky-500 text-white text-xs font-bold cursor-pointer">新增員工排班</button>
         <button
           v-if="canEdit"
           @click="calendarStore.openCreateModal()"
