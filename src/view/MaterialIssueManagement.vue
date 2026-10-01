@@ -1,9 +1,51 @@
 <template>
   <div class="space-y-6 pb-12">
 
-    <!-- KPI Cards -->
+    <div class="inline-flex rounded-xl border border-[var(--outline)] bg-[var(--surface-container)] p-1">
+      <button
+        type="button"
+        class="rounded-lg px-4 py-2 text-[length:var(--font-body)] font-bold transition-colors"
+        :class="activeSection === 'suggestions'
+          ? 'bg-[var(--primary)] text-[var(--on-primary)]'
+          : 'text-[var(--on-surface-variant)] hover:text-[var(--on-surface)]'"
+        @click="activeSection = 'suggestions'"
+      >
+        備料建議
+      </button>
+      <button
+        type="button"
+        class="rounded-lg px-4 py-2 text-[length:var(--font-body)] font-bold transition-colors"
+        :class="activeSection === 'records'
+          ? 'bg-[var(--primary)] text-[var(--on-primary)]'
+          : 'text-[var(--on-surface-variant)] hover:text-[var(--on-surface)]'"
+        @click="activeSection = 'records'"
+      >
+        領料紀錄
+      </button>
+      <button
+        type="button"
+        class="rounded-lg px-4 py-2 text-[length:var(--font-body)] font-bold transition-colors"
+        :class="activeSection === 'settlement'
+          ? 'bg-[var(--primary)] text-[var(--on-primary)]'
+          : 'text-[var(--on-surface-variant)] hover:text-[var(--on-surface)]'"
+        @click="activeSection = 'settlement'"
+      >
+        今日結算
+      </button>
+    </div>
 
+    <DailyPreparationSuggestionsPanel
+      v-if="activeSection === 'suggestions'"
+      ref="suggestionsPanelRef"
+      :filters-expanded="filtersExpanded"
+    />
 
+    <DailyMaterialSettlementPanel
+      v-else-if="activeSection === 'settlement'"
+      ref="settlementPanelRef"
+    />
+
+    <template v-else>
 
     <!-- 由原物料進銷存上方 Bar 控制展開的查詢工具列 -->
     <Transition name="inventory-filter">
@@ -251,6 +293,7 @@
   @close="inventoryAdjustmentModalOpen = false"
   @success="handleAdjustmentSuccess"
 />
+    </template>
 
   </div>
 </template>
@@ -267,6 +310,8 @@ import Filter from '@/component/子元件/Filter.vue'
 import Pagination from '@/component/子元件/Pagination.vue'
 import httpClient from '@/service/httpClient'
 import InventoryAdjustmentModal from '@/component/父元件/InventoryAdjustmentModal.vue'
+import DailyMaterialSettlementPanel from '@/component/父元件/DailyMaterialSettlementPanel.vue'
+import DailyPreparationSuggestionsPanel from '@/component/父元件/DailyPreparationSuggestionsPanel.vue'
 import StatusBadge from '@/component/子元件/StatusBadge.vue'
 defineProps({
   filtersExpanded: {
@@ -275,6 +320,9 @@ defineProps({
   }
 })
 const inventoryAdjustmentModalOpen = ref(false)
+const activeSection = ref('suggestions')
+const suggestionsPanelRef = ref(null)
+const settlementPanelRef = ref(null)
 // ==============================
 // 異動紀錄
 // ==============================
@@ -671,7 +719,17 @@ const formatDateTime = (dateTime) => {
 }
 
 defineExpose({
-  refresh: loadLogs,
+  refresh: () => {
+    if (activeSection.value === 'suggestions') {
+      suggestionsPanelRef.value?.refresh?.()
+      return
+    }
+    if (activeSection.value === 'settlement') {
+      settlementPanelRef.value?.refresh?.()
+      return
+    }
+    loadLogs()
+  },
   openPrimaryAction: () => {
     inventoryAdjustmentModalOpen.value = true
   }

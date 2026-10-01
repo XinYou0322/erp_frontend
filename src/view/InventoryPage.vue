@@ -37,6 +37,7 @@
         </button>
 
         <button
+          v-if="showPrimaryAction"
           type="button"
           class="btn-primary inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[length:var(--font-body)]"
           @click="openActivePrimaryAction"
@@ -85,6 +86,12 @@ ref="materialViewRef"
 :filters-expanded="filtersExpanded"
 />
 
+    <ReplenishmentSuggestions
+      v-else-if="activeTab === 'replenishment'"
+      ref="replenishmentViewRef"
+      :filters-expanded="filtersExpanded"
+    />
+
 
 
 
@@ -106,6 +113,7 @@ import {
   Plus,
   RefreshCw,
   SlidersHorizontal,
+  Sparkles,
 } from "lucide-vue-next";
 
 import PageTabs from "@/component/子元件/PageTabs.vue";
@@ -116,6 +124,7 @@ import InventoryManagement from "@/view/InventoryManagement.vue";
 import InventoryLogManagement from "@/view/InventoryLogManagement.vue";
 import MaterialIssueManagement from "./MaterialIssueManagement.vue";
 import MaterialManagement from "./MaterialManagement.vue";
+import ReplenishmentSuggestions from "./ReplenishmentSuggestions.vue";
 import { useSystemSettingStore } from "@/stores/systemSetting.store";
 
 const activeTab = ref("inventory");
@@ -124,9 +133,11 @@ const materialViewRef = ref(null);
 const inventoryViewRef = ref(null);
 const inventoryLogViewRef = ref(null);
 const materialIssueViewRef = ref(null);
+const replenishmentViewRef = ref(null);
 const showFilterToggle = computed(() =>
-  ["Material", "inventory", "logs", "MaterialIssue"].includes(activeTab.value),
+  ["Material", "inventory", "logs", "MaterialIssue", "replenishment"].includes(activeTab.value),
 );
+const showPrimaryAction = computed(() => activeTab.value !== "replenishment");
 
 function changeInventoryTab(tab) {
   activeTab.value = tab;
@@ -139,6 +150,7 @@ const activePrimaryActionLabel = computed(() => {
     return purchaseOrderReceivingEnabled.value ? "採購單收貨" : "進貨原物料";
   }
   if (activeTab.value === "logs") return "庫存調整";
+  if (activeTab.value === "replenishment") return "";
   return "新增領料";
 });
 
@@ -146,6 +158,7 @@ function getActiveView() {
   if (activeTab.value === "Material") return materialViewRef.value;
   if (activeTab.value === "inventory") return inventoryViewRef.value;
   if (activeTab.value === "logs") return inventoryLogViewRef.value;
+  if (activeTab.value === "replenishment") return replenishmentViewRef.value;
   return materialIssueViewRef.value;
 }
 
@@ -197,13 +210,21 @@ const allInventoryTabs = [
     label: "當日領料",
     icon: History,
   },
+  {
+    value: "replenishment",
+    label: "補貨建議",
+    icon: Sparkles,
+  },
 
 ];
 
 const inventoryTabs = computed(() =>
   retailModeEnabled.value
     ? allInventoryTabs.filter(
-        (tab) => tab.value !== "Material" && tab.value !== "MaterialIssue",
+        (tab) =>
+          tab.value !== "Material" &&
+          tab.value !== "MaterialIssue" &&
+          tab.value !== "replenishment",
       )
     : allInventoryTabs,
 );

@@ -70,12 +70,12 @@ const barChartOptions = {
       display: true,
       text: "客單價分佈",
       color: "#e2e8f0",
-      font: { size: 16, weight: "bold" }
+      font: { size: 24, weight: "bold" }
     }
   },
   scales: {
     x: {
-      ticks: { color: "#94a3b8", font: { size: 12 } },
+      ticks: { color: "#94a3b8", font: { size: 18 } },
       grid: { color: "#334155" }
     },
     y: {
@@ -83,7 +83,7 @@ const barChartOptions = {
       ticks: {
         color: "#94a3b8",
         stepSize: 1,
-        font: { size: 12 }
+        font: { size: 18 }
       },
       grid: { color: "#334155" },
       title: { display: false }
@@ -109,13 +109,13 @@ const pieChartOptions = {
   plugins: {
     legend: {
       position: "bottom",
-      labels: { color: "#94a3b8", padding: 12, font: { size: 12 } }
+      labels: { color: "#94a3b8", padding: 12, font: { size: 18 } }
     },
     title: {
       display: true,
       text: "支付方式訂單佔比",
       color: "#e2e8f0",
-      font: { size: 16, weight: "bold" }
+      font: { size: 24, weight: "bold" }
     },
     tooltip: {
       callbacks: {

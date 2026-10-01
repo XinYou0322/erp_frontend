@@ -30,6 +30,17 @@ const chartData = computed(() => ({
       borderWidth: 1,
       borderRadius: 6,
       maxBarThickness: 26,
+      stack: "workspace",
+    },
+    {
+      label: "前次工作區留存",
+      data: props.data.map((item) => Number(item.previousCarryoverQuantity || 0)),
+      backgroundColor: "rgba(168, 85, 247, 0.78)",
+      borderColor: "#c084fc",
+      borderWidth: 1,
+      borderRadius: 6,
+      maxBarThickness: 26,
+      stack: "workspace",
     },
     {
       label: "銷售理論耗用",
@@ -39,6 +50,7 @@ const chartData = computed(() => ({
       borderWidth: 1,
       borderRadius: 6,
       maxBarThickness: 26,
+      stack: "usage",
     },
   ],
 }));
@@ -76,10 +88,12 @@ const chartOptions = computed(() => ({
   },
   scales: {
     x: {
+      stacked: true,
       grid: { display: false },
       ticks: { color: "#94a3b8", maxRotation: 45, minRotation: 0 },
     },
     y: {
+      stacked: true,
       beginAtZero: true,
       grid: { color: "rgba(51, 65, 85, .25)" },
       ticks: { color: "#94a3b8" },
@@ -93,7 +107,7 @@ const chartOptions = computed(() => ({
     <div class="chart-header">
       <div>
         <h3>今日原物料領用比較</h3>
-        <p>手動領料與完成銷售依 BOM 推算的理論耗用</p>
+        <p>前次工作區留存、今日手動領料與完成銷售依 BOM 推算的理論耗用</p>
       </div>
       <span class="material-symbols-outlined">inventory</span>
     </div>
@@ -106,7 +120,7 @@ const chartOptions = computed(() => ({
     </div>
 
     <p class="unit-note">
-      各原物料單位可能不同，請以滑鼠移入顯示的單位為準；差異＝手動領料－理論耗用。
+      紫色為前次結算留在工作區的數量；差異＝前次留存＋今日手動領料－理論耗用。
     </p>
   </div>
 </template>
