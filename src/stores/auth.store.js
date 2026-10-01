@@ -539,6 +539,8 @@ export const useAuthStore = defineStore("auth", () => {
       name: userDto.name,
       email: userDto.email,
       roleLevel: Number(userDto.roleLevel) || 1,
+      // Codex 修改：申請與開立帳號都保存選定部門。
+      department: userDto.department,
       salary:
         userDto.salary !== undefined && userDto.salary !== "" && userDto.salary !== null
           ? Number(userDto.salary)

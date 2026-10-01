@@ -7,6 +7,8 @@ import { useUIStore } from "../stores/ui.store";
 import { UserProfile, UserRole, PermissionKey } from "../types";
 // Codex 修改：共用十個角色的定義。
 import { SYSTEM_ROLES } from "../data/roleData";
+// Codex 修改：與員工帳號申請共用部門選項。
+import { DEPARTMENTS, departmentOptions } from "../data/departmentData";
 // Codex 修改：薪資輸入檢查及確認金額的共用格式。
 import { validateSalary, formatSalary } from "../data/salarySafety";
 import { PERMISSION_MODULES } from "../data/permissionData";
@@ -95,19 +97,11 @@ const userSearchTerm = ref("");
 const selectedDepartmentFilter = ref("全部");
 const departments = [
   "全部",
-  "總管理處",
-  "營運與行銷部",
-  "生產研發部",
-  "門市收銀課",
-  "外部審計顧問",
+  ...DEPARTMENTS,
 ];
 
 // Codex 修改：部門選項包含既有資料，避免重新編輯時下拉選單空白。
-const editableDepartments = computed(() => [...new Set([
-  ...departments.filter((department) => department !== "全部"),
-  ...authStore.users.map((user) => user.department),
-  userForm.value.department,
-])].filter(Boolean));
+const editableDepartments = computed(() => departmentOptions(authStore.users, userForm.value.department));
 
 type BadgeVariant = "success" | "warning" | "danger" | "info" | "neutral";
 

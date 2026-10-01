@@ -9,6 +9,9 @@ import BaseBadge from "../component/子元件/BaseBadge.vue";
 import BaseModal from "../component/子元件/BaseModal.vue";
 import { useNotificationStore } from "../stores/notification.store";
 import { getDefaultAvatar } from "../data/defaultAvatars";
+// Codex 修改：申請帳號的角色與部門沿用開立新帳號的共用資料。
+import { SYSTEM_ROLES } from "../data/roleData";
+import { DEFAULT_DEPARTMENT, departmentOptions } from "../data/departmentData";
 // 【本次新增：登入頁品牌顯示】與側邊欄使用同一份系統設定，確保品牌名稱一致
 import {
   resolveBackendAssetUrl,
@@ -59,11 +62,13 @@ const registerForm = ref({
   name: "",
   email: "",
   password: "",
-  department: "營運與行銷部",
-  requestedRole: "manager" as UserRole,
+  department: DEFAULT_DEPARTMENT,
+  requestedRole: "employee" as UserRole,
   reason: "",
   avatar: "",
 });
+
+const registerDepartments = computed(() => departmentOptions(authStore.users, registerForm.value.department));
 
 // Quick Credentials Auto Fill
 const handleQuickFill = (targetEmail: string, targetPass: string) => {
@@ -74,13 +79,8 @@ const handleQuickFill = (targetEmail: string, targetPass: string) => {
 
 const resolveBackendRoleLevel = (selectedRole: UserRole): number => {
   const normalized = String(selectedRole || "").trim().toLowerCase();
-  const fallbackMap: Record<string, number> = {
-    admin: 1,     // 店長為 1
-    manager: 2,   // 經理為 2
-    employee: 3,  // 正職為 3
-    guest: 4,     // 訪客為 4
-  };
-  return fallbackMap[normalized] || 4;
+  // Codex 修改：十個角色皆送出正確等級。
+  return SYSTEM_ROLES.find((role) => role.key === normalized)?.level || 4;
 };
 
 onMounted(async () => {
@@ -192,7 +192,8 @@ const handleRegisterSubmit = async () => {
       password: applicantPassword,
       name,
       email: applicantEmail,
-      roleId: resolveBackendRoleLevel(requestedRole),
+      // Codex 修改：使用 createUserApi 接收的 roleLevel 欄位。
+      roleLevel: resolveBackendRoleLevel(requestedRole),
       avatar: avatar || "",
       department,
       reason: normalizedReason,
@@ -219,8 +220,8 @@ const handleRegisterSubmit = async () => {
       name: "",
       email: "",
       password: "",
-      department: "營運與行銷部",
-      requestedRole: "manager" as UserRole,
+      department: DEFAULT_DEPARTMENT,
+      requestedRole: "employee" as UserRole,
       reason: "",
       avatar: "",
     };
@@ -722,27 +723,26 @@ const handleRegisterSubmit = async () => {
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block text-slate-400 mb-1 font-semibold"
-              >所屬部門</label
+              >歸屬部門</label
             >
             <select
               v-model="registerForm.department"
               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-hidden focus:border-emerald-500"
             >
-              <option value="門市收銀課">門市收銀課</option>
-              <option value="總管理處">總管理處</option>
+              <!-- Codex 修改：與開立新帳號顯示相同部門。 -->
+              <option v-for="department in registerDepartments" :key="department" :value="department">{{ department }}</option>
             </select>
           </div>
           <div>
             <label class="block text-slate-400 mb-1 font-semibold"
-              >申請權限角色</label
+              >指派系統角色</label
             >
             <select
               v-model="registerForm.requestedRole"
               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-hidden focus:border-emerald-500"
             >
-              <option value="manager">營運經理 / 店長</option>
-              <option value="employee">現場員工 / 收銀員</option>
-              <option value="guest">訪客審計</option>
+              <!-- Codex 修改：與開立新帳號顯示相同十個角色。 -->
+              <option v-for="role in SYSTEM_ROLES" :key="role.key" :value="role.key">{{ role.name }}</option>
             </select>
           </div>
         </div>
