@@ -57,6 +57,18 @@
             <!-- 後端 SuppliersNotesRespoDTO 欄位是 remark，不是 content。 -->
             <div class="supplier-note-card__content">{{ note.remark || '-' }}</div>
 
+            <!-- 【新增：訂單跳轉】點擊單號後直接開啟該採購單的詳細資料。 -->
+            <button
+              v-if="note.purchaseOrderNumber && note.purchaseOrderId !== null && note.purchaseOrderId !== undefined"
+              type="button"
+              class="mt-2 text-left text-xs font-semibold text-[var(--primary)] hover:underline focus-visible:underline"
+              :title="`查看採購單 ${note.purchaseOrderNumber}`"
+              @click="openPurchaseOrderDetail(note.purchaseOrderId)"
+            >
+              <!-- 【修改】後端已限定已到貨，不重複顯示 RECEIVED。 -->
+              對應採購單：{{ note.purchaseOrderNumber }}
+            </button>
+
             <div class="supplier-note-card__footer">
               <span>{{ note.createdBy || '-' }}</span>
               <time class="supplier-note-card__time">{{ formatDate(note.createdAt) }}</time>
@@ -87,6 +99,10 @@
         saving-text="儲存中…"
         success-title="供應商備註修改成功"
         :max-length="200"
+        :show-purchase-order-select="true"
+        :purchase-order-options="purchaseOrderOptions"
+        :purchase-order-loading="editOrdersLoading"
+        :initial-purchase-order-id="editingNote?.purchaseOrderId ?? null"
         @close="closeEditModal"
         @confirm="saveEdit"
       />
@@ -110,6 +126,7 @@
 </template>
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { LoaderCircle, Pencil, Trash2 } from 'lucide-vue-next'
 import httpClient from '@/service/httpClient'
 
@@ -132,6 +149,8 @@ const props = defineProps({
   }
 })
 
+const router = useRouter()
+
 
 
 // 備註分頁狀態；畫面頁碼從 1 開始，呼叫 Spring Page API 時再減 1。
@@ -152,6 +171,8 @@ const deletingNoteId = ref(null)
 const deleteConfirmOpen = ref(false)
 const pendingDeleteNote = ref(null)
 const deleteError = ref('')
+const purchaseOrderOptions = ref([])
+const editOrdersLoading = ref(false)
 
 const deleteConfirmMessage = computed(() => {
   const remark = String(pendingDeleteNote.value?.remark || '').trim()
@@ -177,7 +198,8 @@ watch(
     deleteConfirmOpen.value = false
     pendingDeleteNote.value = null
     deleteError.value = ''
-    if (!visible || !supplierId) {
+    // 【修正】供應商 ID 可能是 0；不可用 !supplierId 判斷，否則新增成功後永遠不會查詢 ID 0 的備註。
+    if (!visible || supplierId === null || supplierId === undefined || String(supplierId).trim() === '') {
       return
     }
 
@@ -190,7 +212,8 @@ watch(
 async function fetchSupplierNotes() {
   const supplierId = props.supplier?.id
 
-  if (!supplierId) {
+  // 【修正】0 是有效的供應商 ID，只有 null、undefined 或空字串才代表未選擇供應商。
+  if (supplierId === null || supplierId === undefined || String(supplierId).trim() === '') {
     supplierNotes.value = []
     noteTotalPages.value = 0
     noteTotalElements.value = 0
@@ -264,12 +287,23 @@ function isNoteOwner(note) {
   return String(props.loginUserId) === String(note.createdByUserId)
 }
 
-function openEditModal(note) {
+function openPurchaseOrderDetail(purchaseOrderId) {
+  const normalizedId = Number(purchaseOrderId)
+  if (!Number.isSafeInteger(normalizedId) || normalizedId < 0) return
+
+  router.push({
+    name: 'purchaseOrder',
+    query: { purchaseOrderId: String(normalizedId) }
+  })
+}
+
+async function openEditModal(note) {
   if (!isNoteOwner(note) || isSavingEdit.value || deletingNoteId.value !== null) return
   editingNote.value = note
   editSaved.value = false
   editError.value = ''
   editModalOpen.value = true
+  await loadPurchaseOrderOptions()
 }
 
 function closeEditModal() {
@@ -280,7 +314,7 @@ function closeEditModal() {
   editError.value = ''
 }
 
-async function saveEdit(value) {
+async function saveEdit(value, purchaseOrderId) {
   const note = editingNote.value
   if (!note || !isNoteOwner(note) || isSavingEdit.value) return
 
@@ -295,7 +329,7 @@ async function saveEdit(value) {
   try {
     await httpClient.patch(
       `/api/supplierNote/update/${props.supplier.id}/${note.id}`,
-      { remark }
+      { remark, purchaseOrderId }
     )
     editSaved.value = true
     await fetchSupplierNotes()
@@ -305,6 +339,22 @@ async function saveEdit(value) {
       (typeof data === 'string' ? data : '修改備註失敗，請稍後再試。')
   } finally {
     isSavingEdit.value = false
+  }
+}
+
+async function loadPurchaseOrderOptions() {
+  editOrdersLoading.value = true
+  try {
+    const response = await httpClient.get(
+      `/api/purchaseOrder/supplier/${props.supplier.id}/note-options`)
+    purchaseOrderOptions.value = Array.isArray(response.data) ? response.data : []
+  } catch (error) {
+    purchaseOrderOptions.value = []
+    editError.value = error.response?.data?.message
+      || error.response?.data?.detail
+      || '採購單選項載入失敗'
+  } finally {
+    editOrdersLoading.value = false
   }
 }
 

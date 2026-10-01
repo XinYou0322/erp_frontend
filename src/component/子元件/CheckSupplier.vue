@@ -7,7 +7,9 @@
     <TextInputModal :is-open="noteModalOpen" :is-saving="isSavingNote" :successful="noteSaved"
       :error="noteError" title="新增供應商備註" :subtitle="supplier.name" label="請輸入備註"
       confirm-text="新增備註" saving-text="儲存中…" success-title="供應商備註新增成功"
-      :max-length="200" @close="closeNoteModal" @confirm="saveNote" />
+      :max-length="200" :show-purchase-order-select="true"
+      :purchase-order-options="purchaseOrderOptions" :purchase-order-loading="ordersLoading"
+      @close="closeNoteModal" @confirm="saveNote" />
     <div class="purchase-order-detail__layout">
       <article class="purchase-order-detail__main bento-card">
         <header class="purchase-order-detail__header">
@@ -64,16 +66,19 @@ const isSavingNote = ref(false)
 const noteSaved = ref(false)
 const noteError = ref('')
 const noteRefreshKey = ref(0)
-function openNoteModal() {
+const purchaseOrderOptions = ref([])
+const ordersLoading = ref(false)
+async function openNoteModal() {
   if (isSavingNote.value) return
   noteSaved.value = false
   noteError.value = ''
   noteModalOpen.value = true
+  await loadPurchaseOrderOptions()
 }
 function closeNoteModal() {
   if (!isSavingNote.value) noteModalOpen.value = false
 }
-async function saveNote(value) {
+async function saveNote(value, purchaseOrderId) {
   if (isSavingNote.value || noteSaved.value) return
   const remark = value.trim()
   if (!remark || remark.length > 200) {
@@ -89,7 +94,7 @@ async function saveNote(value) {
   isSavingNote.value = true
   noteError.value = ''
   try {
-    await httpClient.post(`/api/supplierNote/${props.supplier.id}`, { remark },
+    await httpClient.post(`/api/supplierNote/${props.supplier.id}`, { remark, purchaseOrderId },
       { params: { loginUserId: Number(userId) } })
     noteSaved.value = true
     noteModalOpen.value = false
@@ -100,6 +105,22 @@ async function saveNote(value) {
       (typeof data === 'string' ? data : '新增備註失敗，請稍後再試。')
   } finally {
     isSavingNote.value = false
+  }
+}
+
+async function loadPurchaseOrderOptions() {
+  ordersLoading.value = true
+  try {
+    const response = await httpClient.get(
+      `/api/purchaseOrder/supplier/${props.supplier.id}/note-options`)
+    purchaseOrderOptions.value = Array.isArray(response.data) ? response.data : []
+  } catch (error) {
+    purchaseOrderOptions.value = []
+    noteError.value = error.response?.data?.message
+      || error.response?.data?.detail
+      || '採購單選項載入失敗'
+  } finally {
+    ordersLoading.value = false
   }
 }
 </script>

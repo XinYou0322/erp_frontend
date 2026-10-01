@@ -49,6 +49,23 @@
           <div><span class="text-[var(--on-surface-variant)]">預計到貨日</span><div class="mt-1 font-bold">{{ selectedPurchaseOrder.expectedDeliveryDate }}</div></div>
         </div>
 
+        <!-- 【新增：收貨備註】若本次到貨有異常，可在收貨交易中直接建立對應備註。 -->
+        <div v-if="selectedPurchaseOrder" class="rounded-xl border border-[var(--outline)] bg-[var(--surface-container-low)] p-3">
+          <label class="mb-1.5 block text-xs font-bold text-[var(--on-surface)]">
+            訂單備註（選填）
+          </label>
+          <textarea
+            v-model="supplierRemark"
+            maxlength="200"
+            rows="3"
+            class="input-field resize-y text-xs"
+            placeholder="例如：本次到貨有破損、數量或品質異常；儲存後會自動對應此採購單。"
+          ></textarea>
+          <div class="mt-1 text-right text-[10px] text-[var(--on-surface-variant)]">
+            {{ supplierRemark.length }}/200
+          </div>
+        </div>
+
         <div v-if="selectedPurchaseOrder" class="overflow-hidden rounded-xl border border-[var(--outline)] bg-[var(--surface-container)]">
           <div class="overflow-x-auto">
             <table class="w-full min-w-[760px] border-collapse text-left text-xs">
@@ -151,6 +168,7 @@ const purchaseReceiptItems = ref([]);
 const saving = ref(false);
 const loadingReceivableOrders = ref(false);
 const errorMessage = ref("");
+const supplierRemark = ref("");
 
 const selectedPurchaseOrder = computed(() => receivableOrders.value.find((order) => Number(order.id) === Number(selectedPurchaseOrderId.value)) || null);
 const submitDisabled = computed(() => saving.value || (props.purchaseOrderMode && (loadingReceivableOrders.value || !selectedPurchaseOrder.value)));
@@ -211,6 +229,7 @@ async function resetModal() {
   receivableOrders.value = [];
   selectedPurchaseOrderId.value = "";
   purchaseReceiptItems.value = [];
+  supplierRemark.value = "";
   if (props.purchaseOrderMode) await loadReceivableOrders();
   else addIntakeRow();
 }
@@ -243,7 +262,11 @@ async function submitPurchaseOrderReceipt() {
   const items = purchaseReceiptItems.value.map((item) => ({ purchaseOrderItemId: Number(item.purchaseOrderItemId), expiryDate: item.expiryDate || null }));
   saving.value = true;
   try {
-    await receivePurchaseOrder(selectedPurchaseOrder.value.id, items);
+    await receivePurchaseOrder(
+      selectedPurchaseOrder.value.id,
+      items,
+      supplierRemark.value.trim() || null,
+    );
     emit("success"); emit("close");
   } catch (error) {
     console.error("採購單收貨失敗：", error);

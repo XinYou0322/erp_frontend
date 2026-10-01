@@ -149,6 +149,7 @@
 
 <script setup>
 import { ref, computed, nextTick, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 // 【新增】登入資料供既有新增元件使用；自己頁籤的身分由後端 Session 判定。
 import { useAuthStore } from '@/stores/auth.store'
 import httpClient from '@/service/httpClient'
@@ -160,6 +161,9 @@ import PurchaseOrderDetail from '@/view/PurchaseOrderDetail.vue'
 import AddPurchaseOrder from '@/component/子元件/AddPurchaseOrder.vue'
 // 【本次串接：採購單修改成功視窗】使用專案既有共用成功提示元件。
 import ConfirmSuccessfulModal from '@/component/子元件/ConfirmSuccessfulModal.vue'
+
+const route = useRoute()
+const router = useRouter()
 
 onMounted(() => {
   fetchSupplierOptions()
@@ -239,6 +243,23 @@ const isUpdating = ref(false)
 const showUpdateSuccess = ref(false)
 // 【新增】控制草稿送簽的忙碌狀態。
 const isSubmitting = ref(false)
+
+// 【新增：訂單跳轉】支援從供應商備註以 ?purchaseOrderId=... 直接開啟採購單明細。
+watch(
+  () => route.query.purchaseOrderId,
+  (queryId) => {
+    const rawId = Array.isArray(queryId) ? queryId[0] : queryId
+    if (rawId === null || rawId === undefined || String(rawId).trim() === '') return
+
+    const purchaseOrderId = Number(rawId)
+    if (!Number.isSafeInteger(purchaseOrderId) || purchaseOrderId < 0) return
+
+    selectedPurchaseOrder.value = { id: purchaseOrderId }
+    showUpdatePurchaseOrder.value = false
+    showPurchaseOrderDetail.value = true
+  },
+  { immediate: true }
+)
 
 function changePageSize(size) {
   pageSize.value = size
@@ -486,6 +507,13 @@ function closeDetail() {
   showUpdatePurchaseOrder.value = false
   showPurchaseOrderDetail.value = false
   selectedPurchaseOrder.value = null
+
+  // 從備註連入時，返回列表一併移除網址中的指定採購單。
+  if (route.query.purchaseOrderId !== null && route.query.purchaseOrderId !== undefined) {
+    const query = { ...route.query }
+    delete query.purchaseOrderId
+    router.replace({ name: 'purchaseOrder', query })
+  }
 }
 
 function showUpdate(onePurchaseOrder) {

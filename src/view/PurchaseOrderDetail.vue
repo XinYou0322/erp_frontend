@@ -162,6 +162,28 @@
             >目前沒有採購明細資料</p>
           </section>
 
+          <!-- 【保留】只顯示直接對應到本採購單的供應商備註。 -->
+          <section class="purchase-order-detail__section">
+            <div class="purchase-order-detail__section-heading">
+              <h2 class="purchase-order-detail__section-title">訂單備註</h2>
+              <span class="purchase-order-detail__count">{{ purchaseOrderData.supplierNotes.length }} 筆</span>
+            </div>
+            <div v-if="purchaseOrderData.supplierNotes.length" class="supplier-note-list">
+              <article
+                v-for="note in purchaseOrderData.supplierNotes"
+                :key="note.id"
+                class="supplier-note-card"
+              >
+                <div class="supplier-note-card__content">{{ note.remark || '-' }}</div>
+                <div class="supplier-note-card__footer">
+                  <span>{{ note.createdBy || '-' }}</span>
+                  <time class="supplier-note-card__time">{{ formatDate(note.createdAt) }}</time>
+                </div>
+              </article>
+            </div>
+            <p v-else class="purchase-order-detail__empty">此採購單目前沒有供應商備註</p>
+          </section>
+
           <section class="purchase-order-detail__section purchase-order-detail__section--remark">
             <h2 class="purchase-order-detail__section-title">簽核備註</h2>
             <p class="purchase-order-detail__remark">
@@ -500,6 +522,9 @@ function normalizePurchaseOrder(purchaseOrder) {
     receivedAt: purchaseOrder.receivedAt ?? '',
     receiptUrl: purchaseOrder.receiptUrl ?? '',
     decisionRemark: purchaseOrder.decisionRemark ?? purchaseOrder.remark ?? '',
+    supplierNotes: Array.isArray(purchaseOrder.supplierNotes)
+      ? purchaseOrder.supplierNotes
+      : [],
     workflowId:
       purchaseOrder.workflowId
       ?? purchaseOrder.approvalWorkflowId
