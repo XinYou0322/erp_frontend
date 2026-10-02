@@ -13,9 +13,24 @@ const error = ref("");
 const days = ref([]);
 
 const today = new Date();
-const yearMonth = `${today.getFullYear()}-${String(
-  today.getMonth() + 1
-).padStart(2, "0")}`;
+
+const formatDate = (date) => {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate()
+  ).padStart(2, "0")}`;
+};
+
+const getYearMonth = (date) => {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+};
+
+// 最近 30 天：包含今天
+const endDate = new Date(today);
+endDate.setHours(23, 59, 59, 999);
+
+const startDate = new Date(today);
+startDate.setDate(startDate.getDate() - 29);
+startDate.setHours(0, 0, 0, 0);
 
 const STATUS_LABEL = {
   NORMAL: "正常",
@@ -109,17 +124,53 @@ async function loadAttendance() {
   error.value = "";
 
   try {
-    const res = await fetch(
-      `/api/attendance/calendar?userId=${props.userId}&yearMonth=${yearMonth}`,
-      {
-        cache: "no-store",
-      }
+    // 最近 30 天可能跨兩個月份
+    const currentYearMonth = getYearMonth(today);
+
+    const previousMonthDate = new Date(
+      today.getFullYear(),
+      today.getMonth() - 1,
+      1
     );
 
-    if (!res.ok) throw new Error();
+    const previousYearMonth = getYearMonth(previousMonthDate);
 
-    const data = await res.json();
-    days.value = data.days || [];
+    const yearMonths = [...new Set([
+      currentYearMonth,
+      previousYearMonth,
+    ])];
+
+    const responses = await Promise.all(
+      yearMonths.map((yearMonth) =>
+        fetch(
+          `/api/attendance/calendar?userId=${props.userId}&yearMonth=${yearMonth}`,
+          {
+            cache: "no-store",
+          }
+        )
+      )
+    );
+
+    if (responses.some((res) => !res.ok)) {
+      throw new Error();
+    }
+
+    const results = await Promise.all(
+      responses.map((res) => res.json())
+    );
+
+    // 合併兩個月份
+    const allDays = results.flatMap((data) => data.days || []);
+
+    // 只保留最近 30 天
+    days.value = allDays
+      .filter((day) => {
+        const date = new Date(`${day.date}T00:00:00`);
+
+        return date >= startDate && date <= endDate;
+      })
+      .sort((a, b) => a.date.localeCompare(b.date));
+
   } catch {
     error.value = "無法取得出勤資料";
   } finally {
@@ -134,7 +185,7 @@ onMounted(loadAttendance);
   <div class="attendance-card">
     <div class="card-title">
       <span class="material-symbols-outlined">schedule</span>
-      出勤摘要（本月）
+      出勤摘要（近30天）
     </div>
 
     <p v-if="loading" class="loading">讀取中...</p>
@@ -144,7 +195,7 @@ onMounted(loadAttendance);
       <!-- 統計 -->
       <div class="summary-grid">
         <div class="summary-item">
-          <span class="value">{{ attendanceCount }}</span>
+          <span class="value">{{ summary.NORMAL }}</span>
           <span class="label">出勤</span>
         </div>
 

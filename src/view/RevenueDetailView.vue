@@ -33,15 +33,19 @@ function applyPreset(preset) {
   let start, end, defaultGroup = "DAY";
 
   if (preset === "month") {
+    // 本月：整個月份
     start = new Date(today.getFullYear(), today.getMonth(), 1);
-    end = today;
+    end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
     defaultGroup = "DAY";
+
   } else if (preset === "year") {
+    // 本年：整個年度
     start = new Date(today.getFullYear(), 0, 1);
-    end = today;
+    end = new Date(today.getFullYear(), 11, 31);
     defaultGroup = "MONTH";
+
   } else if (preset === "custom") {
-    // 修正：只有「還沒選過日期」時才帶入今天，否則沿用現有選擇
+    // 自訂：沿用使用者選擇
     start = startDate.value ? new Date(startDate.value) : today;
     end = endDate.value ? new Date(endDate.value) : today;
     defaultGroup = groupBy.value;
@@ -50,6 +54,7 @@ function applyPreset(preset) {
   startDate.value = toLocalDateStr(start);
   endDate.value = toLocalDateStr(end);
   groupBy.value = defaultGroup;
+
   load();
 }
 
@@ -182,8 +187,8 @@ function labelOf(dateStr) {
 }
 
 const compareLabel = computed(() => {
-  if (activePreset.value === "year") return "較去年同期";
-  if (activePreset.value === "month") return "較上月同期";
+  if (activePreset.value === "year") return "較去年";
+  if (activePreset.value === "month") return "較上月";
   return "較前一期間";
 });
 
@@ -274,7 +279,14 @@ onMounted(() => applyPreset("month"));
           <dd v-if="data.previousRevenue != null" class="summary-sub">上期：{{ formatCurrency(data.previousRevenue) }}</dd>
         </div>
         <div class="bento-card summary-card">
-          <dt>日均營收</dt>
+          <dt>
+            {{ groupBy === 'DAY'
+                ? '日均營收'
+                : groupBy === 'MONTH'
+                  ? '月均營收'
+                  : '年均營收'
+            }}
+          </dt>
           <dd class="summary-value">{{ formatCurrency(avgRevenue) }}</dd>
         </div>
         <div v-if="bestDay" class="bento-card summary-card">
