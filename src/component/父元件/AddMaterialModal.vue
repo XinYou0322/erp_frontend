@@ -5,539 +5,243 @@
     subtitle="建立原物料主檔資料"
     max-width="xl"
     :icon="PackagePlus"
-    @close="emit('close')"
+    @close="requestClose"
   >
-
-    <form
-      id="add-material-form"
-      @submit.prevent="handleSubmit"
-      class="space-y-4"
-    >
-
-      <!-- 名稱 / 代碼 -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-        <div>
-          <label
-            class="
-              block
-              font-bold
-              text-[var(--on-surface)]
-              text-xs
-              mb-1
-            "
-          >
-            原物料名稱
-            <span class="text-[var(--error)]">*</span>
-          </label>
-
-          <input
-            v-model="name"
-            type="text"
-            required
-            class="input-field"
-            placeholder="例如：阿薩姆紅茶原葉"
-          />
-        </div>
-
-
-        <div>
-          <label
-            class="
-              block
-              font-bold
-              text-[var(--on-surface)]
-              text-xs
-              mb-1
-            "
-          >
-            物料代碼
-            <span class="text-[var(--error)]">*</span>
-          </label>
-
-          <input
-            v-model="code"
-            type="text"
-            required
-            class="input-field font-mono"
-            placeholder="例如：TEA-001"
-          />
-        </div>
-
-      </div>
-
- <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-      <!-- 單位 -->
-      <div>
-  <label
-          class="
-            block
-            font-bold
-            text-[var(--on-surface)]
-            text-xs
-            mb-1
-          "
-        >
-
-          成本模式
-          <span class="text-[var(--error)]">*</span>
-        </label>
-   <select
-          v-model="costMode"
-          requiredc
-          class="input-field"
-        >
-          <option value="DIRECT">直接輸入</option>
-          <option value="CONVERSION">採購換算</option>
-
-        </select>
-
-      </div>
-      
-      <div>
-
-
-        <label
-          class="
-            block
-            font-bold
-            text-[var(--on-surface)]
-            text-xs
-            mb-1
-          "
-        >
-        
-          bom單位
-          <span class="text-[var(--error)]">*</span>
-        </label>
-
-        <select
-          v-model="unit"
-          required
-          class="input-field"
-        >
-          <option value="kg">公斤 (kg)</option>
-          <option value="g">公克 (g)</option>
-          <option value="L">公升 (L)</option>
-          <option value="ml">毫升 (ml)</option>
-          <option value="瓶">瓶</option>
-          <option value="包">包</option>
-          <option value="桶">桶</option>
-          <option value="個">個</option>
-          <option value="箱">箱</option>
-          <option value="支">支</option>
-        </select>
-
-      </div>
-
-     </div>
-      <!-- 安全庫存 / 成本 -->
+    <form id="add-material-form" class="space-y-4" @submit.prevent="handleSubmit">
       <div
-        class="
-          p-3.5
-          rounded-xl
-          bg-[var(--surface-container-high)]
-          border
-          border-[var(--outline)]
-          space-y-3
-        "
+        v-if="errorMessage"
+        class="rounded-xl border border-[var(--error)]/40 bg-[var(--error)]/10 px-4 py-3 text-sm font-semibold text-[var(--error)]"
+        role="alert"
       >
+        {{ errorMessage }}
+      </div>
 
-        <div
-          class="
-            flex
-            items-center
-            space-x-1.5
-            text-xs
-            font-bold
-            text-[var(--primary)]
-          "
-        >
-          <Layers class="w-4 h-4" />
-
-          <span>
-            庫存基準與成本
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <label class="space-y-1">
+          <span class="block text-xs font-bold text-[var(--on-surface)]">
+            原物料名稱 <span class="text-[var(--error)]">*</span>
           </span>
+          <input v-model.trim="form.name" type="text" maxlength="100" required class="input-field" placeholder="例如：阿薩姆紅茶原葉" />
+        </label>
+
+        <label class="space-y-1">
+          <span class="block text-xs font-bold text-[var(--on-surface)]">
+            物料代碼 <span class="text-[var(--error)]">*</span>
+          </span>
+          <input v-model.trim="form.code" type="text" maxlength="50" required class="input-field font-mono" placeholder="例如：TEA-001" />
+        </label>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <label class="space-y-1">
+          <span class="block text-xs font-bold text-[var(--on-surface)]">
+            成本模式 <span class="text-[var(--error)]">*</span>
+          </span>
+          <select v-model="form.costMode" required class="input-field">
+            <option value="DIRECT">直接輸入</option>
+            <option value="CONVERSION">採購換算</option>
+          </select>
+        </label>
+
+        <label class="space-y-1">
+          <span class="block text-xs font-bold text-[var(--on-surface)]">
+            BOM 單位 <span class="text-[var(--error)]">*</span>
+          </span>
+          <select v-model="form.unit" required class="input-field">
+            <option v-for="option in unitOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+          </select>
+        </label>
+      </div>
+
+      <section class="space-y-4 rounded-xl border border-[var(--outline)] bg-[var(--surface-container-high)] p-4">
+        <div class="flex items-center gap-2 text-xs font-bold text-[var(--primary)]">
+          <Layers class="h-4 w-4" />
+          <span>庫存基準與成本</span>
         </div>
 
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
-          <!-- 安全庫存 -->
-          <div>
-
-            <label
-              class="
-                block
-                font-semibold
-                text-[var(--on-surface-variant)]
-                text-xs
-                mb-1
-              "
-            >
-              安全庫存
-            </label>
-
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label class="space-y-1">
+            <span class="block text-xs font-semibold text-[var(--on-surface-variant)]">安全庫存</span>
             <div class="relative">
+              <input v-model.number="form.safetyStock" type="number" step="any" min="0" required class="input-field no-number-spinner pr-14" />
+              <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--on-surface-variant)]">{{ form.unit }}</span>
+            </div>
+          </label>
 
-              <input
-                v-model.number="safetyStock"
-                type="number"
-                step="any"
-                min="0"
-                required
-                class="input-field no-number-spinner pr-12"
-              />
+          <label v-if="form.costMode === 'DIRECT'" class="space-y-1">
+            <span class="block text-xs font-semibold text-[var(--on-surface-variant)]">原物料成本（NT$）</span>
+            <div class="relative">
+              <input v-model.number="form.cost" type="number" step="any" min="0" required class="input-field no-number-spinner pr-16" />
+              <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--on-surface-variant)]">/ {{ form.unit }}</span>
+            </div>
+          </label>
+        </div>
 
-              <span
-                class="
-                  absolute
-                  right-3
-                  top-1/2
-                  -translate-y-1/2
-                  text-[var(--on-surface-variant)]
-                  text-xs
-                "
-              >
-                {{ unit }}
+        <div v-if="form.costMode === 'CONVERSION'" class="space-y-4">
+          <label class="space-y-1">
+            <span class="block text-xs font-semibold text-[var(--on-surface-variant)]">
+              採購單位 <span class="text-[var(--error)]">*</span>
+            </span>
+            <select v-model="form.purchaseUnit" required class="input-field">
+              <option v-for="option in unitOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+            </select>
+          </label>
+
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label class="space-y-1">
+              <span class="block text-xs font-bold text-[var(--on-surface)]">
+                一個採購單位可換算數量 <span class="text-[var(--error)]">*</span>
               </span>
-
-
-
-
-
-              
-            </div>
-            
-           
-
-
-          <!-- 成本 -->
-          <div>
-
- </div>
-            </div>
-<div v-if="costMode === 'DIRECT'">
-            <label
-              class="
-                block
-                font-semibold
-                text-[var(--on-surface-variant)]
-                text-xs
-                mb-1
-              "
-            >
-              原物料成本 (NT$)
+              <input v-model.number="form.conversionQuantity" type="number" step="any" min="0.0001" required class="input-field no-number-spinner font-mono" placeholder="例如：1850" />
+              <span class="block text-xs text-[var(--on-surface-variant)]">例如：一瓶牛奶等於 1850 ml，就輸入 1850。</span>
             </label>
 
-            <div class="relative">
-
-              <input
-                v-model.number="cost"
-                type="number"
-                step="any"
-                min="0"
-                required
-                class="input-field no-number-spinner pr-14"
-              />
-
-              <span
-                class="
-                  absolute
-                  right-3
-                  top-1/2
-                  -translate-y-1/2
-                  text-[var(--on-surface-variant)]
-                  text-xs
-                "
-              >
-                /{{ unit }}
-
-   </span>
-</div>
-</div>
-<div v-else>
-                 <label
-              class="
-                block
-                font-semibold
-                text-[var(--on-surface-variant)]
-                text-xs
-                mb-1
-              "
-            >
-             採購單位
-               </label>
-     <select
-          v-model="purchaseUnit"
-          required
-          class="input-field"
-        >
-          <option value="kg">公斤 (kg)</option>
-          <option value="g">公克 (g)</option>
-          <option value="L">公升 (L)</option>
-          <option value="ml">毫升 (ml)</option>
-          <option value="瓶">瓶</option>
-          <option value="包">包</option>
-          <option value="桶">桶</option>
-          <option value="個">個</option>
-          <option value="箱">箱</option>
-          <option value="支">支</option>
-        </select>
-          
-           </div>
+            <label class="space-y-1">
+              <span class="block text-xs font-bold text-[var(--on-surface)]">
+                採購價格 <span class="text-[var(--error)]">*</span>
+              </span>
+              <input v-model.number="form.purchaseCost" type="number" step="any" min="0" required class="input-field no-number-spinner font-mono" placeholder="例如：95" />
+              <span class="block text-xs text-[var(--on-surface-variant)]">換算成本：NT$ {{ unitCostPreview }} / {{ form.unit }}</span>
+            </label>
           </div>
- <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" v-if="costMode === 'CONVERSION'">
- <div >
-          <label
-            class="
-              block
-              font-bold
-              text-[var(--on-surface)]
-              text-xs
-              
-            "
-          >
-           採購單位換算bom單位  
-            <span class="text-[var(--error)]">*</span>
-          </label>
-
-          <input
-            v-model="conversionQuantity"
-            type="text"
-            required
-            class="input-field font-mono"
-         
-          />   <div
-        class="
-          rounded-xl
-          border
-          border-[var(--outline)]
-          bg-[var(--surface-container-high)]
-          p-3.5
-          text-xs
-          text-[var(--on-surface-variant)]
-        "
-      >
-        例如：買1瓶牛奶1850毫升 就輸入1850
-      </div>
-
-       
-</div>
-<div >
-  
-       <label
-            class="
-              block
-              font-bold
-              text-[var(--on-surface)]
-              text-xs
-              
-            "
-          >
-           採購價格
-            <span class="text-[var(--error)]">*</span>
-          </label>
-
-          <input
-            v-model.number="purchaseCost"
-            type="text"
-            required
-            class="input-field font-mono"
-         
-          /> 
-<div
-        class="
-          rounded-xl
-          border
-          border-[var(--outline)]
-          bg-[var(--surface-container-high)]
-          p-3.5
-          text-xs
-          text-[var(--on-surface-variant)]
-        "
-      >
-    <span >  NT$ {{ unitCostPreview }}  / </span>
-     <span>{{ unit }}</span>
-      </div>
-
-
         </div>
-
- </div>
-        </div>
-
-    
-
+      </section>
     </form>
 
-
-  <template #footer="{ close }">
-
-      <button
-        type="button"
-       @click="close"
-        class="btn-secondary text-xs"
-      >
-        取消
-      </button>
-
-
+    <template #footer>
+      <button type="button" class="btn-secondary text-xs" :disabled="saving" @click="requestClose">取消</button>
       <button
         type="submit"
         form="add-material-form"
-        class="
-          btn-primary
-          text-xs
-          flex
-          items-center
-          space-x-1.5
-        "
+        class="btn-primary flex items-center gap-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-60"
+        :disabled="saving"
       >
-
-        <Check class="w-4 h-4" />
-
-        <span>
-          確認建立原物料
-        </span>
-
+        <Check class="h-4 w-4" />
+        <span>{{ saving ? "建立中..." : "確認建立原物料" }}</span>
       </button>
-
     </template>
-
   </ModalWrapper>
 </template>
 
-
 <script setup>
+import { computed, reactive, ref, watch } from "vue";
+import { Check, Layers, PackagePlus } from "lucide-vue-next";
 
-import {
-  ref,
-  watch,
-  computed
-} from 'vue'
-
-import {
-  PackagePlus,
-  Check,
-  Layers
-} from 'lucide-vue-next'
-
-import ModalWrapper from '../子元件/ModalWrapper.vue'
-
-import httpClient
-  from '@/service/httpClient'
-
+import ModalWrapper from "../子元件/ModalWrapper.vue";
+import httpClient from "@/service/httpClient";
 
 const props = defineProps({
-  isOpen: {
-    type: Boolean,
-    required: true
-  }
-})
+  isOpen: { type: Boolean, required: true },
+});
 
+const emit = defineEmits(["close", "success"]);
 
-const emit = defineEmits([
-  'close',
-  'success'
-])
+const unitOptions = [
+  { value: "kg", label: "公斤 (kg)" },
+  { value: "g", label: "公克 (g)" },
+  { value: "L", label: "公升 (L)" },
+  { value: "ml", label: "毫升 (ml)" },
+  { value: "瓶", label: "瓶" },
+  { value: "包", label: "包" },
+  { value: "桶", label: "桶" },
+  { value: "個", label: "個" },
+  { value: "箱", label: "箱" },
+  { value: "支", label: "支" },
+];
 
+const createInitialForm = () => ({
+  name: "",
+  code: "",
+  unit: "kg",
+  costMode: "DIRECT",
+  safetyStock: 0,
+  cost: 0,
+  purchaseUnit: "kg",
+  conversionQuantity: null,
+  purchaseCost: null,
+});
 
-const name = ref('')
-const code = ref('')
-const unit = ref('kg')
-const cost = ref(0)
-const safetyStock = ref(0)
-const costMode = ref('DIRECT')
-const purchaseUnit= ref("l")
-const conversionQuantity= ref("") 
-const purchaseCost= ref("l")
-watch(  
-  () => props.isOpen,
+const form = reactive(createInitialForm());
+const saving = ref(false);
+const errorMessage = ref("");
 
-  (isOpen) => {
+const resetForm = () => {
+  Object.assign(form, createInitialForm());
+  saving.value = false;
+  errorMessage.value = "";
+};
 
-    if (isOpen) {
+watch(() => props.isOpen, (isOpen) => {
+  if (isOpen) resetForm();
+});
 
-      name.value = ''
-      code.value = ''
-      unit.value = 'kg'
-      cost.value = 0
-      safetyStock.value = 0
+watch(() => form.costMode, () => {
+  errorMessage.value = "";
+});
 
-    }
-
-  }
-)
-
-
-const handleSubmit = () => {
-
-  const data = {
-
-    code: code.value.trim(),
-
-    name: name.value.trim(),
-
-    unit: unit.value,
-
-    costMode: costMode.value,
-
-    safetyStock:
-      Number(safetyStock.value)
-      
-
-  }
-
-if (costMode.value === 'DIRECT') {
-
-  data.cost = Number(cost.value)
-
-} else if (costMode.value === 'CONVERSION') {
-
-  data.purchaseUnit = purchaseUnit.value
-  data.conversionQuantity = Number(conversionQuantity.value)
-  data.purchaseCost = Number(purchaseCost.value)
-
-}
-  console.log(
-    '準備新增的原物料：',
-    data
-  )
-
-
-  httpClient
-    .post('/api/material/add', data)
-
-    .then((response) => {
-
-      console.log(
-        '新增原物料成功：',
-        response.data
-      )
-
-      emit('success')
-
-      emit('close')
-
-    })
-
-    .catch((error) => {
-
-      console.error(
-        '新增原物料失敗：',
-        error
-      )
-
-    })
-
-}
 const unitCostPreview = computed(() => {
-    if (!purchaseCost.value || !conversionQuantity.value) {
-    return 0
-  }
-return purchaseCost.value/conversionQuantity.value
+  const quantity = Number(form.conversionQuantity);
+  const purchaseCost = Number(form.purchaseCost);
+  if (!Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(purchaseCost)) return "0";
+  return (purchaseCost / quantity).toFixed(4).replace(/\.?0+$/, "");
+});
 
-})
+const getApiError = (error) => {
+  const data = error.response?.data;
+  if (typeof data === "string" && data.trim()) return data;
+  return data?.message || data?.detail || "新增原物料失敗，請確認資料後再試一次";
+};
+
+const validateForm = () => {
+  if (!form.name.trim() || !form.code.trim()) return "請填寫原物料名稱與物料代碼";
+  if (!Number.isFinite(Number(form.safetyStock)) || Number(form.safetyStock) < 0) return "安全庫存不可小於 0";
+
+  if (form.costMode === "DIRECT") {
+    if (!Number.isFinite(Number(form.cost)) || Number(form.cost) < 0) return "原物料成本不可小於 0";
+    return "";
+  }
+
+  if (!form.purchaseUnit) return "請選擇採購單位";
+  if (!Number.isFinite(Number(form.conversionQuantity)) || Number(form.conversionQuantity) <= 0) return "換算數量必須大於 0";
+  if (!Number.isFinite(Number(form.purchaseCost)) || Number(form.purchaseCost) < 0) return "採購價格不可小於 0";
+  return "";
+};
+
+const handleSubmit = async () => {
+  if (saving.value) return;
+
+  errorMessage.value = validateForm();
+  if (errorMessage.value) return;
+
+  const payload = {
+    code: form.code.trim(),
+    name: form.name.trim(),
+    unit: form.unit,
+    costMode: form.costMode,
+    safetyStock: Number(form.safetyStock),
+    ...(form.costMode === "DIRECT"
+      ? { cost: Number(form.cost) }
+      : {
+          purchaseUnit: form.purchaseUnit,
+          conversionQuantity: Number(form.conversionQuantity),
+          purchaseCost: Number(form.purchaseCost),
+        }),
+  };
+
+  saving.value = true;
+  try {
+    const response = await httpClient.post("/api/material/add", payload);
+    emit("success", response.data);
+    emit("close");
+  } catch (error) {
+    console.error("新增原物料失敗：", error);
+    errorMessage.value = getApiError(error);
+  } finally {
+    saving.value = false;
+  }
+};
+
+const requestClose = () => {
+  if (!saving.value) emit("close");
+};
 </script>
